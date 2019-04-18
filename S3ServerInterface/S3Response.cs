@@ -95,8 +95,9 @@ namespace S3ServerInterface
         /// </summary>
         /// <param name="statusCode">HTTP status code.</param>
         /// <param name="contentType">Content-type.</param>
+        /// <param name="headers">HTTP headers.</param>
         /// <param name="data">Data.</param>
-        public S3Response(S3Request s3request, bool success, int statusCode, string contentType, byte[] data)
+        public S3Response(S3Request s3request, bool success, int statusCode, string contentType, Dictionary<string, string> headers, byte[] data)
         {
             if (s3request == null) throw new ArgumentNullException(nameof(s3request));
 
@@ -104,7 +105,7 @@ namespace S3ServerInterface
             Success = success;
             StatusCode = statusCode;
             ContentType = contentType;
-            Headers = new Dictionary<string, string>();
+            Headers = headers;
 
             if (data != null && data.Length > 0)
             {

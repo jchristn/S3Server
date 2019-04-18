@@ -51,7 +51,7 @@ namespace Test
             Console.WriteLine("S3 Request Received");
             Console.WriteLine(req.ToString());
 
-            S3Response resp = new S3Response(req, true, 200, "text/plain", null);
+            S3Response resp = new S3Response(req, true, 200, "text/plain", null, null);
             return resp;
         }
     }
