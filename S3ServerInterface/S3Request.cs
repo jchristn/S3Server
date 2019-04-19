@@ -17,6 +17,16 @@ namespace S3ServerInterface
         #region Public-Members
 
         /// <summary>
+        /// IP address of the client.
+        /// </summary>
+        public string SourceIp { get; set; }
+
+        /// <summary>
+        /// TCP port of the client.
+        /// </summary>
+        public int SourcePort { get; set; }
+
+        /// <summary>
         /// HTTP method (GET, PUT, POST, DELETE, etc).
         /// </summary>
         public HttpMethod Method { get; set; }
@@ -125,7 +135,9 @@ namespace S3ServerInterface
             _Debug = debug;
 
             #region Initialize
-             
+
+            SourceIp = req.SourceIp;
+            SourcePort = req.SourcePort;
             Method = req.Method;
             FullUrl = req.FullUrl;
             RawUrl = req.RawUrlWithoutQuery;
@@ -216,6 +228,7 @@ namespace S3ServerInterface
         public override string ToString()
         {
             string ret = "---" + Environment.NewLine;
+            ret += "  Source IP:Port : " + SourceIp + ":" + SourcePort + Environment.NewLine;
             ret += "  Method         : " + Method.ToString() + Environment.NewLine;
             ret += "  FullUrl        : " + FullUrl + Environment.NewLine;
             ret += "  RawUrl         : " + RawUrl + Environment.NewLine;
