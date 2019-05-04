@@ -17,6 +17,11 @@ namespace S3ServerInterface
         #region Public-Members
 
         /// <summary>
+        /// HTTP request from which this response was created.
+        /// </summary>
+        public HttpRequest Http { get; set; }
+
+        /// <summary>
         /// IP address of the client.
         /// </summary>
         public string SourceIp { get; set; }
@@ -136,6 +141,7 @@ namespace S3ServerInterface
 
             #region Initialize
 
+            Http = req;
             SourceIp = req.SourceIp;
             SourcePort = req.SourcePort;
             Method = req.Method;

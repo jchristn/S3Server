@@ -18,8 +18,7 @@ namespace S3ClientTest
         static AmazonS3Config _S3Config = null;
         static IAmazonS3 _S3Client = null;
         static BasicAWSCredentials _S3Credentials = null;
-        static RegionEndpoint _S3Region = RegionEndpoint.USWest1;
-        static string _S3RegionString = null;
+        static RegionEndpoint _S3Region = RegionEndpoint.USWest1; 
         static string _Bucket = null;
 
         static bool _RunForever = true;
@@ -136,36 +135,28 @@ namespace S3ClientTest
             switch (userInput)
             {
                 case "APNortheast1":
-                    _S3Region = RegionEndpoint.APNortheast1;
-                    _S3RegionString = "ap-northeast-1";
+                    _S3Region = RegionEndpoint.APNortheast1; 
                     break;
                 case "APSoutheast1":
-                    _S3Region = RegionEndpoint.APSoutheast1;
-                    _S3RegionString = "ap-southeast-1";
+                    _S3Region = RegionEndpoint.APSoutheast1; 
                     break;
                 case "APSoutheast2":
-                    _S3Region = RegionEndpoint.APSoutheast2;
-                    _S3RegionString = "ap-southeast-2";
+                    _S3Region = RegionEndpoint.APSoutheast2; 
                     break;
                 case "EUWest1":
-                    _S3Region = RegionEndpoint.EUWest1;
-                    _S3RegionString = "eu-west-1";
+                    _S3Region = RegionEndpoint.EUWest1; 
                     break;
                 case "SAEast1":
-                    _S3Region = RegionEndpoint.SAEast1;
-                    _S3RegionString = "sa-east-1";
+                    _S3Region = RegionEndpoint.SAEast1; 
                     break;
                 case "USEast1":
-                    _S3Region = RegionEndpoint.USEast1;
-                    _S3RegionString = "us-east-1";
+                    _S3Region = RegionEndpoint.USEast1; 
                     break; 
                 case "USWest1":
-                    _S3Region = RegionEndpoint.USWest1;
-                    _S3RegionString = "us-west-1";
+                    _S3Region = RegionEndpoint.USWest1; 
                     break;
                 case "USWest2":
-                    _S3Region = RegionEndpoint.USWest2;
-                    _S3RegionString = "us-west-2";
+                    _S3Region = RegionEndpoint.USWest2; 
                     break;
             }
         }
@@ -193,13 +184,7 @@ namespace S3ClientTest
         static void InitS3Client()
         {
             _S3Credentials = new Amazon.Runtime.BasicAWSCredentials(_AccessKey, _SecretKey);
-            
-            //
-            // Thanks to Minio
-            // https://docs.min.io/docs/how-to-use-aws-sdk-for-net-with-minio-server.html
-            // for this little blurb on getting it to work with a different endpoint
-            //
-
+             
             _S3Config = new AmazonS3Config
             {
                 RegionEndpoint = RegionEndpoint.USWest1, 

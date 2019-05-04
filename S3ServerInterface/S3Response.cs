@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 
+using WatsonWebserver;
+
 namespace S3ServerInterface
 {
     /// <summary>
@@ -15,12 +17,7 @@ namespace S3ServerInterface
         /// The original request to which this response is being sent.
         /// </summary>
         public S3Request Request;
-
-        /// <summary>
-        /// Indicates whether or not the request succeeded.
-        /// </summary>
-        public bool Success;
-
+         
         /// <summary>
         /// The HTTP status code to return to the requestor (client).
         /// </summary>
@@ -97,12 +94,11 @@ namespace S3ServerInterface
         /// <param name="contentType">Content-type.</param>
         /// <param name="headers">HTTP headers.</param>
         /// <param name="data">Data.</param>
-        public S3Response(S3Request s3request, bool success, int statusCode, string contentType, Dictionary<string, string> headers, byte[] data)
+        public S3Response(S3Request s3request, int statusCode, string contentType, Dictionary<string, string> headers, byte[] data)
         {
             if (s3request == null) throw new ArgumentNullException(nameof(s3request));
 
-            Request = s3request;
-            Success = success;
+            Request = s3request; 
             StatusCode = statusCode;
             ContentType = contentType;
             Headers = headers;
@@ -118,6 +114,22 @@ namespace S3ServerInterface
         #endregion
 
         #region Public-Methods
+
+        /// <summary>
+        /// Create an HttpResponse from the S3Response.
+        /// </summary>
+        /// <returns></returns>
+        public HttpResponse ToHttpResponse()
+        {
+            HttpResponse resp = new HttpResponse(
+                Request.Http,
+                StatusCode,
+                Headers,
+                ContentType,
+                Data);
+
+            return resp;
+        }
 
         #endregion
 
