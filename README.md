@@ -6,9 +6,10 @@ Simple S3 server-side interface, produced using Amazon's public documentation.
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v1.1.x
+## New in v1.2.x
 
-- Separate callbacks for each of the various operations (breaking change)
+- Default request handler (when no appropriate callback can be found) caused breaking change to constructor
+- Various console debugging settings can be found in ```S3Server.ConsoleDebug.*``` 
 
 ## Examples
 
@@ -26,7 +27,7 @@ The following notes should be read prior to using S3ServerInterface:
 using S3ServerInterface;
 
 // Initialize the server
-_Server = new S3Server("+", 8000, false); // host, port, SSL
+_Server = new S3Server("+", 8000, false, DefaultRequestHandler// host, port, SSL
 
 // Set callbacks
 _Server.Bucket.Exists = BucketExists;
@@ -38,6 +39,12 @@ _Server.Object.Write = ObjectWrite;
 _Server.Object.Delete = ObjectDelete;
 
 // Example callback definition
+static S3Response DefaultRequestHandler(S3Request req)
+{
+   // unknown API
+   return new S3Response(req, 400, "text/plain", null, Encoding.UTF8.GetBytes("Unknown API"));
+}
+
 static S3Response BucketExists(S3Request req)
 {
    // implement your logic here
@@ -161,6 +168,10 @@ The roadmap for this project includes:
 - Adding request parsers and response builders
 
 ## Version History
+
+v1.1.x
+
+- Separate callbacks for each of the various operations (breaking change)
 
 v1.0.x
 

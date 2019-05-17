@@ -12,9 +12,10 @@ namespace Test
 
         static void Main(string[] args)
         {
-            _Server = new S3Server("+", 8000, false);
-            _Server.DebugHttpRequests = false;
-            _Server.DebugS3RequestConstruction = false;
+            _Server = new S3Server("+", 8000, false, RequestReceived);
+            _Server.ConsoleDebug.Exceptions = false;
+            _Server.ConsoleDebug.HttpRequests = false;
+            _Server.ConsoleDebug.S3Requests = false;
 
             _Server.Bucket.Delete = RequestReceived;
             _Server.Bucket.DeleteTags = RequestReceived;

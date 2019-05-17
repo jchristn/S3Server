@@ -16,16 +16,11 @@ namespace S3ServerInterface
     public class S3Server : IDisposable
     {
         #region Public-Members
-         
-        /// <summary>
-        /// Enable or disable console debugging of HTTP requests.
-        /// </summary>
-        public bool DebugHttpRequests = false;
 
         /// <summary>
-        /// Enable or disable console debugging of S3 request construction.
+        /// Enable or disable console debugging for various items.
         /// </summary>
-        public bool DebugS3RequestConstruction = false;
+        public ConsoleDebugging ConsoleDebug = new ConsoleDebugging();
 
         /// <summary>
         /// Callback methods for requests received for bucket operations.
@@ -36,7 +31,7 @@ namespace S3ServerInterface
         /// Callback methods for requests received for object operations.
         /// </summary>
         public ObjectCallbacks Object = new ObjectCallbacks();
-
+         
         #endregion
 
         #region Private-Members
@@ -47,6 +42,7 @@ namespace S3ServerInterface
         private int _Port;
         private bool _Ssl;
         private Server _Server;
+        public Func<S3Request, S3Response> _DefaultRequestHandler = null;
 
         #endregion
 
@@ -58,14 +54,17 @@ namespace S3ServerInterface
         /// <param name="hostname">The hostname on which to listen.</param>
         /// <param name="port">The TCP port number.</param>
         /// <param name="ssl">Enable or disable SSL.</param>
-        public S3Server(string hostname, int port, bool ssl)
+        /// <param name="defaultRequestHandler">Default request handler, used when no other callbacks can be found.</param>
+        public S3Server(string hostname, int port, bool ssl, Func<S3Request, S3Response> defaultRequestHandler)
         {
             if (String.IsNullOrEmpty(hostname)) throw new ArgumentNullException(nameof(hostname));
             if (port < 0 || port > 65535) throw new ArgumentException("Port must be between 0 and 65535.");
+            if (defaultRequestHandler == null) throw new ArgumentNullException(nameof(defaultRequestHandler));
 
             _Hostname = hostname;
             _Port = port;
             _Ssl = ssl;
+            _DefaultRequestHandler = defaultRequestHandler;
 
             _Server = new Server(_Hostname, _Port, _Ssl, RequestHandler);
         }
@@ -110,10 +109,10 @@ namespace S3ServerInterface
 
             try
             {
-                S3Request s3req = new S3Request(req, DebugS3RequestConstruction);
+                S3Request s3req = new S3Request(req, ConsoleDebug.S3Requests);
                 S3Response s3resp = new S3Response(s3req, 500, "text/plain", null, Encoding.UTF8.GetBytes("Unknown endpoint."));
 
-                if (DebugHttpRequests)
+                if (ConsoleDebug.HttpRequests)
                 {
                     Console.WriteLine(Common.SerializeJson(req, true));
                     Console.WriteLine(Environment.NewLine);
@@ -463,13 +462,15 @@ namespace S3ServerInterface
                             return resp;
                         } 
 
-                    default: 
+                    default:
+                        S3Response defaultResp = _DefaultRequestHandler(s3req);
+                        resp = defaultResp.ToHttpResponse();
                         return resp;
                 }
             }
             catch (Exception e)
             {
-                if (DebugHttpRequests)
+                if (ConsoleDebug.Exceptions)
                 {
                     Console.WriteLine(Common.SerializeJson(e, true));
                 }
@@ -479,7 +480,7 @@ namespace S3ServerInterface
             }
             finally
             {
-                if (DebugHttpRequests)
+                if (ConsoleDebug.HttpRequests)
                 {
                     Console.WriteLine(
                         req.SourceIp + ":" + 
