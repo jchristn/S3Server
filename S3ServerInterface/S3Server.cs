@@ -42,6 +42,7 @@ namespace S3ServerInterface
         private int _Port;
         private bool _Ssl;
         private Server _Server;
+        public Func<S3Request, S3Response> _PreRequestHandler = null;
         public Func<S3Request, S3Response> _DefaultRequestHandler = null;
 
         #endregion
@@ -50,20 +51,77 @@ namespace S3ServerInterface
 
         /// <summary>
         /// Instantiate the object.
+        /// Using this constructor results in no pre-request handler (your own API handler), and no custom default request handler (when an S3 API cannot be matched).
         /// </summary>
         /// <param name="hostname">The hostname on which to listen.</param>
         /// <param name="port">The TCP port number.</param>
-        /// <param name="ssl">Enable or disable SSL.</param>
-        /// <param name="defaultRequestHandler">Default request handler, used when no other callbacks can be found.</param>
-        public S3Server(string hostname, int port, bool ssl, Func<S3Request, S3Response> defaultRequestHandler)
+        /// <param name="ssl">Enable or disable SSL.</param> 
+        public S3Server(
+            string hostname,
+            int port,
+            bool ssl)
         {
             if (String.IsNullOrEmpty(hostname)) throw new ArgumentNullException(nameof(hostname));
             if (port < 0 || port > 65535) throw new ArgumentException("Port must be between 0 and 65535.");
-            if (defaultRequestHandler == null) throw new ArgumentNullException(nameof(defaultRequestHandler));
 
             _Hostname = hostname;
             _Port = port;
             _Ssl = ssl;
+            _PreRequestHandler = null;
+            _DefaultRequestHandler = null;
+
+            _Server = new Server(_Hostname, _Port, _Ssl, RequestHandler);
+        }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// Using this constructor results in no pre-request handler (your own API handler), but (if not null) allows a custom default request handler (when an S3 API cannot be matched).
+        /// </summary>
+        /// <param name="hostname">The hostname on which to listen.</param>
+        /// <param name="port">The TCP port number.</param>
+        /// <param name="ssl">Enable or disable SSL.</param> 
+        /// <param name="defaultRequestHandler">Default request handler used when no other callbacks can be found.</param>
+        public S3Server(
+            string hostname,
+            int port,
+            bool ssl,
+            Func<S3Request, S3Response> defaultRequestHandler)
+        {
+            if (String.IsNullOrEmpty(hostname)) throw new ArgumentNullException(nameof(hostname));
+            if (port < 0 || port > 65535) throw new ArgumentException("Port must be between 0 and 65535.");
+
+            _Hostname = hostname;
+            _Port = port;
+            _Ssl = ssl;
+            _PreRequestHandler = null;
+            _DefaultRequestHandler = defaultRequestHandler;
+
+            _Server = new Server(_Hostname, _Port, _Ssl, RequestHandler);
+        }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// Using this constructor results in (if not null) a pre-request handler (your own API handler), and (if not null) a custom default request handler (when an S3 API cannot be matched).
+        /// </summary>
+        /// <param name="hostname">The hostname on which to listen.</param>
+        /// <param name="port">The TCP port number.</param>
+        /// <param name="ssl">Enable or disable SSL.</param>
+        /// <param name="preRequestHandler">Request handler to call prior to evaluating for S3 requests, can be null.</param>
+        /// <param name="defaultRequestHandler">Default request handler used when no other callbacks can be found.</param>
+        public S3Server(
+            string hostname,
+            int port,
+            bool ssl,
+            Func<S3Request, S3Response> preRequestHandler,
+            Func<S3Request, S3Response> defaultRequestHandler)
+        {
+            if (String.IsNullOrEmpty(hostname)) throw new ArgumentNullException(nameof(hostname));
+            if (port < 0 || port > 65535) throw new ArgumentException("Port must be between 0 and 65535."); 
+
+            _Hostname = hostname;
+            _Port = port;
+            _Ssl = ssl;
+            _PreRequestHandler = preRequestHandler;
             _DefaultRequestHandler = defaultRequestHandler;
 
             _Server = new Server(_Hostname, _Port, _Ssl, RequestHandler);
@@ -110,13 +168,27 @@ namespace S3ServerInterface
             try
             {
                 S3Request s3req = new S3Request(req, ConsoleDebug.S3Requests);
-                S3Response s3resp = new S3Response(s3req, 500, "text/plain", null, Encoding.UTF8.GetBytes("Unknown endpoint."));
+                S3Response s3resp = new S3Response(s3req, 400, "text/plain", null, Encoding.UTF8.GetBytes("Unknown endpoint."));
 
                 if (ConsoleDebug.HttpRequests)
                 {
                     Console.WriteLine(Common.SerializeJson(req, true));
                     Console.WriteLine(Environment.NewLine);
                     Console.WriteLine(Common.SerializeJson(s3req, true));
+                }
+
+                if (_PreRequestHandler != null)
+                {
+                    s3resp = _PreRequestHandler(s3req);
+                    if (s3resp == null)
+                    {
+                        s3resp = new S3Response(s3req, 500, "text/plain", null, Encoding.UTF8.GetBytes("Unknown endpoint."));
+                    }
+                    else
+                    {
+                        resp = s3resp.ToHttpResponse();
+                        return resp;
+                    }
                 }
 
                 switch (s3req.Method)
@@ -463,8 +535,16 @@ namespace S3ServerInterface
                         } 
 
                     default:
-                        S3Response defaultResp = _DefaultRequestHandler(s3req);
-                        resp = defaultResp.ToHttpResponse();
+                        if (_DefaultRequestHandler != null)
+                        {
+                            S3Response defaultResp = _DefaultRequestHandler(s3req);
+                            resp = defaultResp.ToHttpResponse();
+                        }
+                        else
+                        {
+                            s3resp = new S3Response(s3req, 400, "text/plain", null, Encoding.UTF8.GetBytes("Unknown endpoint."));
+                            resp = s3resp.ToHttpResponse();
+                        }
                         return resp;
                 }
             }
