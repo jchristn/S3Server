@@ -9,6 +9,8 @@ Is there an API you'd like exposed that isn't currently?  Did you identify an is
 ## New in v1.2.x
 
 - Default request handler (when no appropriate callback can be found) caused breaking change to constructor
+- Pre-request handler (to allow you to implement your own APIs prior to attempting to match an S3 API)
+- Additional constructors
 - Various console debugging settings can be found in ```S3Server.ConsoleDebug.*``` 
 
 ## Examples
@@ -50,6 +52,25 @@ static S3Response BucketExists(S3Request req)
    // implement your logic here
    return new S3Response(req, 200, "text/plain", null, Encoding.UTF8.GetBytes("Hello, world!"));
 }
+```
+
+## Client
+Use the following example with the AWSSDK.S3 NuGet package to point your S3 client toward S3ServerInterface.
+``` 
+using Amazon;
+using Amazon.Runtime;
+using Amazon.S3;
+using Amazon.S3.Model;
+
+BasicAWSCredentials cred = new Amazon.Runtime.BasicAWSCredentials("access key", "secret key");            
+AmazonS3Config config = new AmazonS3Config
+{
+  RegionEndpoint = RegionEndpoint.USWest1, 
+  ServiceURL = "http://localhost:8000/",  
+  ForcePathStyle = true,
+  UseHttp = true
+};
+IAmazonS3 client = new AmazonS3Client(cred, config);
 ```
 
 ## Request and Responses
