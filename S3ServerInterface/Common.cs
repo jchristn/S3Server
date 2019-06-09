@@ -18,7 +18,7 @@ namespace S3ServerInterface
     /// <summary>
     /// Common static methods used by Kvpbase.
     /// </summary>
-    public static class Common
+    internal static class Common
     { 
         #region Input
 
