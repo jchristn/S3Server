@@ -318,6 +318,34 @@ namespace S3ServerInterface
                                     return resp;
                                 }
                             }
+                            else if (req.QuerystringEntries.ContainsKey("legal-hold"))
+                            {
+                                if (Object.ReadLegalHold != null)
+                                {
+                                    s3resp = Object.ReadLegalHold(s3req);
+                                    resp = s3resp.ToHttpResponse();
+                                    return resp;
+                                }
+                                else
+                                {
+                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object read legal hold not implemented.");
+                                    return resp;
+                                }
+                            }
+                            else if (req.QuerystringEntries.ContainsKey("retention"))
+                            {
+                                if (Object.ReadRetention != null)
+                                {
+                                    s3resp = Object.ReadRetention(s3req);
+                                    resp = s3resp.ToHttpResponse();
+                                    return resp;
+                                }
+                                else
+                                {
+                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object read retention not implemented.");
+                                    return resp;
+                                }
+                            }
                             else
                             {
                                 if (Object.Read != null)
@@ -412,6 +440,34 @@ namespace S3ServerInterface
                                 else
                                 {
                                     resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object write ACL not implemented.");
+                                    return resp;
+                                }
+                            }
+                            else if (req.QuerystringEntries.ContainsKey("legal-hold"))
+                            {
+                                if (Object.WriteLegalHold != null)
+                                {
+                                    s3resp = Object.WriteLegalHold(s3req);
+                                    resp = s3resp.ToHttpResponse();
+                                    return resp;
+                                }
+                                else
+                                {
+                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object write legal hold not implemented.");
+                                    return resp;
+                                }
+                            }
+                            else if (req.QuerystringEntries.ContainsKey("retention"))
+                            {
+                                if (Object.WriteRetention != null)
+                                {
+                                    s3resp = Object.WriteRetention(s3req);
+                                    resp = s3resp.ToHttpResponse();
+                                    return resp;
+                                }
+                                else
+                                {
+                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object write retention not implemented.");
                                     return resp;
                                 }
                             }

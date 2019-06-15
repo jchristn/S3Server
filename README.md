@@ -6,12 +6,9 @@ Simple S3 server-side interface, produced using Amazon's public documentation.
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v1.2.x
+## New in v1.3.x
 
-- Default request handler (when no appropriate callback can be found) caused breaking change to constructor
-- Pre-request handler (to allow you to implement your own APIs prior to attempting to match an S3 API)
-- Additional constructors
-- Various console debugging settings can be found in ```S3Server.ConsoleDebug.*``` 
+- Legal hold and retention callbacks
 
 ## Examples
 
@@ -20,7 +17,9 @@ Refer to ```S3ClientTest``` and ```S3ServerTest``` projects for full examples.
 ## Notes
 
 The following notes should be read prior to using S3ServerInterface:
+
 - IP addresses are not supported for the hostname.  You must use ```localhost``` or a DNS FQDN.
+- If you use ```*``` or ```+``` for the hostname, you must run under administrative privileges.
 - Chunk encoding is not supported.  It must be disabled in the client SDK.
 - Bucket names must appear in the URL and not in the hostname.
 
@@ -39,6 +38,7 @@ _Server.Object.Exists = ObjectExists;
 _Server.Object.Read = ObjectRead;
 _Server.Object.Write = ObjectWrite;
 _Server.Object.Delete = ObjectDelete;
+// etc
 
 // Example callback definition
 static S3Response DefaultRequestHandler(S3Request req)
@@ -139,10 +139,14 @@ As of v1.1.0, the following callbacks are supported:
 | Object.Write             | Write an object                                |
 | Object.WriteAcl          | Write an object access control list            |
 | Object.WriteTags         | Write tags to an object                        |
+| Object.WriteLegalHold    | Write a legal hold status to an object         |
+| Object.WriteRetention    | Write a retention status to an object          |
 | Object.Read              | Read an object                                 |
 | Object.ReadAcl           | Read an object's access control list           |
 | Object.ReadRange         | Read a range of bytes from an object           |
 | Object.ReadTags          | Read an object's tags                          |
+| Object.ReadLegalHold     | Read an object's legal hold status             |
+| Object.ReadRetention     | Read an object's retention status              |
 | Object.Delete            | Delete an object                               |
 | Object.DeleteTags        | Delete an object's tags                        |
 | Object.DeleteMultiple    | Delete multiple objects                        |
@@ -172,12 +176,10 @@ The following bucket operations are not exposed through callbacks:
 - Website
 
 The following object operations are not exposed through callbacks:
-
-- Legal hold
+ 
 - Multipart upload
 - Parts
-- Restore
-- Retention
+- Restore 
 - Torrent
 
 ## Future Enhancements
@@ -189,6 +191,13 @@ The roadmap for this project includes:
 - Adding request parsers and response builders
 
 ## Version History
+
+v1.2.x
+
+- Default request handler (when no appropriate callback can be found) caused breaking change to constructor
+- Pre-request handler (to allow you to implement your own APIs prior to attempting to match an S3 API)
+- Additional constructors
+- Various console debugging settings can be found in ```S3Server.ConsoleDebug.*``` 
 
 v1.1.x
 

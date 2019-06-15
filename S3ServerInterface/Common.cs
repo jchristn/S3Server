@@ -16,7 +16,7 @@ using Newtonsoft.Json.Linq;
 namespace S3ServerInterface
 {
     /// <summary>
-    /// Common static methods used by Kvpbase.
+    /// Common static methods.
     /// </summary>
     internal static class Common
     { 
