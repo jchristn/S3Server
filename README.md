@@ -1,6 +1,10 @@
+![alt tag](https://github.com/jchristn/s3serverinterface/blob/master/assets/logo.ico)
+
 # S3ServerInterface
 
 Simple S3 server-side interface, produced using Amazon's public documentation.  
+
+[![nuget](https://badge.fury.io/nu/Object.svg)](https://www.nuget.org/packages/S3ServerInterface/) 
 
 ## Feedback and Enhancements
 
