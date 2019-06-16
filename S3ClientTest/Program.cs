@@ -219,7 +219,7 @@ namespace S3ClientTest
                     BucketName = _Bucket,
                     Key = id,
                     InputStream = s,
-                    ContentType = "application/octet-stream",
+                    ContentType = "application/octet-stream"
                 };
 
                 PutObjectResponse response = _S3Client.PutObjectAsync(request).Result;

@@ -22,10 +22,10 @@ Refer to ```S3ClientTest``` and ```S3ServerTest``` projects for full examples.
 
 The following notes should be read prior to using S3ServerInterface:
 
-- IP addresses are not supported for the hostname.  You must use ```localhost``` or a DNS FQDN.
-- If you use ```*``` or ```+``` for the hostname, you must run under administrative privileges.
-- Chunk encoding is not supported.  It must be disabled in the client SDK.
-- Bucket names must appear in the URL and not in the hostname.
+- IP addresses are not supported for the hostname.  You *must* use ```localhost``` or a DNS FQDN.
+- If you use ```*``` or ```+``` for the hostname, you *must* run under administrative privileges.
+- Chunk encoding is not supported.  It *must* be disabled in the client SDK
+- Bucket names *must* appear in the URL and not in the hostname, i.e. ```ForcePathStyle```.
 
 ## Server
 ```
@@ -79,7 +79,7 @@ IAmazonS3 client = new AmazonS3Client(cred, config);
 
 ## Request and Responses
 
-An ```S3Request``` object is passed to the callback, and it expects an ```S3Response``` in return.  S3ServerInterface does NOT parse the request body for you, nor does it create a well-formed response.  That will be the responsibility of your code.
+An ```S3Request``` object is passed to the callback, and in certain cases, an object of the type ```S3Objects.*``` is passed along with it.  S3ServerInterface expects an ```S3Response``` in return.  S3ServerInterface will parse the request body for you and place it into an object of the type ```S3Objects.*``` where appropriate, but it is up to you to create well-formed responses.
 
 ### S3Request
 ```
@@ -120,7 +120,7 @@ S3ServerInterface parses incoming HTTP requests, extracting key pieces of inform
 
 Refer to https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html for the S3 API documentation used to create this project.
 
-As of v1.1.0, the following callbacks are supported:
+As of v1.4.0, the following callbacks are supported:
 
 ### Bucket Callbacks
 
@@ -191,8 +191,7 @@ The following object operations are not exposed through callbacks:
 The roadmap for this project includes:
 
 - Adding more callbacks for the ones listed above as not supported / not yet available
-- Adding stream support (instead of byte arrays for data in the request and response)
-- Adding request parsers and response builders
+- Adding stream support (instead of byte arrays for data in the request and response) 
 
 ## Version History
 
