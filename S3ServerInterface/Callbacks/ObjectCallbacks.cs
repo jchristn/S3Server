@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 
+using S3ServerInterface.S3Objects;
+
 namespace S3ServerInterface.Callbacks
 {
     public class ObjectCallbacks
@@ -9,79 +11,94 @@ namespace S3ServerInterface.Callbacks
         #region Public-Members
 
         /// <summary>
-        /// Check for the existence of an object.  A successful S3Response should include no data and return an HTTP 200.
+        /// Check for the existence of an object.  
+        /// Success: return an S3Response object with status 200.
         /// </summary>
         public Func<S3Request, S3Response> Exists = null;
 
         /// <summary>
-        /// Write an object.  A successful S3Response should include no data and return an HTTP 200.
+        /// Write an object.
+        /// Success: return an S3Response object with status 200.
         /// </summary>
         public Func<S3Request, S3Response> Write = null;
 
         /// <summary>
-        /// Write an object's access control list.  A successful S3Response should include no data and return an HTTP 200.
+        /// Write an object's access control list.  
+        /// Success: return an S3Response object with status 200. 
         /// </summary>
-        public Func<S3Request, S3Response> WriteAcl = null;
+        public Func<S3Request, AccessControlPolicy, S3Response> WriteAcl = null;
 
         /// <summary>
-        /// Write tags to an object.  A successful S3Response should include no data and return an HTTP 200.
+        /// Write tags to an object.
+        /// Success: return an S3Response object with status 200.
         /// </summary>
-        public Func<S3Request, S3Response> WriteTags = null;
+        public Func<S3Request, Tagging, S3Response> WriteTags = null;
 
         /// <summary>
-        /// Write a legal hold status to an object.  A successful S3Response should include no data and return an HTTP 200.
+        /// Write a legal hold status to an object. 
+        /// Success: return an S3Response object with status 200.
         /// </summary>
-        public Func<S3Request, S3Response> WriteLegalHold = null;
+        public Func<S3Request, LegalHold, S3Response> WriteLegalHold = null;
 
         /// <summary>
-        /// Write a retention status to an object.  A successful S3Response should include no data and return an HTTP 200.
+        /// Write a retention status to an object.
+        /// Success: return an S3Response object with status 200. 
         /// </summary>
-        public Func<S3Request, S3Response> WriteRetention = null;
+        public Func<S3Request, Retention, S3Response> WriteRetention = null;
 
         /// <summary>
-        /// Read an object.  A successful S3Response should include the data and return an HTTP 200.
+        /// Read an object.  
+        /// Success: return an S3Response object with status 200 and the object data.
         /// </summary>
         public Func<S3Request, S3Response> Read = null;
 
         /// <summary>
-        /// Read an object's access control list.  A successful S3Response should include an XML document containing the access control policy and return an HTTP 200.
+        /// Read an object's access control list.  
+        /// Success: return an S3Response object with status 200 and an AccessControlPolicy as its data.
         /// </summary>
         public Func<S3Request, S3Response> ReadAcl = null;
 
         /// <summary>
-        /// Read a range of bytes from an object.  A successful S3Response should include the data and return an HTTP 200.
+        /// Read a range of bytes from an object.  
+        /// Success: return an S3Response object with status 200 and the range of bytes as its data. 
         /// </summary>
         public Func<S3Request, S3Response> ReadRange = null;
 
         /// <summary>
-        /// Read an object's tags.  A successful S3Response should include the data and return an HTTP 200.
+        /// Read an object's tags.  
+        /// Success: return an S3Response object with status 200 and a Tagging object as its data.
         /// </summary>
         public Func<S3Request, S3Response> ReadTags = null;
 
         /// <summary>
-        /// Read an object's legal hold status.  A successful S3Response should include the data and return an HTTP 200.
+        /// Read an object's legal hold status.
+        /// Success: return an S3Response object with status 200 and a LegalHold object as its data. 
         /// </summary>
         public Func<S3Request, S3Response> ReadLegalHold = null;
 
         /// <summary>
-        /// Read an object's retention status.  A successful S3Response should include the data and return an HTTP 200.
+        /// Read an object's retention status.  
+        /// Success: return an S3Response object with status 200 and a Retention object as its data.
         /// </summary>
         public Func<S3Request, S3Response> ReadRetention = null;
 
         /// <summary>
-        /// Delete an object.  A successful S3Response should include no data and return an HTTP 200.
+        /// Delete an object. 
+        /// Success: return an S3Response object with status 204.
         /// </summary>
         public Func<S3Request, S3Response> Delete = null;
 
         /// <summary>
-        /// Delete an object's tags.  A successful S3Response should include no data and return an HTTP 204.
+        /// Delete an object's tags.  
+        /// Success: return an S3Response object with status 204.
         /// </summary>
         public Func<S3Request, S3Response> DeleteTags = null;
 
         /// <summary>
-        /// Delete multiple objects.  A successful S3Response should include an XML document containing the delete result and an HTTP 200.
+        /// Delete multiple objects.  
+        /// Success: return an S3Response object with status 200 and a DeleteResult as its data.
         /// </summary>
-        public Func<S3Request, S3Response> DeleteMultiple = null;
+        public Func<S3Request, Delete, S3Response> DeleteMultiple = null;
 
         #endregion
 

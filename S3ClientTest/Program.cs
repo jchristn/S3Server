@@ -73,6 +73,10 @@ namespace S3ClientTest
                         WriteObject();
                         break;
 
+                    case "write tags":
+                        WriteObjectTags();
+                        break;
+
                     case "read":
                         ReadObject();
                         break;
@@ -104,19 +108,20 @@ namespace S3ClientTest
         static void Menu()
         {
             Console.WriteLine("--- Available Commands ---");
-            Console.WriteLine("  ?         Help, this menu");
-            Console.WriteLine("  q         Quit the program");
-            Console.WriteLine("  cls       Clear the screen");
-            Console.WriteLine("  endpoint  Set endpoint (currently " + _Endpoint + ")");
-            Console.WriteLine("  access    Set access key (currently " + _AccessKey + ")");
-            Console.WriteLine("  secret    Set secret key (currently " + _SecretKey + ")");
-            Console.WriteLine("  region    Set AWS region (currently " + _S3Region.ToString() + ")");
-            Console.WriteLine("  bucket    Set S3 bucket (currently " + _Bucket + ")");
-            Console.WriteLine("  init      Initialize client (needed after changing keys or region)");
-            Console.WriteLine("  write     Write an object");
-            Console.WriteLine("  read      Read an object");
-            Console.WriteLine("  delete    Delete an object");
-            Console.WriteLine("  exists    Check if object exists");
+            Console.WriteLine("  ?           Help, this menu");
+            Console.WriteLine("  q           Quit the program");
+            Console.WriteLine("  cls         Clear the screen");
+            Console.WriteLine("  endpoint    Set endpoint (currently " + _Endpoint + ")");
+            Console.WriteLine("  access      Set access key (currently " + _AccessKey + ")");
+            Console.WriteLine("  secret      Set secret key (currently " + _SecretKey + ")");
+            Console.WriteLine("  region      Set AWS region (currently " + _S3Region.ToString() + ")");
+            Console.WriteLine("  bucket      Set S3 bucket (currently " + _Bucket + ")");
+            Console.WriteLine("  init        Initialize client (needed after changing keys or region)");
+            Console.WriteLine("  write       Write an object");
+            Console.WriteLine("  write tags  Write object tags");
+            Console.WriteLine("  read        Read an object");
+            Console.WriteLine("  delete      Delete an object");
+            Console.WriteLine("  exists      Check if object exists");
         }
 
         #endregion
@@ -326,6 +331,51 @@ namespace S3ClientTest
             catch (Exception)
             {
                 Console.WriteLine("Does not exist");
+            }
+        }
+
+        static void WriteObjectTags()
+        {
+            string id = Common.InputString("Key:", null, false); 
+
+            try
+            { 
+                PutObjectTaggingRequest request = new PutObjectTaggingRequest
+                { 
+                    BucketName = _Bucket,
+                    Key = id
+                };
+
+                request.Tagging = new Tagging();
+                request.Tagging.TagSet = new List<Tag>();
+
+                Tag tag1 = new Tag();
+                tag1.Key = "foo";
+                tag1.Value = "bar";
+                request.Tagging.TagSet.Add(tag1);
+
+                Tag tag2 = new Tag();
+                tag2.Key = "bar";
+                tag2.Value = "baz";
+                request.Tagging.TagSet.Add(tag2);
+
+                PutObjectTaggingResponse response = _S3Client.PutObjectTaggingAsync(request).Result;
+                int statusCode = (int)response.HttpStatusCode;
+
+                if (response != null)
+                {
+                    Console.WriteLine("Success");
+                    return;
+                }
+                else
+                {
+                    Console.WriteLine("Failed");
+                    return;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(Common.SerializeJson(e, true));
             }
         }
 

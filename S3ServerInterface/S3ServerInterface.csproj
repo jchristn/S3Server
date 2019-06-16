@@ -6,17 +6,19 @@
     <Authors>Joel Christner</Authors>
     <Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
     <Copyright>(c)2019 Joel Christner</Copyright>
-    <PackageReleaseNotes>Additional constructors, pre-request handler to allow integration of your own APIs.</PackageReleaseNotes>
+    <PackageReleaseNotes>Added continuation token for ListBucketResult.</PackageReleaseNotes>
     <PackageTags>aws s3 storage rest interface server</PackageTags>
     <PackageLicenseUrl>https://github.com/jchristn/S3ServerInterface/blob/master/LICENSE.txt</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/jchristn/S3ServerInterface</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jchristn/S3ServerInterface</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
-    <Version>1.3.1</Version>
+    <Version>1.4.2</Version>
+    <PackageIconUrl>https://raw.githubusercontent.com/jchristn/S3ServerInterface/master/assets/logo.ico</PackageIconUrl>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Watson" Version="2.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="Watson" Version="2.0.4" />
   </ItemGroup>
 
 </Project>

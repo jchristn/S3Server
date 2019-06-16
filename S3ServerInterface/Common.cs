@@ -10,6 +10,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -442,6 +443,29 @@ namespace S3ServerInterface
         {
             if (data == null || data.Length < 1) throw new ArgumentNullException(nameof(data));
             return DeserializeJson<T>(Encoding.UTF8.GetString(data));
+        }
+
+        public static T DeserializeXml<T>(string xml)
+        {
+            if (String.IsNullOrEmpty(xml)) throw new ArgumentNullException(nameof(xml));
+
+            XmlSerializer xmls = new XmlSerializer(typeof(T));
+            using (MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(xml)))
+            {
+                return (T)xmls.Deserialize(ms);
+            }
+        }
+
+        public static string SerializeXml(object obj)
+        {
+            if (obj == null) throw new ArgumentNullException(nameof(obj));
+
+            XmlSerializer xml = new XmlSerializer(obj.GetType());
+            using (StringWriter sw = new StringWriter())
+            {
+                xml.Serialize(sw, obj);
+                return sw.ToString();
+            }
         }
 
         #endregion
