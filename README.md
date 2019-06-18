@@ -10,9 +10,10 @@ Simple S3 server-side interface, produced using Amazon's public documentation.
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v1.3.x
+## New in v1.4.x
 
-- Legal hold and retention callbacks
+- Now passing objects received from AWS SDK into callback methods
+- Class definitions for requests and responses used by AWS SDK
 
 ## Examples
 
@@ -120,7 +121,7 @@ S3ServerInterface parses incoming HTTP requests, extracting key pieces of inform
 
 Refer to https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html for the S3 API documentation used to create this project.
 
-As of v1.4.0, the following callbacks are supported:
+As of v1.4.x, the following callbacks are supported:
 
 ### Bucket Callbacks
 
@@ -190,10 +191,14 @@ The following object operations are not exposed through callbacks:
 
 The roadmap for this project includes:
 
-- Adding more callbacks for the ones listed above as not supported / not yet available
 - Adding stream support (instead of byte arrays for data in the request and response) 
+- Adding more callbacks for the ones listed above as not supported / not yet available
 
 ## Version History
+
+v1.3.x
+
+- Legal hold and retention callbacks
 
 v1.2.x
 

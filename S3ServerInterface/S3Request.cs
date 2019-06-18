@@ -292,6 +292,16 @@ namespace S3ServerInterface
             return ret;
         }
 
+        /// <summary>
+        /// Retrieve a header (or querystring) value.
+        /// </summary>
+        /// <param name="key">Key.</param>
+        /// <returns>Value.</returns>
+        public string RetrieveHeaderValue(string key)
+        {
+            return Http.RetrieveHeaderValue(key);
+        }
+
         #endregion
 
         #region Private-Methods
