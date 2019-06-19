@@ -6,11 +6,9 @@ using System.Xml.Serialization;
 namespace S3ServerInterface.S3Objects
 {
     // built using https://xmltocsharp.azurewebsites.net/
-
+     
     /*
-     *  
-     * Already defined in AccessControlPolicy
-     *  
+     * Implemented in AccessControlPolicy
      * 
     [XmlRoot(ElementName = "Owner", Namespace = "http://s3.amazonaws.com/doc/2006-03-01")]
     public class Owner
@@ -20,8 +18,7 @@ namespace S3ServerInterface.S3Objects
         [XmlElement(ElementName = "DisplayName", Namespace = "http://s3.amazonaws.com/doc/2006-03-01")]
         public string DisplayName { get; set; }
     }
-     *
-     */ 
+     */
 
     [XmlRoot(ElementName = "Bucket", Namespace = "http://s3.amazonaws.com/doc/2006-03-01")]
     public class Bucket
@@ -48,5 +45,5 @@ namespace S3ServerInterface.S3Objects
         public Buckets Buckets { get; set; }
         [XmlAttribute(AttributeName = "xmlns")]
         public string Xmlns { get; set; }
-    }
+    } 
 }

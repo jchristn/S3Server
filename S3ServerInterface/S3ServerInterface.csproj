@@ -6,13 +6,13 @@
     <Authors>Joel Christner</Authors>
     <Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
     <Copyright>(c)2019 Joel Christner</Copyright>
-    <PackageReleaseNotes>Added Service callbacks including ListBuckets</PackageReleaseNotes>
+    <PackageReleaseNotes>Added PostRequestHandler callback.</PackageReleaseNotes>
     <PackageTags>aws s3 storage rest interface server</PackageTags>
     <PackageLicenseUrl>https://github.com/jchristn/S3ServerInterface/blob/master/LICENSE.txt</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/jchristn/S3ServerInterface</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jchristn/S3ServerInterface</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
-    <Version>1.4.5</Version>
+    <Version>1.4.6</Version>
     <PackageIconUrl>https://raw.githubusercontent.com/jchristn/S3ServerInterface/master/assets/logo.ico</PackageIconUrl>
   </PropertyGroup>
 
