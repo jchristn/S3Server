@@ -131,6 +131,44 @@ namespace S3ServerInterface
             return resp;
         }
 
+        /// <summary>
+        /// Returns a human-readable string with the object details.
+        /// </summary>
+        /// <returns>String.</returns>
+        public override string ToString()
+        {
+            string ret = "---" + Environment.NewLine;
+            ret += "  Status Code    : " + StatusCode + Environment.NewLine;
+            ret += "  Content Type   : " + ContentType + Environment.NewLine;
+            ret += "  Content Length : " + ContentLength + Environment.NewLine;
+            ret += "  Headers        : ";
+            if (Headers != null && Headers.Count > 0)
+            {
+                ret += Environment.NewLine;
+                foreach (KeyValuePair<string, string> curr in Headers)
+                {
+                    if (String.IsNullOrEmpty(curr.Key)) continue;
+                    ret += "    " + curr.Key + "=" + curr.Value + Environment.NewLine;
+                }
+            }
+            else
+            {
+                ret += "(none)" + Environment.NewLine;
+            }
+
+            ret += "  Data           : ";
+            if (Data != null && Data.Length > 0)
+            {
+                ret += Data.Length + " bytes" + Environment.NewLine;
+            }
+            else
+            {
+                ret += "(none)" + Environment.NewLine;
+            }
+             
+            return ret;
+        }
+
         #endregion
 
         #region Private-Methods
