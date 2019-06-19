@@ -47,6 +47,11 @@ namespace S3ServerInterface
         public string RawUrl { get; set; }
 
         /// <summary>
+        /// The individual elements in the raw URL.
+        /// </summary>
+        public List<string> RawUrlEntries { get; set; }
+
+        /// <summary>
         /// The length of the payload.
         /// </summary>
         public long ContentLength { get; set; }
@@ -147,6 +152,7 @@ namespace S3ServerInterface
             Method = req.Method;
             FullUrl = req.FullUrl;
             RawUrl = req.RawUrlWithoutQuery;
+            RawUrlEntries = req.RawUrlEntries;
             ContentLength = 0;
             ContentType = req.ContentType;
             Querystring = req.QuerystringEntries;

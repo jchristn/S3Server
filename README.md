@@ -14,6 +14,7 @@ Is there an API you'd like exposed that isn't currently?  Did you identify an is
 
 - Now passing objects received from AWS SDK into callback methods
 - Class definitions for requests and responses used by AWS SDK
+- Added Service callbacks including ListBuckets
 
 ## Examples
 

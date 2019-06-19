@@ -24,6 +24,11 @@ namespace S3ServerInterface
         public ConsoleDebugging ConsoleDebug = new ConsoleDebugging();
 
         /// <summary>
+        /// Callback methods for requests received for service operations.
+        /// </summary>
+        public ServiceCallbacks Service = new ServiceCallbacks();
+
+        /// <summary>
         /// Callback methods for requests received for bucket operations.
         /// </summary>
         public BucketCallbacks Bucket = new BucketCallbacks();
@@ -240,7 +245,22 @@ namespace S3ServerInterface
                         }
 
                     case HttpMethod.GET:
-                        if (req.RawUrlEntries.Count == 1)
+                        if (req.RawUrlEntries.Count == 0)
+                        {
+                            if (Service.ListBuckets != null)
+                            {
+                                s3resp = Service.ListBuckets(s3req);
+                                resp = s3resp.ToHttpResponse();
+                                return resp;
+                            }
+                            else
+                            {
+                                resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Service read not implemented.");
+                                return resp;
+
+                            }
+                        }
+                        else if (req.RawUrlEntries.Count == 1)
                         {
                             if (req.QuerystringEntries.ContainsKey("tagging"))
                             {
