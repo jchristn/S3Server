@@ -7,19 +7,6 @@ namespace S3ServerInterface.S3Objects
 {
     // built using https://xmltocsharp.azurewebsites.net/
      
-    /*
-     * Implemented in AccessControlPolicy
-     * 
-    [XmlRoot(ElementName = "Owner", Namespace = "http://s3.amazonaws.com/doc/2006-03-01")]
-    public class Owner
-    {
-        [XmlElement(ElementName = "ID", Namespace = "http://s3.amazonaws.com/doc/2006-03-01")]
-        public string ID { get; set; }
-        [XmlElement(ElementName = "DisplayName", Namespace = "http://s3.amazonaws.com/doc/2006-03-01")]
-        public string DisplayName { get; set; }
-    }
-     */
-
     [XmlRoot(ElementName = "Bucket", Namespace = "http://s3.amazonaws.com/doc/2006-03-01")]
     public class Bucket
     {

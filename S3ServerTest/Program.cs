@@ -24,8 +24,9 @@ namespace Test
             _Server.ConsoleDebug.S3Requests = false;
 
             _Server.PreRequestHandler = PreRequestHandler;
+            _Server.PostRequestHandler = PostRequestHandler;
             _Server.DefaultRequestHandler = DefaultRequestHandler;
-             
+            
             _Server.Bucket.Delete = BucketDelete;
             _Server.Bucket.DeleteTags = BucketDeleteTags;
             _Server.Bucket.Exists = BucketExists;
@@ -86,6 +87,14 @@ namespace Test
 
             S3Response resp = new S3Response(req, 200, "text/plain", null, null);
             return resp;
+        }
+
+        static bool PostRequestHandler(S3Request req, S3Response resp)
+        {
+            Console.WriteLine("");
+            Console.WriteLine("S3 Response Sending");
+            Console.WriteLine(resp.ToString());
+            return true;
         }
 
         static S3Response DefaultRequestHandler(S3Request req)

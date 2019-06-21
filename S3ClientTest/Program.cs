@@ -64,9 +64,33 @@ namespace S3ClientTest
                     case "bucket":
                         SetBucket();
                         break;
-
+                        
                     case "init":
                         InitS3Client();
+                        break;
+
+                    case "list":
+                        ListBuckets();
+                        break;
+
+                    case "write bucket":
+                        WriteBucket();
+                        break;
+
+                    case "write bucket tags":
+                        WriteBucketTags();
+                        break;
+
+                    case "read bucket tags":
+                        ReadBucketTags();
+                        break;
+
+                    case "write bucket ver":
+                        WriteBucketVersioning();
+                        break;
+
+                    case "read bucket ver":
+                        ReadBucketVersioning();
                         break;
 
                     case "write":
@@ -108,20 +132,26 @@ namespace S3ClientTest
         static void Menu()
         {
             Console.WriteLine("--- Available Commands ---");
-            Console.WriteLine("  ?           Help, this menu");
-            Console.WriteLine("  q           Quit the program");
-            Console.WriteLine("  cls         Clear the screen");
-            Console.WriteLine("  endpoint    Set endpoint (currently " + _Endpoint + ")");
-            Console.WriteLine("  access      Set access key (currently " + _AccessKey + ")");
-            Console.WriteLine("  secret      Set secret key (currently " + _SecretKey + ")");
-            Console.WriteLine("  region      Set AWS region (currently " + _S3Region.ToString() + ")");
-            Console.WriteLine("  bucket      Set S3 bucket (currently " + _Bucket + ")");
-            Console.WriteLine("  init        Initialize client (needed after changing keys or region)");
-            Console.WriteLine("  write       Write an object");
-            Console.WriteLine("  write tags  Write object tags");
-            Console.WriteLine("  read        Read an object");
-            Console.WriteLine("  delete      Delete an object");
-            Console.WriteLine("  exists      Check if object exists");
+            Console.WriteLine("  ?                   Help, this menu");
+            Console.WriteLine("  q                   Quit the program");
+            Console.WriteLine("  cls                 Clear the screen");
+            Console.WriteLine("  endpoint            Set endpoint (currently " + _Endpoint + ")");
+            Console.WriteLine("  access              Set access key (currently " + _AccessKey + ")");
+            Console.WriteLine("  secret              Set secret key (currently " + _SecretKey + ")");
+            Console.WriteLine("  region              Set AWS region (currently " + _S3Region.ToString() + ")");
+            Console.WriteLine("  bucket              Set S3 bucket (currently " + _Bucket + ")");
+            Console.WriteLine("  write bucket        Create a bucket");
+            Console.WriteLine("  write bucket tags   Write tags to a bucket");
+            Console.WriteLine("  read bucket tags    Read tags from a bucket");
+            Console.WriteLine("  write bucket ver    Write bucket versioning");
+            Console.WriteLine("  read bucket ver     Read bucket versioning");
+            Console.WriteLine("  init                Initialize client (needed after changing keys or region)");
+            Console.WriteLine("  list                List buckets");
+            Console.WriteLine("  write               Write an object");
+            Console.WriteLine("  write tags          Write object tags");
+            Console.WriteLine("  read                Read an object");
+            Console.WriteLine("  delete              Delete an object");
+            Console.WriteLine("  exists              Check if object exists");
         }
 
         #endregion
@@ -178,12 +208,12 @@ namespace S3ClientTest
 
         static void SetAccessKey()
         {
-            _AccessKey = Common.InputString("Access key:", "access", false); 
+            _AccessKey = Common.InputString("Access key:", "default", false); 
         }
 
         static void SetSecretKey()
         {
-            _SecretKey = Common.InputString("Secret key:", "secret", false); 
+            _SecretKey = Common.InputString("Secret key:", "default", false); 
         }
 
         static void InitS3Client()
@@ -199,6 +229,151 @@ namespace S3ClientTest
             };
 
             _S3Client = new AmazonS3Client(_S3Credentials, _S3Config);
+        }
+
+        #endregion
+
+        #region Service-Primitives
+
+        static void ListBuckets()
+        {
+            ListBucketsRequest request = new ListBucketsRequest();
+            ListBucketsResponse response = _S3Client.ListBucketsAsync(request).Result;
+            int statusCode = (int)response.HttpStatusCode;
+
+            if (response != null)
+            {
+                Console.WriteLine("Success");
+                Console.WriteLine("  Owner   : " + response.Owner.DisplayName);
+                Console.WriteLine("  Buckets : " + response.Buckets.Count);
+                foreach (S3Bucket bucket in response.Buckets)
+                {
+                    Console.WriteLine("    " + bucket.BucketName);
+                }
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+            }
+        }
+
+        #endregion
+
+        #region Bucket-Primitives
+
+        static void WriteBucket()
+        {
+            string id = Common.InputString("Name:", null, false);
+
+            PutBucketRequest request = new PutBucketRequest();
+            request.BucketName = id;
+
+            PutBucketResponse response = _S3Client.PutBucketAsync(request).Result;
+            int statusCode = (int)response.HttpStatusCode;
+
+            if (response != null)
+            {
+                Console.WriteLine("Success");
+                return;
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+                return;
+            }
+        }
+
+        static void WriteBucketTags()
+        {
+            string bucket = Common.InputString("Bucket:", null, false);
+            string key = Common.InputString("Key:", null, false);
+            string val = Common.InputString("Value:", null, false);
+
+            PutBucketTaggingRequest request = new PutBucketTaggingRequest();
+            request.BucketName = bucket;
+            request.TagSet = new List<Tag>();
+            Tag tag = new Tag();
+            tag.Key = key;
+            tag.Value = val;
+            request.TagSet.Add(tag);
+
+            PutBucketTaggingResponse response = _S3Client.PutBucketTaggingAsync(request).Result;
+            if (response != null)
+            {
+                Console.WriteLine("Success");
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+            }
+        }
+
+        static void ReadBucketTags()
+        {
+            string bucket = Common.InputString("Bucket:", null, false);
+
+            GetBucketTaggingRequest request = new GetBucketTaggingRequest();
+            request.BucketName = bucket;
+
+            GetBucketTaggingResponse response = _S3Client.GetBucketTaggingAsync(request).Result;
+            if (response != null)
+            {
+                Console.WriteLine("Success");
+                foreach (Tag curr in response.TagSet)
+                {
+                    Console.WriteLine("  " + curr.Key + ": " + curr.Value);
+                }
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+            }
+        }
+
+        static void WriteBucketVersioning()
+        {
+            string bucket = Common.InputString("Bucket:", null, false);
+            bool versioning = Common.InputBoolean("Enable versioning:", true);
+
+            PutBucketVersioningRequest request = new PutBucketVersioningRequest();
+            request.BucketName = bucket;
+            request.VersioningConfig = new S3BucketVersioningConfig();
+            request.VersioningConfig.EnableMfaDelete = false;
+
+            if (versioning)
+                request.VersioningConfig.Status = VersionStatus.Enabled;
+            else
+                request.VersioningConfig.Status = VersionStatus.Suspended;
+
+            PutBucketVersioningResponse response = _S3Client.PutBucketVersioningAsync(request).Result;
+            if (response != null)
+            {
+                Console.WriteLine("Success");
+            }
+            else;
+            {
+                Console.WriteLine("Failed");
+            }
+        }
+
+        static void ReadBucketVersioning()
+        {
+            string bucket = Common.InputString("Bucket:", null, false);
+
+            GetBucketVersioningRequest request = new GetBucketVersioningRequest();
+            request.BucketName = bucket;
+
+            GetBucketVersioningResponse response = _S3Client.GetBucketVersioningAsync(request).Result;
+            if (response != null)
+            {
+                Console.WriteLine("Success");
+                Console.WriteLine("  MFA delete  : " + response.VersioningConfig.EnableMfaDelete.ToString());
+                Console.WriteLine("  Versioning  : " + response.VersioningConfig.Status.Value);
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+            }
         }
 
         #endregion

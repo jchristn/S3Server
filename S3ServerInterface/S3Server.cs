@@ -48,7 +48,7 @@ namespace S3ServerInterface
         /// Callback method to use after a request has been processed.
         /// Return a modified S3Response if you wish to modify the response, otherwise, return the original S3Response.
         /// </summary>
-        public Func<S3Request, S3Response, S3Response> PostRequestHandler = null;
+        public Func<S3Request, S3Response, bool> PostRequestHandler = null;
 
         /// <summary>
         /// Callback method to call when no matching AWS S3 API callback could be found.
@@ -208,7 +208,7 @@ namespace S3ServerInterface
                     }
                     else
                     {
-                        if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                        if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                         resp = s3resp.ToHttpResponse();
                         return resp;
                     }
@@ -222,7 +222,7 @@ namespace S3ServerInterface
                             if (Bucket.Exists != null)
                             {
                                 s3resp = Bucket.Exists(s3req);
-                                if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                 resp = s3resp.ToHttpResponse();
                                 return resp;
                             }
@@ -237,7 +237,7 @@ namespace S3ServerInterface
                             if (Object.Exists != null)
                             {
                                 s3resp = Object.Exists(s3req);
-                                if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                 resp = s3resp.ToHttpResponse();
                                 return resp;
                             }
@@ -259,7 +259,7 @@ namespace S3ServerInterface
                             if (Service.ListBuckets != null)
                             {
                                 s3resp = Service.ListBuckets(s3req);
-                                if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                 resp = s3resp.ToHttpResponse();
                                 return resp;
                             }
@@ -277,7 +277,7 @@ namespace S3ServerInterface
                                 if (Bucket.ReadTags != null)
                                 {
                                     s3resp = Bucket.ReadTags(s3req);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -292,7 +292,7 @@ namespace S3ServerInterface
                                 if (Bucket.ReadVersioning != null)
                                 {
                                     s3resp = Bucket.ReadVersioning(s3req);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -307,7 +307,7 @@ namespace S3ServerInterface
                                 if (Bucket.Read != null)
                                 {
                                     s3resp = Bucket.Read(s3req);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -325,7 +325,7 @@ namespace S3ServerInterface
                                 if (Object.ReadRange != null)
                                 {
                                     s3resp = Object.ReadRange(s3req);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -340,7 +340,7 @@ namespace S3ServerInterface
                                 if (Object.ReadTags != null)
                                 {
                                     s3resp = Object.ReadTags(s3req);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -355,7 +355,7 @@ namespace S3ServerInterface
                                 if (Object.ReadAcl != null)
                                 {
                                     s3resp = Object.ReadAcl(s3req);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -370,7 +370,7 @@ namespace S3ServerInterface
                                 if (Object.ReadLegalHold != null)
                                 {
                                     s3resp = Object.ReadLegalHold(s3req);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -385,7 +385,7 @@ namespace S3ServerInterface
                                 if (Object.ReadRetention != null)
                                 {
                                     s3resp = Object.ReadRetention(s3req);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -400,7 +400,7 @@ namespace S3ServerInterface
                                 if (Object.Read != null)
                                 {
                                     s3resp = Object.Read(s3req);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -429,7 +429,7 @@ namespace S3ServerInterface
                                         tagging = Common.DeserializeXml<Tagging>(Encoding.UTF8.GetString(req.Data));
 
                                     s3resp = Bucket.WriteTags(s3req, tagging);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -448,7 +448,7 @@ namespace S3ServerInterface
                                         versioning = Common.DeserializeXml<VersioningConfiguration>(Encoding.UTF8.GetString(req.Data));
 
                                     s3resp = Bucket.WriteVersioning(s3req, versioning);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -467,7 +467,7 @@ namespace S3ServerInterface
                                         bucket = Common.DeserializeXml<CreateBucketConfiguration>(Encoding.UTF8.GetString(req.Data));
 
                                     s3resp = Bucket.Write(s3req, bucket);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -489,7 +489,7 @@ namespace S3ServerInterface
                                         tagging = Common.DeserializeXml<Tagging>(Encoding.UTF8.GetString(req.Data));
 
                                     s3resp = Object.WriteTags(s3req, tagging);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -508,7 +508,7 @@ namespace S3ServerInterface
                                         acl = Common.DeserializeXml<AccessControlPolicy>(Encoding.UTF8.GetString(req.Data));
 
                                     s3resp = Object.WriteAcl(s3req, acl);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -527,7 +527,7 @@ namespace S3ServerInterface
                                         legalHold = Common.DeserializeXml<LegalHold>(Encoding.UTF8.GetString(req.Data));
 
                                     s3resp = Object.WriteLegalHold(s3req, legalHold);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -546,7 +546,7 @@ namespace S3ServerInterface
                                         retention = Common.DeserializeXml<Retention>(Encoding.UTF8.GetString(req.Data));
 
                                     s3resp = Object.WriteRetention(s3req, retention);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -561,7 +561,7 @@ namespace S3ServerInterface
                                 if (Object.Write != null)
                                 {
                                     s3resp = Object.Write(s3req);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -590,7 +590,7 @@ namespace S3ServerInterface
                                         delete = Common.DeserializeXml<Delete>(Encoding.UTF8.GetString(req.Data));
 
                                     s3resp = Object.DeleteMultiple(s3req, delete);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -620,7 +620,7 @@ namespace S3ServerInterface
                                 if (Bucket.DeleteTags != null)
                                 {
                                     s3resp = Bucket.DeleteTags(s3req);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -635,7 +635,7 @@ namespace S3ServerInterface
                                 if (Bucket.Delete != null)
                                 {
                                     s3resp = Bucket.Delete(s3req);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -653,7 +653,7 @@ namespace S3ServerInterface
                                 if (Object.DeleteTags != null)
                                 {
                                     s3resp = Object.DeleteTags(s3req);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -668,7 +668,7 @@ namespace S3ServerInterface
                                 if (Object.Delete != null)
                                 {
                                     s3resp = Object.Delete(s3req);
-                                    if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
                                 }
@@ -689,13 +689,13 @@ namespace S3ServerInterface
                         if (DefaultRequestHandler != null)
                         {
                             S3Response defaultResp = DefaultRequestHandler(s3req);
-                            if (PostRequestHandler != null) defaultResp = PostRequestHandler(s3req, defaultResp);
+                            if (PostRequestHandler != null) PostRequestHandler(s3req, defaultResp);
                             resp = defaultResp.ToHttpResponse();
                         }
                         else
                         {
                             s3resp = new S3Response(s3req, 400, "text/plain", null, Encoding.UTF8.GetBytes("Unknown endpoint."));
-                            if (PostRequestHandler != null) s3resp = PostRequestHandler(s3req, s3resp);
+                            if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                             resp = s3resp.ToHttpResponse();
                         }
                         return resp;

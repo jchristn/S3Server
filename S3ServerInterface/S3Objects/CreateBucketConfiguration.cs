@@ -7,10 +7,10 @@ namespace S3ServerInterface.S3Objects
 {
     // built using https://xmltocsharp.azurewebsites.net/
 
-    [XmlRoot(ElementName = "CreateBucketConfiguration", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+    [XmlRoot(ElementName = "CreateBucketConfiguration")]
     public class CreateBucketConfiguration
     {
-        [XmlElement(ElementName = "LocationConstraint", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+        [XmlElement(ElementName = "LocationConstraint")]
         public string LocationConstraint { get; set; }
         [XmlAttribute(AttributeName = "xmlns")]
         public string Xmlns { get; set; }

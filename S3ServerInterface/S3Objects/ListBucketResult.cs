@@ -7,37 +7,37 @@ namespace S3ServerInterface.S3Objects
 {
     // built using https://xmltocsharp.azurewebsites.net/
 
-    [XmlRoot(ElementName = "Contents", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+    [XmlRoot(ElementName = "Contents")]
     public class Contents
     {
-        [XmlElement(ElementName = "Key", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+        [XmlElement(ElementName = "Key")]
         public string Key { get; set; }
-        [XmlElement(ElementName = "LastModified", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+        [XmlElement(ElementName = "LastModified")]
         public string LastModified { get; set; }
-        [XmlElement(ElementName = "ETag", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+        [XmlElement(ElementName = "ETag")]
         public string ETag { get; set; }
-        [XmlElement(ElementName = "Size", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+        [XmlElement(ElementName = "Size")]
         public string Size { get; set; }
-        [XmlElement(ElementName = "StorageClass", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+        [XmlElement(ElementName = "StorageClass")]
         public string StorageClass { get; set; }
     }
 
-    [XmlRoot(ElementName = "ListBucketResult", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+    [XmlRoot(ElementName = "ListBucketResult")]
     public class ListBucketResult
     {
-        [XmlElement(ElementName = "Name", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+        [XmlElement(ElementName = "Name")]
         public string Name { get; set; }
-        [XmlElement(ElementName = "Prefix", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+        [XmlElement(ElementName = "Prefix")]
         public string Prefix { get; set; }
-        [XmlElement(ElementName = "NextContinuationToken", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+        [XmlElement(ElementName = "NextContinuationToken")]
         public string NextContinuationToken { get; set; }
-        [XmlElement(ElementName = "KeyCount", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+        [XmlElement(ElementName = "KeyCount")]
         public string KeyCount { get; set; }
-        [XmlElement(ElementName = "MaxKeys", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+        [XmlElement(ElementName = "MaxKeys")]
         public string MaxKeys { get; set; }
-        [XmlElement(ElementName = "IsTruncated", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+        [XmlElement(ElementName = "IsTruncated")]
         public string IsTruncated { get; set; }
-        [XmlElement(ElementName = "Contents", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+        [XmlElement(ElementName = "Contents")]
         public List<Contents> Contents { get; set; }
         [XmlAttribute(AttributeName = "xmlns")]
         public string Xmlns { get; set; }

@@ -461,10 +461,15 @@ namespace S3ServerInterface
             if (obj == null) throw new ArgumentNullException(nameof(obj));
 
             XmlSerializer xml = new XmlSerializer(obj.GetType());
-            using (StringWriter sw = new StringWriter())
+
+            using (MemoryStream stream = new MemoryStream())
             {
-                xml.Serialize(sw, obj);
-                return sw.ToString();
+                using (StreamWriter writer = new StreamWriter(stream, Encoding.UTF8))
+                {
+                    xml.Serialize(writer, obj);
+                    string ret = Encoding.UTF8.GetString(stream.ToArray(), 0, (int)stream.Length);
+                    return ret;
+                }
             }
         }
 
