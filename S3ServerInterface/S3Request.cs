@@ -17,6 +17,11 @@ namespace S3ServerInterface
         #region Public-Members
 
         /// <summary>
+        /// Time of creation in UTC.
+        /// </summary>
+        public DateTime TimestampUtc { get; set; }
+
+        /// <summary>
         /// HTTP request from which this response was created.
         /// </summary>
         public HttpRequest Http { get; set; }
@@ -131,7 +136,7 @@ namespace S3ServerInterface
         /// </summary>
         public S3Request()
         {
-
+            TimestampUtc = DateTime.Now.ToUniversalTime();
         }
 
         /// <summary>
@@ -146,6 +151,7 @@ namespace S3ServerInterface
 
             #region Initialize
 
+            TimestampUtc = DateTime.Now.ToUniversalTime();
             Http = req;
             SourceIp = req.SourceIp;
             SourcePort = req.SourcePort;

@@ -14,6 +14,11 @@ namespace S3ServerInterface
         #region Public-Members
 
         /// <summary>
+        /// Time of creation in UTC.
+        /// </summary>
+        public DateTime TimestampUtc { get; set; }
+
+        /// <summary>
         /// The original request to which this response is being sent.
         /// </summary>
         public S3Request Request;
@@ -84,6 +89,7 @@ namespace S3ServerInterface
         /// </summary>
         public S3Response()
         {
+            TimestampUtc = DateTime.Now.ToUniversalTime();
             Headers = new Dictionary<string, string>();
         }
 
@@ -98,6 +104,7 @@ namespace S3ServerInterface
         {
             if (s3request == null) throw new ArgumentNullException(nameof(s3request));
 
+            TimestampUtc = DateTime.Now.ToUniversalTime();
             Request = s3request; 
             StatusCode = statusCode;
             ContentType = contentType;
