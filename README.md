@@ -15,6 +15,8 @@ Is there an API you'd like exposed that isn't currently?  Did you identify an is
 - Now passing objects received from AWS SDK into callback methods
 - Class definitions for requests and responses used by AWS SDK
 - Added Service callbacks including ListBuckets
+- TimestampUtc in both S3Response/S3Request
+- Owner, Error, and ErrorCode objects
 
 ## Examples
 
@@ -30,6 +32,7 @@ The following notes should be read prior to using S3ServerInterface:
 - Bucket names *must* appear in the URL and not in the hostname, i.e. ```ForcePathStyle```.
 
 ## Server
+
 ```
 using S3ServerInterface;
 
@@ -61,6 +64,7 @@ static S3Response BucketExists(S3Request req)
 ```
 
 ## Client
+
 Use the following example with the AWSSDK.S3 NuGet package to point your S3 client toward S3ServerInterface.
 ``` 
 using Amazon;
@@ -194,6 +198,7 @@ The roadmap for this project includes:
 
 - Adding stream support (instead of byte arrays for data in the request and response) 
 - Adding more callbacks for the ones listed above as not supported / not yet available
+- Better error handling (using native Error objects) and greater degrees of abstraction (more streamlined API callbacks)
 
 ## Version History
 
