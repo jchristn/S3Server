@@ -6,19 +6,20 @@
     <Authors>Joel Christner</Authors>
     <Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
     <Copyright>(c)2019 Joel Christner</Copyright>
-    <PackageReleaseNotes>Added TimestampUtc to both S3Request and S3Response, Error class, ErrorCode, and Owner</PackageReleaseNotes>
+    <PackageReleaseNotes>Added detection and decoding for chunked transfer encoding on object writes</PackageReleaseNotes>
     <PackageTags>aws s3 storage rest interface server</PackageTags>
     <PackageLicenseUrl>https://github.com/jchristn/S3ServerInterface/blob/master/LICENSE.txt</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/jchristn/S3ServerInterface</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jchristn/S3ServerInterface</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
-    <Version>1.4.9</Version>
+    <Version>1.4.10</Version>
     <PackageIconUrl>https://raw.githubusercontent.com/jchristn/S3ServerInterface/master/assets/logo.ico</PackageIconUrl>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ChunkDecoder" Version="1.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
-    <PackageReference Include="Watson" Version="2.0.4" />
+    <PackageReference Include="Watson" Version="2.0.5" />
   </ItemGroup>
 
 </Project>

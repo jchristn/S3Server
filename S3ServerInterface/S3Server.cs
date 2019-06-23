@@ -2,6 +2,8 @@
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
+using ChunkDecoder;
 using WatsonWebserver;
 
 using S3ServerInterface.Callbacks;
@@ -66,6 +68,7 @@ namespace S3ServerInterface
         private int _Port;
         private bool _Ssl;
         private Server _Server;
+        private ChunkDecoder.Decoder _Decoder = new ChunkDecoder.Decoder();
 
         #endregion
 
@@ -89,6 +92,7 @@ namespace S3ServerInterface
             _Hostname = hostname;
             _Port = port;
             _Ssl = ssl;
+
             PreRequestHandler = null;
             DefaultRequestHandler = null;
 
@@ -217,6 +221,8 @@ namespace S3ServerInterface
                 switch (s3req.Method)
                 {
                     case HttpMethod.HEAD:
+                        #region HEAD
+
                         if (req.RawUrlEntries.Count == 1)
                         { 
                             if (Bucket.Exists != null)
@@ -253,7 +259,11 @@ namespace S3ServerInterface
                             return resp;
                         }
 
+                    #endregion
+
                     case HttpMethod.GET:
+                        #region GET
+
                         if (req.RawUrlEntries.Count == 0)
                         {
                             if (Service.ListBuckets != null)
@@ -417,7 +427,11 @@ namespace S3ServerInterface
                             return resp;
                         }
 
+                    #endregion
+
                     case HttpMethod.PUT:
+                        #region PUT
+
                         if (req.RawUrlEntries.Count == 1)
                         {
                             if (req.QuerystringEntries.ContainsKey("tagging"))
@@ -560,7 +574,27 @@ namespace S3ServerInterface
                             {
                                 if (Object.Write != null)
                                 {
-                                    s3resp = Object.Write(s3req);
+                                    if (IsChunkTransferEncoded(s3req))
+                                    {
+                                        byte[] decodedData = null;
+                                        long decodedContentLength = 0;
+                                        if (!_Decoder.Decode(s3req.Data, out decodedData))
+                                        {
+                                            s3resp = new S3Response(s3req, 400, "text/plain", null, Encoding.UTF8.GetBytes("Decode error"));
+                                        }
+                                        else
+                                        {
+                                            s3req.ContentLength = decodedContentLength;
+                                            s3req.Data = new byte[decodedData.Length];
+                                            Buffer.BlockCopy(decodedData, 0, s3req.Data, 0, decodedData.Length);
+                                            s3resp = Object.Write(s3req);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        s3resp = Object.Write(s3req);
+                                    }
+
                                     if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
@@ -578,7 +612,11 @@ namespace S3ServerInterface
                             return resp;
                         }
 
+                    #endregion
+
                     case HttpMethod.POST:
+                        #region POST
+
                         if (req.RawUrlEntries.Count == 1)
                         {
                             if (req.QuerystringEntries.ContainsKey("delete"))
@@ -612,7 +650,11 @@ namespace S3ServerInterface
                             return resp;
                         }
 
+                    #endregion
+
                     case HttpMethod.DELETE:
+                        #region DELETE
+
                         if (req.RawUrlEntries.Count == 1)
                         {
                             if (req.QuerystringEntries.ContainsKey("tagging"))
@@ -683,7 +725,9 @@ namespace S3ServerInterface
                         {
                             resp = new HttpResponse(req, 400, null, "text/plain", Encoding.UTF8.GetBytes("Bad request."));
                             return resp;
-                        } 
+                        }
+
+                    #endregion
 
                     default:
                         if (DefaultRequestHandler != null)
@@ -724,6 +768,17 @@ namespace S3ServerInterface
                         " [" + Common.TotalMsFrom(startTime) + "]");
                 }
             }
+        }
+
+        private bool IsChunkTransferEncoded(S3Request req)
+        {
+            string headerTest = req.RetrieveHeaderValue("X-Amz-Content-SHA256");
+            if (!String.IsNullOrEmpty(headerTest))
+            {
+                if (headerTest.Contains("STREAMING")) return true;
+            }
+
+            return false;
         }
 
         #endregion
