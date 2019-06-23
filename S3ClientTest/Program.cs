@@ -325,6 +325,7 @@ namespace S3ClientTest
                 {
                     Console.WriteLine("Continuation token: " + response.NextContinuationToken);
                 }
+
                 Console.WriteLine("Success");
             }
             else

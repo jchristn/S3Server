@@ -6,20 +6,20 @@
     <Authors>Joel Christner</Authors>
     <Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
     <Copyright>(c)2019 Joel Christner</Copyright>
-    <PackageReleaseNotes>Fix header initialization</PackageReleaseNotes>
+    <PackageReleaseNotes>Fix for v4 authorization header</PackageReleaseNotes>
     <PackageTags>aws s3 storage rest interface server</PackageTags>
     <PackageLicenseUrl>https://github.com/jchristn/S3ServerInterface/blob/master/LICENSE.txt</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/jchristn/S3ServerInterface</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jchristn/S3ServerInterface</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
-    <Version>1.4.11</Version>
+    <Version>1.4.14</Version>
     <PackageIconUrl>https://raw.githubusercontent.com/jchristn/S3ServerInterface/master/assets/logo.ico</PackageIconUrl>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ChunkDecoder" Version="1.0.1" />
+    <PackageReference Include="ChunkDecoder" Version="1.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
-    <PackageReference Include="Watson" Version="2.0.5" />
+    <PackageReference Include="Watson" Version="2.1.1" />
   </ItemGroup>
 
 </Project>

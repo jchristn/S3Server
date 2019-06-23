@@ -29,6 +29,18 @@ namespace S3ServerInterface
         public Func<S3Request, Tagging, S3Response> WriteTags = null;
 
         /// <summary>
+        /// Set a bucket's versioning policy.  
+        /// Success: return an S3Response object with status 200.
+        /// </summary>
+        public Func<S3Request, VersioningConfiguration, S3Response> WriteVersioning = null;
+
+        /// <summary>
+        /// Set a bucket's access control policy.
+        /// Sucess: return an S3Response object with status 200.
+        /// </summary>
+        public Func<S3Request, AccessControlPolicy, S3Response> WriteAcl = null;
+
+        /// <summary>
         /// Enumerate a bucket.  
         /// Success: return an S3Response object with status 200 and a ListBucketResult object as its data.
         /// </summary>
@@ -41,6 +53,18 @@ namespace S3ServerInterface
         public Func<S3Request, S3Response> ReadTags = null;
 
         /// <summary>
+        /// Get a bucket's versioning policy.  
+        /// Success: return an S3Response object with status 200 and a VersioningConfiguration object as its data.
+        /// </summary>
+        public Func<S3Request, S3Response> ReadVersioning = null;
+
+        /// <summary>
+        /// Read a bucket's access control policy.
+        /// Success: return an S3Response object with status 200 and an AccessControlPolicy object as its data.
+        /// </summary>
+        public Func<S3Request, S3Response> ReadAcl = null;
+
+        /// <summary>
         /// Delete a bucket.  
         /// Success: return an S3Response object with status 204. 
         /// </summary>
@@ -51,18 +75,6 @@ namespace S3ServerInterface
         /// Success: return an S3Response object with status 204. 
         /// </summary>
         public Func<S3Request, S3Response> DeleteTags = null;
-
-        /// <summary>
-        /// Set a bucket's versioning policy.  
-        /// Success: return an S3Response object with status 200.
-        /// </summary>
-        public Func<S3Request, VersioningConfiguration, S3Response> WriteVersioning = null;
-
-        /// <summary>
-        /// Get a bucket's versioning policy.  
-        /// Success: return an S3Response object with status 200 and a VersioningConfiguration object as its data.
-        /// </summary>
-        public Func<S3Request, S3Response> ReadVersioning = null;
 
         #endregion
 

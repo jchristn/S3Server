@@ -330,10 +330,18 @@ namespace S3ServerInterface
             if (String.IsNullOrEmpty(authHeader)) return;
             string exceptionMsg = "Invalid authorization header format: " + authHeader;
 
-            string[] valsOuter = authHeader.Split(' ');
+            string[] valsOuter = authHeader.Split(new[] { ' ' }, 2);
             if (valsOuter == null || valsOuter.Length < 2) throw new ArgumentException(exceptionMsg);
 
-            if (_Debug) Console.WriteLine("Authorization header starts with: " + valsOuter[0]);
+            if (_Debug)
+            {
+                Console.WriteLine("Authorization header: " + authHeader);
+                Console.WriteLine("Outer authorization header values:");
+                for (int i = 0; i < valsOuter.Length; i++)
+                {
+                    Console.WriteLine("  " + i + ": " + valsOuter[i]);
+                }
+            }
 
             if (valsOuter[0].Equals("AWS"))
             {
@@ -343,6 +351,16 @@ namespace S3ServerInterface
                 // Authorization: AWS AWSAccessKeyId:Signature
 
                 string[] valsInner = valsOuter[1].Split(':');
+
+                if (_Debug)
+                {
+                    Console.WriteLine("Inner authorization header values:");
+                    for (int i = 0; i < valsInner.Length; i++)
+                    {
+                        Console.WriteLine("  " + i + ": " + valsInner[i]);
+                    }
+                }
+
                 if (valsInner.Length != 2) throw new ArgumentException(exceptionMsg);
                 accessKey = valsInner[0];
                 signature = valsInner[1];
@@ -361,23 +379,36 @@ namespace S3ServerInterface
                 // 
                 // AWS4-HMAC-SHA256 Credential=access/20190418/us-east-1/s3/aws4_request, SignedHeaders=content-length;content-type;host;user-agent;x-amz-content-sha256;x-amz-date;x-amz-decoded-content-length, Signature=66946e06895806f4e32d32217c1a02313b9d9235b759f3a690742c8f9971daa0
                 //
-                // valsOuter[0] AWS4-HMAC-SHA256 <space>
-                // valsOuter[1] Credential=access/20190418/us-east-1/s3/aws4_request, <space>
-                // valsOuter[2] SignedHeaders=content-length;content-type;host;user-agent;x-amz-content-sha256;x-amz-date;x-amz-decoded-content-length, <space>
-                // valsOuter[3] Signature=66946e06895806f4e32d32217c1a02313b9d9235b759f3a690742c8f9971daa0
+                // valsOuter[0] AWS4-HMAC-SHA256
+                // valsOuter[1] everything else...
+                 
+                string[] keyValuePairs = valsOuter[1].Split(',');
+
+                if (_Debug)
+                {
+                    Console.WriteLine("Inner authorization header values:");
+                    for (int i = 0; i < keyValuePairs.Length; i++)
+                    {
+                        Console.WriteLine("  " + i + ": " + keyValuePairs[i]);
+                    }
+                }
+
+                // keyValuePairs[0]: Credential=...
+                // keyValuePairs[1]: SignedHeaders=...
+                // keyValuePairs[3]: Signature=...
 
                 // credentials
-                string[] credentialVals = valsOuter[1].Split('/');
-                if (credentialVals.Length != 5) throw new ArgumentException(exceptionMsg);
-                accessKey = credentialVals[0];
+                string[] credentialVals = keyValuePairs[0].Split('/');
+                if (credentialVals.Length < 5) throw new ArgumentException(exceptionMsg);
+                accessKey = credentialVals[0].Trim();
                 if (accessKey.StartsWith("Credential=")) accessKey = accessKey.Substring(11);
-                region = credentialVals[2];
+                region = credentialVals[2].Trim();
                  
                 // Signature
-                signature = valsOuter[3];
+                signature = keyValuePairs[2].Trim();
                 if (signature.StartsWith("Signature=")) signature = signature.Substring(10);
 
-                if (_Debug) Console.WriteLine("- Access key [" + accessKey + "] region [" + region + "] signature [" + signature + "]");
+                if (_Debug) Console.WriteLine("Access key [" + accessKey + "] region [" + region + "] signature [" + signature + "]");
 
                 return;
 

@@ -189,7 +189,7 @@ namespace S3ServerInterface
         {
             if (req == null) throw new ArgumentNullException(nameof(req));
             DateTime startTime = DateTime.Now.ToUniversalTime();
-            HttpResponse resp = new HttpResponse(req, 200, null, "text/plain", null);
+            HttpResponse resp = new HttpResponse(req, 200, null, "text/plain", "");
 
             try
             {
@@ -229,7 +229,7 @@ namespace S3ServerInterface
                             {
                                 s3resp = Bucket.Exists(s3req);
                                 if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                resp = s3resp.ToHttpResponse();
+                                resp = s3resp.ToHeadHttpResponse();
                                 return resp;
                             }
                             else
@@ -244,7 +244,7 @@ namespace S3ServerInterface
                             {
                                 s3resp = Object.Exists(s3req);
                                 if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                resp = s3resp.ToHttpResponse();
+                                resp = s3resp.ToHeadHttpResponse();
                                 return resp;
                             }
                             else
@@ -282,7 +282,22 @@ namespace S3ServerInterface
                         }
                         else if (req.RawUrlEntries.Count == 1)
                         {
-                            if (req.QuerystringEntries.ContainsKey("tagging"))
+                            if (req.QuerystringEntries.ContainsKey("acl"))
+                            {
+                                if (Bucket.ReadAcl != null)
+                                {
+                                    s3resp = Bucket.ReadAcl(s3req);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
+                                    resp = s3resp.ToHttpResponse();
+                                    return resp;
+                                }
+                                else
+                                {
+                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Bucket read ACL not implemented.");
+                                    return resp;
+                                }
+                            }
+                            else if (req.QuerystringEntries.ContainsKey("tagging"))
                             {
                                 if (Bucket.ReadTags != null)
                                 {
@@ -342,6 +357,21 @@ namespace S3ServerInterface
                                 else
                                 {
                                     resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object read range not implemented.");
+                                    return resp;
+                                }
+                            }
+                            else if (req.QuerystringEntries.ContainsKey("acl"))
+                            {
+                                if (Object.ReadAcl != null)
+                                {
+                                    s3resp = Object.ReadAcl(s3req);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
+                                    resp = s3resp.ToHttpResponse();
+                                    return resp;
+                                }
+                                else
+                                {
+                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object read ACL not implemented.");
                                     return resp;
                                 }
                             }
@@ -434,7 +464,28 @@ namespace S3ServerInterface
 
                         if (req.RawUrlEntries.Count == 1)
                         {
-                            if (req.QuerystringEntries.ContainsKey("tagging"))
+                            if (req.QuerystringEntries.ContainsKey("acl"))
+                            {
+                                if (Bucket.WriteAcl != null)
+                                {
+                                    AccessControlPolicy acl = null;
+                                    if (req.Data != null && req.ContentLength > 0)
+                                    {
+                                        acl = Common.DeserializeXml<AccessControlPolicy>(Encoding.UTF8.GetString(req.Data));
+                                    }
+
+                                    s3resp = Bucket.WriteAcl(s3req, acl);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
+                                    resp = s3resp.ToHttpResponse();
+                                    return resp;
+                                }
+                                else
+                                {
+                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Bucket write tags not implemented.");
+                                    return resp;
+                                }
+                            }
+                            else if (req.QuerystringEntries.ContainsKey("tagging"))
                             {
                                 if (Bucket.WriteTags != null)
                                 {
@@ -754,7 +805,7 @@ namespace S3ServerInterface
                     Console.WriteLine(Common.SerializeJson(e, true));
                 }
 
-                resp = new HttpResponse(req, 500, null, "text/plain", null);
+                resp = new HttpResponse(req, 500, null, "text/plain", "");
                 return resp;
             }
             finally

@@ -100,12 +100,31 @@ namespace S3ServerInterface
         /// <param name="contentType">Content-type.</param>
         /// <param name="headers">HTTP headers.</param>
         /// <param name="data">Data.</param>
+        public S3Response(S3Request s3request, int statusCode, string contentType, Dictionary<string, string> headers, long contentLength)
+        {
+            if (s3request == null) throw new ArgumentNullException(nameof(s3request));
+
+            TimestampUtc = DateTime.Now.ToUniversalTime();
+            Request = s3request;
+            StatusCode = statusCode;
+            ContentType = contentType;
+            ContentLength = contentLength;
+            if (headers != null) Headers = headers;
+        }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        /// <param name="statusCode">HTTP status code.</param>
+        /// <param name="contentType">Content-type.</param>
+        /// <param name="headers">HTTP headers.</param>
+        /// <param name="data">Data.</param>
         public S3Response(S3Request s3request, int statusCode, string contentType, Dictionary<string, string> headers, byte[] data)
         {
             if (s3request == null) throw new ArgumentNullException(nameof(s3request));
 
             TimestampUtc = DateTime.Now.ToUniversalTime();
-            Request = s3request; 
+            Request = s3request;
             StatusCode = statusCode;
             ContentType = contentType;
             if (headers != null) Headers = headers;
@@ -134,6 +153,21 @@ namespace S3ServerInterface
                 Headers,
                 ContentType,
                 Data);
+
+            return resp;
+        }
+
+        /// <summary>
+        /// Create an HttpResponse from the S3Response for a HEAD response.
+        /// </summary>
+        /// <returns>HttpResponse.</returns>
+        public HttpResponse ToHeadHttpResponse()
+        { 
+            HttpResponse resp = new HttpResponse(
+                Request.Http,
+                StatusCode,
+                Headers, 
+                ContentLength);
 
             return resp;
         }
