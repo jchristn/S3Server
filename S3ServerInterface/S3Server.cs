@@ -440,7 +440,9 @@ namespace S3ServerInterface
                                 {
                                     Tagging tagging = null;
                                     if (req.Data != null && req.ContentLength > 0)
+                                    {
                                         tagging = Common.DeserializeXml<Tagging>(Encoding.UTF8.GetString(req.Data));
+                                    }
 
                                     s3resp = Bucket.WriteTags(s3req, tagging);
                                     if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);

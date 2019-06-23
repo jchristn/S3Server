@@ -75,6 +75,10 @@ namespace S3ClientTest
                         ListBuckets();
                         break;
 
+                    case "list bucket":
+                        ListBucket();
+                        break;
+
                     case "write bucket":
                         WriteBucket();
                         break;
@@ -176,6 +180,7 @@ namespace S3ClientTest
             Console.WriteLine("");
             Console.WriteLine("-- Bucket Commands --");
             Console.WriteLine("   list buckets        List buckets");
+            Console.WriteLine("   list bucket         List the contents of a bucket");
             Console.WriteLine("   write bucket        Create a bucket");
             Console.WriteLine("   write bucket tags   Write tags to a bucket");
             Console.WriteLine("   read bucket tags    Read tags from a bucket");
@@ -194,6 +199,7 @@ namespace S3ClientTest
             Console.WriteLine("   delete multiple     Delete multiple objects");
             Console.WriteLine("   delete tags         Delete tags from an object");
             Console.WriteLine("   exists              Check if object exists");
+            Console.WriteLine("");
         }
 
         #endregion
@@ -202,7 +208,7 @@ namespace S3ClientTest
 
         static void SetBucket()
         {
-            _Bucket = Common.InputString("Bucket:", "bucket", false);
+            _Bucket = Common.InputString("Bucket:", "default", false);
         }
 
         static void SetRegion()
@@ -292,6 +298,34 @@ namespace S3ClientTest
                 {
                     Console.WriteLine("    " + bucket.BucketName);
                 }
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+            }
+        }
+
+        static void ListBucket()
+        {
+            string continuationToken = Common.InputString("Continuation token:", null, true);
+
+            ListObjectsV2Request request = new ListObjectsV2Request();
+            request.BucketName = _Bucket;
+            request.ContinuationToken = continuationToken;
+
+            ListObjectsV2Response response = _S3Client.ListObjectsV2Async(request).Result;
+            if (response != null)
+            {
+                foreach (S3Object curr in response.S3Objects)
+                {
+                    Console.WriteLine(curr.Key + ": " + curr.Size + " bytes");
+                }
+                 
+                if (!String.IsNullOrEmpty(response.NextContinuationToken))
+                {
+                    Console.WriteLine("Continuation token: " + response.NextContinuationToken);
+                }
+                Console.WriteLine("Success");
             }
             else
             {

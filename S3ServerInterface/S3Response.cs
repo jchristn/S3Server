@@ -27,11 +27,11 @@ namespace S3ServerInterface
         /// The HTTP status code to return to the requestor (client).
         /// </summary>
         public int StatusCode;
-          
+
         /// <summary>
         /// User-supplied headers to include in the response.
         /// </summary>
-        public Dictionary<string, string> Headers;
+        public Dictionary<string, string> Headers = new Dictionary<string, string>();
 
         /// <summary>
         /// User-supplied content-type to include in the response.
@@ -108,7 +108,7 @@ namespace S3ServerInterface
             Request = s3request; 
             StatusCode = statusCode;
             ContentType = contentType;
-            Headers = headers;
+            if (headers != null) Headers = headers;
 
             if (data != null && data.Length > 0)
             {
