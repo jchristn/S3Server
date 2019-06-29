@@ -3,11 +3,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Amazon;
+using Amazon.S3;
+using Amazon.S3.Model;
+
 using ChunkDecoder;
 using WatsonWebserver;
 
 using S3ServerInterface.Callbacks;
-using S3ServerInterface.S3Objects;
 
 namespace S3ServerInterface
 {
@@ -312,6 +315,21 @@ namespace S3ServerInterface
                                     return resp;
                                 }
                             }
+                            else if (req.QuerystringEntries.ContainsKey("versions"))
+                            {
+                                if (Bucket.ReadVersions != null)
+                                {
+                                    s3resp = Bucket.ReadVersions(s3req);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
+                                    resp = s3resp.ToHttpResponse();
+                                    return resp;
+                                }
+                                else
+                                {
+                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Bucket get versioning not implemented.");
+                                    return resp;
+                                }
+                            }
                             else if (req.QuerystringEntries.ContainsKey("versioning"))
                             {
                                 if (Bucket.ReadVersioning != null)
@@ -468,13 +486,7 @@ namespace S3ServerInterface
                             {
                                 if (Bucket.WriteAcl != null)
                                 {
-                                    AccessControlPolicy acl = null;
-                                    if (req.Data != null && req.ContentLength > 0)
-                                    {
-                                        acl = Common.DeserializeXml<AccessControlPolicy>(Encoding.UTF8.GetString(req.Data));
-                                    }
-
-                                    s3resp = Bucket.WriteAcl(s3req, acl);
+                                    s3resp = Bucket.WriteAcl(s3req);
                                     if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
@@ -489,13 +501,7 @@ namespace S3ServerInterface
                             {
                                 if (Bucket.WriteTags != null)
                                 {
-                                    Tagging tagging = null;
-                                    if (req.Data != null && req.ContentLength > 0)
-                                    {
-                                        tagging = Common.DeserializeXml<Tagging>(Encoding.UTF8.GetString(req.Data));
-                                    }
-
-                                    s3resp = Bucket.WriteTags(s3req, tagging);
+                                    s3resp = Bucket.WriteTags(s3req);
                                     if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
@@ -510,11 +516,7 @@ namespace S3ServerInterface
                             {
                                 if (Bucket.WriteVersioning != null)
                                 {
-                                    VersioningConfiguration versioning = null;
-                                    if (req.Data != null && req.ContentLength > 0)
-                                        versioning = Common.DeserializeXml<VersioningConfiguration>(Encoding.UTF8.GetString(req.Data));
-
-                                    s3resp = Bucket.WriteVersioning(s3req, versioning);
+                                    s3resp = Bucket.WriteVersioning(s3req);
                                     if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
@@ -528,12 +530,8 @@ namespace S3ServerInterface
                             else
                             {
                                 if (Bucket.Write != null)
-                                {
-                                    CreateBucketConfiguration bucket = null;
-                                    if (req.Data != null && req.ContentLength > 0)
-                                        bucket = Common.DeserializeXml<CreateBucketConfiguration>(Encoding.UTF8.GetString(req.Data));
-
-                                    s3resp = Bucket.Write(s3req, bucket);
+                                { 
+                                    s3resp = Bucket.Write(s3req);
                                     if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
@@ -551,11 +549,7 @@ namespace S3ServerInterface
                             {
                                 if (Object.WriteTags != null)
                                 {
-                                    Tagging tagging = null;
-                                    if (req.Data != null && req.ContentLength > 0)
-                                        tagging = Common.DeserializeXml<Tagging>(Encoding.UTF8.GetString(req.Data));
-
-                                    s3resp = Object.WriteTags(s3req, tagging);
+                                    s3resp = Object.WriteTags(s3req);
                                     if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
@@ -569,12 +563,8 @@ namespace S3ServerInterface
                             else if (req.QuerystringEntries.ContainsKey("acl"))
                             {
                                 if (Object.WriteAcl != null)
-                                {
-                                    AccessControlPolicy acl = null;
-                                    if (req.Data != null && req.ContentLength > 0)
-                                        acl = Common.DeserializeXml<AccessControlPolicy>(Encoding.UTF8.GetString(req.Data));
-
-                                    s3resp = Object.WriteAcl(s3req, acl);
+                                { 
+                                    s3resp = Object.WriteAcl(s3req);
                                     if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
@@ -588,12 +578,8 @@ namespace S3ServerInterface
                             else if (req.QuerystringEntries.ContainsKey("legal-hold"))
                             {
                                 if (Object.WriteLegalHold != null)
-                                {
-                                    LegalHold legalHold = null;
-                                    if (req.Data != null && req.ContentLength > 0)
-                                        legalHold = Common.DeserializeXml<LegalHold>(Encoding.UTF8.GetString(req.Data));
-
-                                    s3resp = Object.WriteLegalHold(s3req, legalHold);
+                                { 
+                                    s3resp = Object.WriteLegalHold(s3req);
                                     if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
@@ -607,12 +593,8 @@ namespace S3ServerInterface
                             else if (req.QuerystringEntries.ContainsKey("retention"))
                             {
                                 if (Object.WriteRetention != null)
-                                {
-                                    Retention retention = null;
-                                    if (req.Data != null && req.ContentLength > 0)
-                                        retention = Common.DeserializeXml<Retention>(Encoding.UTF8.GetString(req.Data));
-
-                                    s3resp = Object.WriteRetention(s3req, retention);
+                                { 
+                                    s3resp = Object.WriteRetention(s3req);
                                     if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;
@@ -675,12 +657,8 @@ namespace S3ServerInterface
                             if (req.QuerystringEntries.ContainsKey("delete"))
                             {
                                 if (Object.DeleteMultiple != null)
-                                {
-                                    Delete delete = null;
-                                    if (req.Data != null && req.ContentLength > 0)
-                                        delete = Common.DeserializeXml<Delete>(Encoding.UTF8.GetString(req.Data));
-
-                                    s3resp = Object.DeleteMultiple(s3req, delete);
+                                { 
+                                    s3resp = Object.DeleteMultiple(s3req);
                                     if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
                                     resp = s3resp.ToHttpResponse();
                                     return resp;

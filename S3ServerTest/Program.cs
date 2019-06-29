@@ -6,8 +6,11 @@ using System.Threading.Tasks;
 
 using Newtonsoft.Json;
 
+using Amazon;
+using Amazon.S3;
+using Amazon.S3.Model;
+
 using S3ServerInterface;
-using S3ServerInterface.S3Objects;
 
 namespace Test
 {
@@ -112,14 +115,12 @@ namespace Test
         static S3Response BucketDelete(S3Request req)
         {
             Console.WriteLine("BucketDelete");
-            Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null);            
         }
 
         static S3Response BucketExists(S3Request req)
         {
             Console.WriteLine("BucketExists");
-            Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null); 
 
         }
@@ -127,49 +128,43 @@ namespace Test
         static S3Response BucketDeleteTags(S3Request req)
         {
             Console.WriteLine("BucketDeleteTags");
-            Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null);
         }
 
         static S3Response BucketReadVersioning(S3Request req)
         {
             Console.WriteLine("BucketReadVersioning");
-            Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null);
         }
 
         static S3Response BucketRead(S3Request req)
         {
             Console.WriteLine("BucketRead");
-            Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null);
         }
 
         static S3Response BucketReadTags(S3Request req)
         {
             Console.WriteLine("BucketReadTags");
-            Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null);
         }
 
-        static S3Response BucketWriteVersioning(S3Request req, VersioningConfiguration version)
-        {
+        static S3Response BucketWriteVersioning(S3Request req)
+        { 
             Console.WriteLine("BucketWriteVersioning");
             Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null);
         }
 
-        static S3Response BucketWrite(S3Request req, CreateBucketConfiguration config)
-        {
+        static S3Response BucketWrite(S3Request req)
+        { 
             Console.WriteLine("BucketWrite");
-            Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null);
         }
 
-        static S3Response BucketWriteTags(S3Request req, Tagging tagging)
+        static S3Response BucketWriteTags(S3Request req)
         {
             Console.WriteLine("BucketWriteTags");
-            Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null);
         }
 
@@ -180,87 +175,66 @@ namespace Test
         static S3Response ObjectDelete(S3Request req)
         {
             Console.WriteLine("ObjectDelete");
-            Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null);
         }
 
-        static S3Response ObjectDeleteMultiple(S3Request req, Delete delete)
-        {
+        static S3Response ObjectDeleteMultiple(S3Request req)
+        { 
             Console.WriteLine("ObjectDeleteMultiple");
-            Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null);
         }
 
         static S3Response ObjectDeleteTags(S3Request req)
         {
             Console.WriteLine("ObjectDeleteTags");
-            Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null);
         }
 
         static S3Response ObjectExists(S3Request req)
         {
             Console.WriteLine("ObjectExists");
-            Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null);
         }
 
         static S3Response ObjectRead(S3Request req)
         {
             Console.WriteLine("ObjectRead");
-            Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null);
         }
 
         static S3Response ObjectReadAcl(S3Request req)
         {
             Console.WriteLine("ObjectReadAcl");
-            Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null);
         }
 
         static S3Response ObjectReadRange(S3Request req)
         {
             Console.WriteLine("ObjectReadRange");
-            Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null);
         }
 
         static S3Response ObjectReadTags(S3Request req)
         {
             Console.WriteLine("ObjectReadTags");
-            Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null);
         }
 
         static S3Response ObjectWrite(S3Request req)
         {
             Console.WriteLine("ObjectWrite");
-            Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null);
         }
 
-        static S3Response ObjectWriteAcl(S3Request req, AccessControlPolicy acp)
-        {
+        static S3Response ObjectWriteAcl(S3Request req)
+        { 
             Console.WriteLine("ObjectWriteAcl");
-            Console.WriteLine(req.ToString());
             return new S3Response(req, 200, "text/plain", null, null);
         }
 
-        static S3Response ObjectWriteTags(S3Request req, Tagging tagging)
+        static S3Response ObjectWriteTags(S3Request req)
         {
-            try
-            {
-                Console.WriteLine("ObjectWriteTags");
-                Console.WriteLine(req.ToString());
-                if (tagging == null) Console.WriteLine("NULL");
-                Console.WriteLine(SerializeJson(tagging, true));
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Exception: " + e.Message);
-            }
-
+            Console.WriteLine("ObjectWriteTags");
             return new S3Response(req, 200, "text/plain", null, null);
         }
          

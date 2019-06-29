@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-using S3ServerInterface.S3Objects;
+using S3ServerInterface;
 
 namespace S3ServerInterface
 {

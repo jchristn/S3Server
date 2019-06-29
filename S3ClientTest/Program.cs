@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+
 using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Amazon.S3.Util;
 
 namespace S3ClientTest
 {
@@ -83,8 +85,16 @@ namespace S3ClientTest
                         WriteBucket();
                         break;
 
+                    case "write bucket acl":
+                        WriteBucketAcl();
+                        break;
+
                     case "write bucket tags":
                         WriteBucketTags();
+                        break;
+
+                    case "read bucket acl":
+                        ReadBucketAcl();
                         break;
 
                     case "read bucket tags":
@@ -99,12 +109,28 @@ namespace S3ClientTest
                         ReadBucketVersioning();
                         break;
 
+                    case "delete bucket":
+                        DeleteBucket();
+                        break;
+
+                    case "delete bucket tags":
+                        DeleteBucketTags();
+                        break;
+
+                    case "bucket exists":
+                        BucketExists();
+                        break;
+
                     #endregion
 
                     #region Object-Commands
 
                     case "write":
                         WriteObject();
+                        break;
+
+                    case "write acl":
+                        WriteObjectAcl();
                         break;
 
                     case "write tags":
@@ -117,6 +143,10 @@ namespace S3ClientTest
 
                     case "read":
                         ReadObject();
+                        break;
+
+                    case "read acl":
+                        ReadObjectAcl();
                         break;
 
                     case "read range":
@@ -182,16 +212,23 @@ namespace S3ClientTest
             Console.WriteLine("   list buckets        List buckets");
             Console.WriteLine("   list bucket         List the contents of a bucket");
             Console.WriteLine("   write bucket        Create a bucket");
+            Console.WriteLine("   write bucket acl    Write a bucket's ACL");
             Console.WriteLine("   write bucket tags   Write tags to a bucket");
+            Console.WriteLine("   read bucket acl     Read a bucket's ACL");
             Console.WriteLine("   read bucket tags    Read tags from a bucket");
             Console.WriteLine("   write bucket ver    Write bucket versioning");
             Console.WriteLine("   read bucket ver     Read bucket versioning");
+            Console.WriteLine("   delete bucket       Delete a bucket");
+            Console.WriteLine("   delete bucket tags  Delete a bucket's tags");
+            Console.WriteLine("   bucket exists       Check if bucket exists");
             Console.WriteLine("");
             Console.WriteLine("-- Object Commands --");
             Console.WriteLine("   write               Write an object");
+            Console.WriteLine("   write acl           Write an object's ACL");
             Console.WriteLine("   write tags          Write object tags");
             Console.WriteLine("   write retention     Write object retention");
             Console.WriteLine("   read                Read an object");
+            Console.WriteLine("   read acl            Read an object's ACL");
             Console.WriteLine("   read range          Read a range of bytes from an object");
             Console.WriteLine("   read tags           Read an object's tags");
             Console.WriteLine("   read retention      Read an object's retention");
@@ -360,11 +397,47 @@ namespace S3ClientTest
             }
         }
 
+        static void WriteBucketAcl()
+        {
+            string id = Common.InputString("Bucket:", null, false); 
+            string owner = Common.InputString("Owner:", "default", false);
+
+            PutACLRequest request = new PutACLRequest();
+            request.BucketName = id;
+            request.AccessControlList = new S3AccessControlList();
+            request.AccessControlList.Owner = new Owner();
+            request.AccessControlList.Owner.DisplayName = owner;
+
+            request.AccessControlList.Grants = new List<S3Grant>();
+            S3Grant grant = new S3Grant();
+            S3Grantee grantee = new S3Grantee();
+            grantee.CanonicalUser = owner;
+            grantee.DisplayName = owner;
+            grantee.EmailAddress = owner;
+            grant.Grantee = grantee;
+
+            request.AccessControlList.Grants.Add(grant);
+
+            PutACLResponse response = _S3Client.PutACLAsync(request).Result;
+            int statusCode = (int)response.HttpStatusCode;
+
+            if (response != null)
+            {
+                Console.WriteLine("Success");
+                return;
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+                return;
+            }
+        }
+
         static void WriteBucketTags()
         {
             string bucket = Common.InputString("Bucket:", null, false);
-            string key = Common.InputString("Key:", null, false);
-            string val = Common.InputString("Value:", null, false);
+            string key = Common.InputString("Tag Key:", null, false);
+            string val = Common.InputString("Tag Value:", null, false);
 
             PutBucketTaggingRequest request = new PutBucketTaggingRequest();
             request.BucketName = bucket;
@@ -377,6 +450,36 @@ namespace S3ClientTest
             PutBucketTaggingResponse response = _S3Client.PutBucketTaggingAsync(request).Result;
             if (response != null)
             {
+                Console.WriteLine("Success");
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+            }
+        }
+
+        static void ReadBucketAcl()
+        {
+            string id = Common.InputString("Bucket:", null, false);
+
+            GetACLRequest request = new GetACLRequest();
+            request.BucketName = id;
+
+            GetACLResponse response = _S3Client.GetACLAsync(request).Result;
+
+            if (response != null)
+            {
+                if (response.AccessControlList != null)
+                {
+                    Console.WriteLine("Owner: " + response.AccessControlList.Owner.DisplayName + " ID " + response.AccessControlList.Owner.Id);
+                    Console.WriteLine("Grants:");
+                    foreach (S3Grant grant in response.AccessControlList.Grants)
+                    {
+                        Console.WriteLine("| Grantee    : " + grant.Grantee.DisplayName);
+                        Console.WriteLine("| Permission : " + grant.Permission);
+                    }
+                }
+
                 Console.WriteLine("Success");
             }
             else
@@ -453,6 +556,52 @@ namespace S3ClientTest
             }
         }
 
+        static void DeleteBucket()
+        {
+            string id = Common.InputString("Bucket:", null, false);
+
+            DeleteBucketRequest request = new DeleteBucketRequest();
+            request.BucketName = id;
+
+            DeleteBucketResponse response = _S3Client.DeleteBucketAsync(request).Result;
+            if (response != null)
+            {
+                Console.WriteLine("Success");
+                return;
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+                return;
+            }
+        }
+
+        static void DeleteBucketTags()
+        {
+            string id = Common.InputString("Bucket:", null, false);
+
+            DeleteBucketTaggingRequest request = new DeleteBucketTaggingRequest();
+            request.BucketName = id;
+
+            DeleteBucketTaggingResponse response = _S3Client.DeleteBucketTaggingAsync(request).Result;
+            if (response != null)
+            {
+                Console.WriteLine("Success");
+                return;
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+                return;
+            }
+        }
+
+        static void BucketExists()
+        {
+            string id = Common.InputString("Bucket:", null, false);
+            Console.WriteLine("Exists: " + AmazonS3Util.DoesS3BucketExistAsync(_S3Client, id).Result);
+        }
+
         #endregion
 
         #region S3-Object-Primitives
@@ -494,32 +643,36 @@ namespace S3ClientTest
             }
         }
 
-        static void WriteObjectTags()
+        static void WriteObjectAcl()
         {
             string id = Common.InputString("Key:", null, false);
+            string owner = Common.InputString("Owner:", "default", false);
 
             try
             {
-                PutObjectTaggingRequest request = new PutObjectTaggingRequest
+                PutACLRequest request = new PutACLRequest
                 {
                     BucketName = _Bucket,
                     Key = id
                 };
 
-                request.Tagging = new Tagging();
-                request.Tagging.TagSet = new List<Tag>();
+                request.Key = id;
+                request.AccessControlList = new S3AccessControlList();
 
-                Tag tag1 = new Tag();
-                tag1.Key = "foo";
-                tag1.Value = "bar";
-                request.Tagging.TagSet.Add(tag1);
+                request.AccessControlList.Owner = new Owner();
+                request.AccessControlList.Owner.DisplayName = owner;
 
-                Tag tag2 = new Tag();
-                tag2.Key = "bar";
-                tag2.Value = "baz";
-                request.Tagging.TagSet.Add(tag2);
+                request.AccessControlList.Grants = new List<S3Grant>();
+                S3Grant grant = new S3Grant();
+                S3Grantee grantee = new S3Grantee();
+                grantee.CanonicalUser = owner;
+                grantee.DisplayName = owner;
+                grantee.EmailAddress = owner;
+                grant.Grantee = grantee;
 
-                PutObjectTaggingResponse response = _S3Client.PutObjectTaggingAsync(request).Result;
+                request.AccessControlList.Grants.Add(grant);
+
+                PutACLResponse response = _S3Client.PutACLAsync(request).Result;
                 int statusCode = (int)response.HttpStatusCode;
 
                 if (response != null)
@@ -537,6 +690,41 @@ namespace S3ClientTest
             {
                 Console.WriteLine(Common.SerializeJson(e, true));
             }
+        }
+
+        static void WriteObjectTags()
+        {
+            string id = Common.InputString("Key:", null, false);
+            int ver = Common.InputInteger("Version:", 1, true, false);
+            string key = Common.InputString("Tag Key:", null, false);
+            string val = Common.InputString("Tag Value:", null, false);
+
+            PutObjectTaggingRequest request = new PutObjectTaggingRequest();
+            request.BucketName = _Bucket;
+            request.Key = id;
+            request.VersionId = ver.ToString();
+
+            Tag tag = new Tag();
+            tag.Key = key;
+            tag.Value = val;
+
+            request.Tagging = new Tagging();
+            request.Tagging.TagSet = new List<Tag>();
+            request.Tagging.TagSet.Add(tag); 
+             
+            PutObjectTaggingResponse response = _S3Client.PutObjectTaggingAsync(request).Result;
+            int statusCode = (int)response.HttpStatusCode;
+
+            if (response != null)
+            {
+                Console.WriteLine("Success");
+                return;
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+                return;
+            } 
         }
 
         static void WriteObjectRetention()
@@ -578,15 +766,15 @@ namespace S3ClientTest
         static void ReadObject()
         {
             string id = Common.InputString("Key:", null, false);
+            int ver = Common.InputInteger("Version:", 1, true, false);
 
             try
             {
-                GetObjectRequest request = new GetObjectRequest
-                {
-                    BucketName = _Bucket,
-                    Key = id
-                };
-
+                GetObjectRequest request = new GetObjectRequest();
+                request.BucketName = _Bucket;
+                request.Key = id;
+                request.VersionId = ver.ToString();
+                 
                 using (GetObjectResponse response = _S3Client.GetObjectAsync(request).Result)
                 using (Stream responseStream = response.ResponseStream)
                 using (StreamReader reader = new StreamReader(responseStream))
@@ -619,24 +807,55 @@ namespace S3ClientTest
             }
             catch (Exception)
             {
-                throw new IOException("Unable to read object.");
+                Console.WriteLine("Unable to read object");
             }
+        }
+
+        static void ReadObjectAcl()
+        {
+            string id = Common.InputString("Key:", null, false);
+
+            GetACLRequest request = new GetACLRequest();
+            request.BucketName = _Bucket;
+            request.Key = id;
+
+            GetACLResponse response = _S3Client.GetACLAsync(request).Result;
+
+            if (response != null)
+            {
+                if (response.AccessControlList != null)
+                {
+                    Console.WriteLine("Owner: " + response.AccessControlList.Owner.DisplayName + " ID " + response.AccessControlList.Owner.Id);
+                    Console.WriteLine("Grants:");
+                    foreach (S3Grant grant in response.AccessControlList.Grants)
+                    {
+                        Console.WriteLine("| Grantee    : " + grant.Grantee.DisplayName);
+                        Console.WriteLine("| Permission : " + grant.Permission);
+                    }
+                }
+
+                Console.WriteLine("Success");
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+            } 
         }
 
         static void ReadObjectRange()
         {
             string id = Common.InputString("Key:", null, false);
+            int ver = Common.InputInteger("Version:", 1, true, false);
             int startPos = Common.InputInteger("Start position:", 0, true, true);
             int endPos = Common.InputInteger("End position:", 0, true, true);
 
             try
             {
-                GetObjectRequest request = new GetObjectRequest
-                {
-                    BucketName = _Bucket,
-                    Key = id,
-                    ByteRange = new ByteRange(startPos, endPos)
-                };
+                GetObjectRequest request = new GetObjectRequest();
+                request.BucketName = _Bucket;
+                request.Key = id;
+                request.ByteRange = new ByteRange(startPos, endPos);
+                request.VersionId = ver.ToString();
 
                 using (GetObjectResponse response = _S3Client.GetObjectAsync(request).Result)
                 using (Stream responseStream = response.ResponseStream)
@@ -677,19 +896,24 @@ namespace S3ClientTest
         static void ReadObjectTags()
         {
             string id = Common.InputString("Key:", null, false);
+            int ver = Common.InputInteger("Version:", 1, true, false);
 
             try
             {
                 GetObjectTaggingRequest request = new GetObjectTaggingRequest();
                 request.BucketName = _Bucket;
                 request.Key = id;
+                request.VersionId = ver.ToString();
 
                 GetObjectTaggingResponse response = _S3Client.GetObjectTaggingAsync(request).Result;
 
                 if (response != null)
-                {
-                    Console.WriteLine(Common.SerializeXml(response.Tagging));
+                { 
                     Console.WriteLine("Success");
+                    foreach (Tag curr in response.Tagging)
+                    {
+                        Console.WriteLine("  " + curr.Key + ": " + curr.Value);
+                    }
                 }
                 else
                 {
@@ -705,40 +929,35 @@ namespace S3ClientTest
         static void ReadObjectRetention()
         {
             string id = Common.InputString("Key:", null, false);
+             
+            GetObjectRetentionRequest request = new GetObjectRetentionRequest();
+            request.BucketName = _Bucket;
+            request.Key = id;
 
-            try
+            GetObjectRetentionResponse response = _S3Client.GetObjectRetentionAsync(request).Result;
+
+            if (response != null)
             {
-                GetObjectRetentionRequest request = new GetObjectRetentionRequest();
-                request.BucketName = _Bucket;
-                request.Key = id;
-
-                GetObjectRetentionResponse response = _S3Client.GetObjectRetentionAsync(request).Result;
-
-                if (response != null)
-                {
+                if (response.Retention != null) 
                     Console.WriteLine(Common.SerializeXml(response.Retention));
-                    Console.WriteLine("Success");
-                }
-                else
-                {
-                    Console.WriteLine("Failed");
-                }
+
+                Console.WriteLine("Success");
             }
-            catch (Exception)
+            else
             {
-                throw new IOException("Unable to read object tags.");
-            }
+                Console.WriteLine("Failed");
+            } 
         }
 
         static void DeleteObject()
         {
             string id = Common.InputString("Key:", null, false);
+            int ver = Common.InputInteger("Version:", 1, true, false);
 
-            DeleteObjectRequest request = new DeleteObjectRequest
-            {
-                BucketName = _Bucket,
-                Key = id
-            };
+            DeleteObjectRequest request = new DeleteObjectRequest();
+            request.BucketName = _Bucket;
+            request.Key = id;
+            request.VersionId = ver.ToString();
 
             DeleteObjectResponse response = _S3Client.DeleteObjectAsync(request).Result;
             int statusCode = (int)response.HttpStatusCode;
@@ -756,14 +975,14 @@ namespace S3ClientTest
         static void DeleteObjectTags()
         {
             string id = Common.InputString("Key:", null, false);
+            int ver = Common.InputInteger("Version:", 1, true, false);
 
             try
             {
-                DeleteObjectTaggingRequest request = new DeleteObjectTaggingRequest
-                {
-                    BucketName = _Bucket,
-                    Key = id
-                };
+                DeleteObjectTaggingRequest request = new DeleteObjectTaggingRequest();
+                request.BucketName = _Bucket;
+                request.Key = id;
+                request.VersionId = ver.ToString();
 
                 DeleteObjectTaggingResponse response = _S3Client.DeleteObjectTaggingAsync(request).Result;
                 int statusCode = (int)response.HttpStatusCode;
@@ -787,34 +1006,51 @@ namespace S3ClientTest
 
         static void DeleteMultiple()
         {
-            List<string> keys = new List<string>();
+            List<KeyVersion> versions = new List<KeyVersion>();
             while (true)
             {
                 string key = Common.InputString("Key [null to end]:", null, true);
-                if (!String.IsNullOrEmpty(key)) keys.Add(key);
-                else break;
+                if (String.IsNullOrEmpty(key)) break;
+                int ver = Common.InputInteger("Version:", 1, true, false);
+                KeyVersion version = new KeyVersion();
+                version.Key = key;
+                version.VersionId = ver.ToString();
+                versions.Add(version);
             }
 
             DeleteObjectsRequest request = new DeleteObjectsRequest();
             request.BucketName = _Bucket;
-            request.Objects = new List<KeyVersion>();
+            request.Objects = versions;
             
-            foreach (string curr in keys)
-            {
-                KeyVersion key = new KeyVersion();
-                key.Key = curr;
-                request.Objects.Add(key);
-            }
-
             DeleteObjectsResponse response = _S3Client.DeleteObjectsAsync(request).Result;
             int statusCode = (int)response.HttpStatusCode;
 
             if (response != null)
             {
                 Console.WriteLine("Deleted objects:");
-                Console.WriteLine(Common.SerializeXml(response.DeletedObjects));
+                if (response.DeletedObjects != null && response.DeletedObjects.Count > 0)
+                {
+                    foreach (DeletedObject curr in response.DeletedObjects)
+                    {
+                        Console.WriteLine("  " + curr.Key + " version " + curr.VersionId);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("  (none)");
+                } 
                 Console.WriteLine("Errors:");
-                Console.WriteLine(Common.SerializeXml(response.DeleteErrors));
+                if (response.DeleteErrors != null && response.DeleteErrors.Count > 0)
+                {
+                    foreach (DeleteError curr in response.DeleteErrors)
+                    {
+                        Console.WriteLine("  " + curr.Key + " version " + curr.VersionId);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("  (none)");
+                } 
                 Console.WriteLine("Success");
             }
             else
@@ -826,14 +1062,14 @@ namespace S3ClientTest
         static void ObjectExists()
         {
             string id = Common.InputString("Key:", null, false);
+            int ver = Common.InputInteger("Version:", 1, true, false);
 
             try
             {
-                GetObjectMetadataRequest request = new GetObjectMetadataRequest
-                {
-                    BucketName = _Bucket,
-                    Key = id
-                };
+                GetObjectMetadataRequest request = new GetObjectMetadataRequest();
+                request.BucketName = _Bucket;
+                request.Key = id;
+                request.VersionId = ver.ToString();
 
                 GetObjectMetadataResponse response = _S3Client.GetObjectMetadataAsync(request).Result;
                 Console.WriteLine("Exists");

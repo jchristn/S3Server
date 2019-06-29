@@ -2,7 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 
-using S3ServerInterface.S3Objects;
+using Amazon;
+using Amazon.S3;
+using Amazon.S3.Model;
+
+using S3ServerInterface;
 
 namespace S3ServerInterface.Callbacks
 {
@@ -26,25 +30,25 @@ namespace S3ServerInterface.Callbacks
         /// Write an object's access control list.  
         /// Success: return an S3Response object with status 200. 
         /// </summary>
-        public Func<S3Request, AccessControlPolicy, S3Response> WriteAcl = null;
+        public Func<S3Request, S3Response> WriteAcl = null;
 
         /// <summary>
         /// Write tags to an object.
         /// Success: return an S3Response object with status 200.
         /// </summary>
-        public Func<S3Request, Tagging, S3Response> WriteTags = null;
+        public Func<S3Request, S3Response> WriteTags = null;
 
         /// <summary>
         /// Write a legal hold status to an object. 
         /// Success: return an S3Response object with status 200.
         /// </summary>
-        public Func<S3Request, LegalHold, S3Response> WriteLegalHold = null;
+        public Func<S3Request, S3Response> WriteLegalHold = null;
 
         /// <summary>
         /// Write a retention status to an object.
         /// Success: return an S3Response object with status 200. 
         /// </summary>
-        public Func<S3Request, Retention, S3Response> WriteRetention = null;
+        public Func<S3Request, S3Response> WriteRetention = null;
 
         /// <summary>
         /// Read an object.  
@@ -98,7 +102,7 @@ namespace S3ServerInterface.Callbacks
         /// Delete multiple objects.  
         /// Success: return an S3Response object with status 200 and a DeleteResult as its data.
         /// </summary>
-        public Func<S3Request, Delete, S3Response> DeleteMultiple = null;
+        public Func<S3Request, S3Response> DeleteMultiple = null;
 
         #endregion
 

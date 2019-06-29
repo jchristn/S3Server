@@ -12,11 +12,10 @@ Is there an API you'd like exposed that isn't currently?  Did you identify an is
 
 ## New in v1.4.x
 
-- Now passing objects received from AWS SDK into callback methods
-- Class definitions for requests and responses used by AWS SDK
 - Added Service callbacks including ListBuckets
 - TimestampUtc in both S3Response/S3Request
 - Owner, Error, and ErrorCode objects
+- Now supports authorization v2 and v4 headers
 
 ## Examples
 
