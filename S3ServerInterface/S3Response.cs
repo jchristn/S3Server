@@ -96,10 +96,12 @@ namespace S3ServerInterface
         /// <summary>
         /// Instantiate the object.
         /// </summary>
+        /// <param name="s3request">S3Request.</param>
         /// <param name="statusCode">HTTP status code.</param>
         /// <param name="contentType">Content-type.</param>
         /// <param name="headers">HTTP headers.</param>
         /// <param name="data">Data.</param>
+        /// <param name="contentLength">ContentLength.</param>
         public S3Response(S3Request s3request, int statusCode, string contentType, Dictionary<string, string> headers, long contentLength)
         {
             if (s3request == null) throw new ArgumentNullException(nameof(s3request));
@@ -115,6 +117,7 @@ namespace S3ServerInterface
         /// <summary>
         /// Instantiate the object.
         /// </summary>
+        /// <param name="s3request">S3Request.</param>
         /// <param name="statusCode">HTTP status code.</param>
         /// <param name="contentType">Content-type.</param>
         /// <param name="headers">HTTP headers.</param>
@@ -135,6 +138,45 @@ namespace S3ServerInterface
                 Buffer.BlockCopy(data, 0, _Data, 0, data.Length);
                 ContentLength = data.Length;
             }
+        }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        /// <param name="s3request">S3Request.</param>
+        /// <param name="error">ErrorCode.</param>
+        public S3Response(S3Request s3Request, ErrorCode error)
+        {
+            if (s3Request == null) throw new ArgumentNullException(nameof(s3Request));
+
+            Error errorBody = new Error(error);
+
+            TimestampUtc = DateTime.Now.ToUniversalTime();
+            Request = s3Request;
+            StatusCode = errorBody.HttpStatusCode;
+            ContentType = "application/xml";
+
+            Data = Encoding.UTF8.GetBytes(Common.SerializeXml(errorBody));
+            ContentLength = Data.Length;
+        }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        /// <param name="s3Request">S3Request.</param>
+        /// <param name="error">Error.</param>
+        public S3Response(S3Request s3Request, Error error)
+        {
+            if (s3Request == null) throw new ArgumentNullException(nameof(s3Request));
+            if (error == null) throw new ArgumentNullException(nameof(error));
+
+            TimestampUtc = DateTime.Now.ToUniversalTime();
+            Request = s3Request;
+            StatusCode = error.HttpStatusCode;
+            ContentType = "application/xml";
+
+            Data = Encoding.UTF8.GetBytes(Common.SerializeXml(error));
+            ContentLength = Data.Length;
         }
 
         #endregion
