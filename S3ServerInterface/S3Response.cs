@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 using WatsonWebserver;
@@ -69,6 +70,25 @@ namespace S3ServerInterface
                     _Data = new byte[value.Length];
                     Buffer.BlockCopy(value, 0, _Data, 0, value.Length);
                     _ContentLength = value.Length;
+                    _DataStream = null;
+                    _UseStream = false;
+                }
+            }
+        }
+
+        public Stream DataStream
+        {
+            get
+            {
+                return _DataStream;
+            }
+            set
+            {
+                if (value != null)
+                {
+                    _DataStream = value;
+                    _UseStream = true;
+                    _Data = null;
                 }
             }
         }
@@ -77,7 +97,9 @@ namespace S3ServerInterface
 
         #region Private-Members
 
+        private bool _UseStream = false;
         private byte[] _Data = null;
+        private Stream _DataStream = null;
         private long _ContentLength = 0;
 
         #endregion
@@ -112,6 +134,7 @@ namespace S3ServerInterface
             ContentType = contentType;
             ContentLength = contentLength;
             if (headers != null) Headers = headers;
+            _UseStream = false;
         }
 
         /// <summary>
@@ -131,6 +154,7 @@ namespace S3ServerInterface
             StatusCode = statusCode;
             ContentType = contentType;
             if (headers != null) Headers = headers;
+            _UseStream = false;
 
             if (data != null && data.Length > 0)
             {
@@ -138,6 +162,30 @@ namespace S3ServerInterface
                 Buffer.BlockCopy(data, 0, _Data, 0, data.Length);
                 ContentLength = data.Length;
             }
+        }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        /// <param name="s3request">S3Request.</param>
+        /// <param name="statusCode">HTTP status code.</param>
+        /// <param name="contentType">Content-type.</param>
+        /// <param name="headers">HTTP headers.</param>
+        /// <param name="contentLength">Content length of data in the stream.</param>
+        /// <param name="stream">Stream containing data.</param>
+        public S3Response(S3Request s3request, int statusCode, string contentType, Dictionary<string, string> headers, long contentLength, Stream stream)
+        {
+            if (s3request == null) throw new ArgumentNullException(nameof(s3request));
+
+            TimestampUtc = DateTime.Now.ToUniversalTime();
+            Request = s3request;
+            StatusCode = statusCode;
+            ContentType = contentType;
+            if (headers != null) Headers = headers;
+
+            ContentLength = contentLength;
+            DataStream = stream;
+            _UseStream = true;
         }
 
         /// <summary>
@@ -158,6 +206,7 @@ namespace S3ServerInterface
 
             Data = Encoding.UTF8.GetBytes(Common.SerializeXml(errorBody));
             ContentLength = Data.Length;
+            _UseStream = false;
         }
 
         /// <summary>
@@ -177,6 +226,7 @@ namespace S3ServerInterface
 
             Data = Encoding.UTF8.GetBytes(Common.SerializeXml(error));
             ContentLength = Data.Length;
+            _UseStream = false;
         }
 
         #endregion
@@ -189,14 +239,24 @@ namespace S3ServerInterface
         /// <returns></returns>
         public HttpResponse ToHttpResponse()
         {
-            HttpResponse resp = new HttpResponse(
-                Request.Http,
-                StatusCode,
-                Headers,
-                ContentType,
-                Data);
-
-            return resp;
+            if (_UseStream)
+            {
+                return new HttpResponse(Request.Http,
+                    StatusCode,
+                    Headers,
+                    ContentType,
+                    ContentLength,
+                    DataStream);
+            }
+            else
+            {
+                return new HttpResponse(
+                    Request.Http,
+                    StatusCode,
+                    Headers,
+                    ContentType,
+                    Data);
+            }
         }
 
         /// <summary>
@@ -205,13 +265,11 @@ namespace S3ServerInterface
         /// <returns>HttpResponse.</returns>
         public HttpResponse ToHeadHttpResponse()
         { 
-            HttpResponse resp = new HttpResponse(
+            return new HttpResponse(
                 Request.Http,
                 StatusCode,
                 Headers, 
                 ContentLength);
-
-            return resp;
         }
 
         /// <summary>
@@ -240,13 +298,27 @@ namespace S3ServerInterface
             }
 
             ret += "  Data           : ";
-            if (Data != null && Data.Length > 0)
+            if (_UseStream)
             {
-                ret += Data.Length + " bytes" + Environment.NewLine;
+                if (DataStream != null)
+                {
+                    ret += "(stream)" + Environment.NewLine;
+                }
+                else
+                {
+                    ret += "(none)" + Environment.NewLine;
+                }
             }
             else
             {
-                ret += "(none)" + Environment.NewLine;
+                if (Data != null && Data.Length > 0)
+                {
+                    ret += Data.Length + " bytes" + Environment.NewLine;
+                }
+                else
+                {
+                    ret += "(none)" + Environment.NewLine;
+                }
             }
              
             return ret;

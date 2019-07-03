@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.Serialization;
 using System.Text;
 using WatsonWebserver; 
@@ -119,14 +120,46 @@ namespace S3ServerInterface
         /// <summary>
         /// Request body.
         /// </summary>
-        public byte[] Data { get; set; }
+        public byte[] Data
+        {
+            get
+            {
+                return _Data;
+            }
+            set
+            {
+                _Data = value;
+                if (value != null) ContentLength = value.Length;
+                _UseStream = false;
+            }
+        }
+
+        /// <summary>
+        /// Stream containing the request body.
+        /// </summary>
+        public Stream DataStream
+        {
+            get
+            {
+                return _DataStream;
+            }
+            set
+            {
+                _Data = null;
+                _DataStream = value;
+                _UseStream = true;
+            }
+        }
 
         #endregion
 
         #region Private-Members
 
         private bool _Debug = false;
-
+        private bool _UseStream = false;
+        private byte[] _Data = null; 
+        private Stream _DataStream = null;
+        
         #endregion
 
         #region Constructors-and-Factories
@@ -171,6 +204,7 @@ namespace S3ServerInterface
             Authorization = null;
             AccessKey = null;
             Data = null;
+            DataStream = null;
 
             #endregion
 
@@ -181,6 +215,14 @@ namespace S3ServerInterface
                 ContentLength = req.Data.Length;
                 Data = new byte[req.Data.Length];
                 Buffer.BlockCopy(req.Data, 0, Data, 0, req.Data.Length);
+                _UseStream = false;
+            }
+
+            if (req.DataStream != null)
+            {
+                DataStream = req.DataStream;
+                ContentLength = req.ContentLength;
+                _UseStream = true;
             }
 
             #endregion
@@ -292,13 +334,27 @@ namespace S3ServerInterface
             ret += "  AccessKey      : " + AccessKey + Environment.NewLine;
 
             ret += "  Data           : ";
-            if (Data != null && Data.Length > 0)
+            if (_UseStream)
             {
-                ret += Data.Length + " bytes" + Environment.NewLine;
+                if (DataStream != null)
+                {
+                    ret += "(stream)" + Environment.NewLine;
+                }
+                else
+                {
+                    ret += "(none)" + Environment.NewLine;
+                }
             }
             else
             {
-                ret += "(none)" + Environment.NewLine;
+                if (Data != null && Data.Length > 0)
+                {
+                    ret += Data.Length + " bytes" + Environment.NewLine;
+                }
+                else
+                {
+                    ret += "(none)" + Environment.NewLine;
+                }
             }
 
             return ret;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -61,6 +62,12 @@ namespace S3ServerInterface
         /// </summary>
         public Func<S3Request, S3Response> DefaultRequestHandler = null;
 
+        /// <summary>
+        /// When set to 'true', S3Server will fully read incoming streams, and supply the data to you in the .Data field, and expect .Data in the S3Response that you return.
+        /// When set to 'false', S3Server will not read incoming streams, but the data will be supplied in the .DataStream field, and expect .DataStream in the S3Response that you return.
+        /// </summary>
+        public bool ReadStreamFully = false;
+
         #endregion
 
         #region Private-Members
@@ -100,6 +107,7 @@ namespace S3ServerInterface
             DefaultRequestHandler = null;
 
             _Server = new Server(_Hostname, _Port, _Ssl, RequestHandler);
+            _Server.ReadInputStream = false;
         }
 
         /// <summary>
@@ -126,6 +134,7 @@ namespace S3ServerInterface
             DefaultRequestHandler = defaultRequestHandler;
 
             _Server = new Server(_Hostname, _Port, _Ssl, RequestHandler);
+            _Server.ReadInputStream = false;
         }
 
         /// <summary>
@@ -154,6 +163,7 @@ namespace S3ServerInterface
             DefaultRequestHandler = defaultRequestHandler;
 
             _Server = new Server(_Hostname, _Port, _Ssl, RequestHandler);
+            _Server.ReadInputStream = false;
         }
 
         #endregion
@@ -198,6 +208,29 @@ namespace S3ServerInterface
             {
                 S3Request s3req = new S3Request(req, ConsoleDebug.S3Requests);
                 S3Response s3resp = new S3Response(s3req, 400, "text/plain", null, Encoding.UTF8.GetBytes("Unknown endpoint."));
+
+                if (ReadStreamFully)
+                {
+                    if (req.ContentLength > 0)
+                    {
+                        MemoryStream dataStream = new MemoryStream();
+                        long bytesRemaining = req.ContentLength;
+                        int bytesRead = 0;
+                        byte[] buffer = new byte[65536];
+
+                        while (bytesRemaining > 0)
+                        {
+                            bytesRead = req.DataStream.Read(buffer, 0, buffer.Length);
+                            if (bytesRead > 0)
+                            {
+                                dataStream.Write(buffer, 0, bytesRead);
+                                bytesRemaining -= bytesRead;
+                            }
+                        }
+
+                        req.Data = dataStream.ToArray();
+                    }
+                }
 
                 if (ConsoleDebug.HttpRequests)
                 {

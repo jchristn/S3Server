@@ -10,12 +10,9 @@ Simple S3 server-side interface, produced using Amazon's public documentation.
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v1.4.x
+## New in v1.5.x
 
-- Added Service callbacks including ListBuckets
-- TimestampUtc in both S3Response/S3Request
-- Owner, Error, and ErrorCode objects
-- Now supports authorization v2 and v4 headers
+- Stream support (more efficient memory use, support for large objects)
 
 ## Examples
 
@@ -106,7 +103,8 @@ public string Key;
 public string Authorization;
 public string Signature;
 public string AccessKey;
-public byte[] Data;
+public byte[] Data;        // see note below
+public Stream DataStream;  // see note below
 ```
 
 ### S3Response
@@ -116,8 +114,17 @@ public int StatusCode;
 public Dictionary<string, string> Headers;
 public string ContentType;
 public long ContentLength;
-public byte[] Data;
+public byte[] Data;         // see note below
+public Stream DataStream;   // see note below
 ```
+
+### Important: Streams vs Bytes
+
+If you wish to use ```S3Request.Data``` and ```S3Response.Data```, set ```S3Server.ReadStreamFully``` to ```true```.
+
+Otherwise, leave ```S3Server.ReadStreamFully``` as ```false```, and use ```S3Request.DataStream``` and ```S3Response.DataStream```.
+
+Using ```DataStream``` has several advantages, including memory utilization efficiency and better support for large objects.
 
 ## Operation
 
@@ -200,6 +207,13 @@ The roadmap for this project includes:
 - Better error handling (using native Error objects) and greater degrees of abstraction (more streamlined API callbacks)
 
 ## Version History
+
+v1.4.x
+
+- Added Service callbacks including ListBuckets
+- TimestampUtc in both S3Response/S3Request
+- Owner, Error, and ErrorCode objects
+- Now supports authorization v2 and v4 headers
 
 v1.3.x
 
