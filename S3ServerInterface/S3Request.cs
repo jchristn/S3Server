@@ -191,6 +191,8 @@ namespace S3ServerInterface
             Method = req.Method;
             FullUrl = req.FullUrl;
             RawUrl = req.RawUrlWithoutQuery;
+            while (RawUrl.Contains("\\\\")) RawUrl.Replace("\\\\", "\\");
+
             RawUrlEntries = req.RawUrlEntries;
             ContentLength = 0;
             ContentType = req.ContentType;
