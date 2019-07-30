@@ -449,6 +449,13 @@ namespace S3ServerInterface
         {
             if (String.IsNullOrEmpty(xml)) throw new ArgumentNullException(nameof(xml));
 
+            // remove preamble if exists
+            string byteOrderMarkUtf8 = Encoding.UTF8.GetString(Encoding.UTF8.GetPreamble());
+            while (xml.StartsWith(byteOrderMarkUtf8, StringComparison.Ordinal))
+            {
+                xml = xml.Remove(0, byteOrderMarkUtf8.Length);
+            }
+
             XmlSerializer xmls = new XmlSerializer(typeof(T));
             using (MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(xml)))
             {
@@ -472,7 +479,7 @@ namespace S3ServerInterface
 
                     // remove preamble if exists
                     string byteOrderMarkUtf8 = Encoding.UTF8.GetString(Encoding.UTF8.GetPreamble());
-                    if (ret.StartsWith(byteOrderMarkUtf8, StringComparison.Ordinal))
+                    while (ret.StartsWith(byteOrderMarkUtf8, StringComparison.Ordinal))
                     {
                         ret = ret.Remove(0, byteOrderMarkUtf8.Length);
                     }

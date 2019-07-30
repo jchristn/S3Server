@@ -13,6 +13,8 @@ Is there an API you'd like exposed that isn't currently?  Did you identify an is
 ## New in v1.5.x
 
 - Stream support (more efficient memory use, support for large objects)
+- Classes for commonly-used S3 server requests and responses
+- Added VersionId to S3Request
 
 ## Examples
 
@@ -100,6 +102,7 @@ public string Hostname;
 public RequestStyle Style;
 public string Bucket;
 public string Key;
+public string VersionId;
 public string Authorization;
 public string Signature;
 public string AccessKey;
@@ -140,8 +143,10 @@ As of v1.4.x, the following callbacks are supported:
 |--------------------------|-----------------------------------|
 | Bucket.Exists            | Check if a bucket exists          |
 | Bucket.Write             | Create a bucket                   |
+| Bucket.WriteAcl          | Write an ACL to a bucket          |
 | Bucket.WriteTags         | Write tags to a bucket            |
 | Bucket.Read              | Enumerate a bucket                |
+| Bucket.ReadAcl           | Read ACL on a bucket              |
 | Bucket.ReadTags          | Read tags on a bucket             |
 | Bucket.DeleteTags        | Delete tags from a bucket         |
 | Bucket.SetVersioning     | Set bucket versioning             |

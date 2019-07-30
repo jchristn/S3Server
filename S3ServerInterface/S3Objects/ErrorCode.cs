@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace S3ServerInterface
+namespace S3ServerInterface.S3Objects
 {
-    /*
     // see https://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html#ErrorCodeList
 
     public enum ErrorCode
@@ -173,5 +172,4 @@ namespace S3ServerInterface
         [XmlEnum(Name = "ServerSideEncryptionConfigurationNotFoundError")]
         ServerSideEncryptionConfigurationNotFoundError
     }
-    */
 }

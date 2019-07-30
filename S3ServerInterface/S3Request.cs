@@ -103,6 +103,11 @@ namespace S3ServerInterface
         public string Key { get; set; }
 
         /// <summary>
+        /// Object version ID.
+        /// </summary>
+        public string VersionId { get; set; }
+
+        /// <summary>
         /// Authorization header string, in full.
         /// </summary>
         public string Authorization { get; set; }
@@ -272,9 +277,18 @@ namespace S3ServerInterface
                 if (!String.IsNullOrEmpty(region)) Region = region;
                 if (style != RequestStyle.Unknown) Style = style;
                 if (!String.IsNullOrEmpty(objectKey)) Key = objectKey;
-            }  
+            }
 
-            #endregion 
+            #endregion
+
+            #region Set-Version-ID
+
+            if (req.QuerystringEntries != null && req.QuerystringEntries.ContainsKey("versionId"))
+            {
+                VersionId = req.QuerystringEntries["versionId"];
+            }
+
+            #endregion
 
             return;
         }

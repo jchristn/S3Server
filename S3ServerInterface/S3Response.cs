@@ -5,6 +5,8 @@ using System.Text;
 
 using WatsonWebserver;
 
+using S3ServerInterface.S3Objects;
+
 namespace S3ServerInterface
 {
     /// <summary>

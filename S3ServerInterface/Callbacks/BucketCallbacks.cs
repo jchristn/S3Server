@@ -25,7 +25,13 @@ namespace S3ServerInterface
         public Func<S3Request, S3Response> Write = null;
 
         /// <summary>
-        /// Write tags to a bucket.  
+        /// Write an ACL to a bucket, deleting the previous ACL.
+        /// Success: return an S3Response object with status 200.
+        /// </summary>
+        public Func<S3Request, S3Response> WriteAcl = null;
+
+        /// <summary>
+        /// Write tags to a bucket, deleting the previous tags.
         /// Success: return an S3Response object with status 204.
         /// </summary>
         public Func<S3Request, S3Response> WriteTags = null;
@@ -35,19 +41,20 @@ namespace S3ServerInterface
         /// Success: return an S3Response object with status 200.
         /// </summary>
         public Func<S3Request, S3Response> WriteVersioning = null;
-
-        /// <summary>
-        /// Set a bucket's access control policy.
-        /// Sucess: return an S3Response object with status 200.
-        /// </summary>
-        public Func<S3Request, S3Response> WriteAcl = null;
-
+         
         /// <summary>
         /// Enumerate a bucket.  
         /// Success: return an S3Response object with status 200 and a ListBucketResult object as its data.
         /// </summary>
         public Func<S3Request, S3Response> Read = null;
 
+        /// <summary>
+        /// Read a bucket's access control policy.
+        /// Success: return an S3Response object with status 200 and an AccessControlPolicy object as its data.
+        /// </summary>
+        public Func<S3Request, S3Response> ReadAcl = null;
+
+        /// <summary>
         /// <summary>
         /// Read a bucket's tags. 
         /// Success: return an S3Response object with status 200 and a Tagging object as its data. 
@@ -66,13 +73,6 @@ namespace S3ServerInterface
         /// </summary>
         public Func<S3Request, S3Response> ReadVersioning = null;
 
-        /// <summary>
-        /// Read a bucket's access control policy.
-        /// Success: return an S3Response object with status 200 and an AccessControlPolicy object as its data.
-        /// </summary>
-        public Func<S3Request, S3Response> ReadAcl = null;
-
-        /// <summary>
         /// Delete a bucket.  
         /// Success: return an S3Response object with status 204. 
         /// </summary>

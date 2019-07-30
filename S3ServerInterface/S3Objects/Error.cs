@@ -3,25 +3,24 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace S3ServerInterface
+namespace S3ServerInterface.S3Objects
 {
-    /*
-    [XmlRoot(ElementName = "Error", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+    [XmlRoot(ElementName = "Error", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
     public class Error
     {
-        [XmlElement(ElementName = "Key", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+        [XmlElement(ElementName = "Key", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
         public string Key { get; set; }
-        [XmlElement(ElementName = "VersionId", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+        [XmlElement(ElementName = "VersionId", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
         public string VersionId { get; set; }
-        [XmlElement(ElementName = "RequestId", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+        [XmlElement(ElementName = "RequestId", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
         public string RequestId { get; set; }
-        [XmlElement(ElementName = "Resource", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+        [XmlElement(ElementName = "Resource", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
         public string Resource { get; set; }
         [XmlElement(ElementName = "Code", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
         public ErrorCode Code { get; set; }
-        [XmlElement(ElementName = "Message", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+        [XmlElement(ElementName = "Message", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
         public string Message { get; set; }
-        [XmlElement(ElementName = "HttpStatusCode")]
+        [XmlElement(ElementName = "HttpStatusCode", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
         public int HttpStatusCode { get; set; }
 
         public Error()
@@ -360,5 +359,4 @@ namespace S3ServerInterface
             }
         }
     }
-    */
 }

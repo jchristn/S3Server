@@ -27,13 +27,13 @@ namespace S3ServerInterface.Callbacks
         public Func<S3Request, S3Response> Write = null;
 
         /// <summary>
-        /// Write an object's access control list.  
+        /// Write an object's access control list, replacing the previous ACL.  
         /// Success: return an S3Response object with status 200. 
         /// </summary>
         public Func<S3Request, S3Response> WriteAcl = null;
 
         /// <summary>
-        /// Write tags to an object.
+        /// Write tags to an object, replacing the previous tags.
         /// Success: return an S3Response object with status 200.
         /// </summary>
         public Func<S3Request, S3Response> WriteTags = null;
