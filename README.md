@@ -12,6 +12,7 @@ Is there an API you'd like exposed that isn't currently?  Did you identify an is
 
 ## New in v1.5.x
 
+- Automatically add ```X-Amz-Date``` and ```Host``` headers to S3Response if not supplied
 - Stream support (more efficient memory use, support for large objects)
 - Classes for commonly-used S3 server requests and responses
 - Added VersionId to S3Request

@@ -115,6 +115,8 @@ namespace S3ServerInterface
         {
             TimestampUtc = DateTime.Now.ToUniversalTime();
             Headers = new Dictionary<string, string>();
+            Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
+            Headers.Add("Host", "localhost");
         }
 
         /// <summary>
@@ -135,7 +137,25 @@ namespace S3ServerInterface
             StatusCode = statusCode;
             ContentType = contentType;
             ContentLength = contentLength;
-            if (headers != null) Headers = headers;
+
+            if (headers != null)
+            {
+                Headers = headers;
+                if (!Headers.ContainsKey("X-Amz-Date"))
+                {
+                    Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
+                }
+                if (!Headers.ContainsKey("Host"))
+                {
+                    Headers.Add("Host", s3request.Hostname);
+                }
+            }
+            else
+            {
+                Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
+                Headers.Add("Host", s3request.Hostname);
+            }
+
             _UseStream = false;
         }
 
@@ -155,7 +175,25 @@ namespace S3ServerInterface
             Request = s3request;
             StatusCode = statusCode;
             ContentType = contentType;
-            if (headers != null) Headers = headers;
+
+            if (headers != null)
+            {
+                Headers = headers;
+                if (!Headers.ContainsKey("X-Amz-Date"))
+                {
+                    Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
+                }
+                if (!Headers.ContainsKey("Host"))
+                {
+                    Headers.Add("Host", s3request.Hostname);
+                }
+            }
+            else
+            {
+                Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
+                Headers.Add("Host", s3request.Hostname);
+            }
+
             _UseStream = false;
 
             if (data != null && data.Length > 0)
@@ -183,7 +221,24 @@ namespace S3ServerInterface
             Request = s3request;
             StatusCode = statusCode;
             ContentType = contentType;
-            if (headers != null) Headers = headers;
+
+            if (headers != null)
+            {
+                Headers = headers;
+                if (!Headers.ContainsKey("X-Amz-Date"))
+                {
+                    Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
+                }
+                if (!Headers.ContainsKey("Host"))
+                {
+                    Headers.Add("Host", s3request.Hostname);
+                }
+            }
+            else
+            {
+                Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
+                Headers.Add("Host", s3request.Hostname);
+            } 
 
             ContentLength = contentLength;
             DataStream = stream;
@@ -195,39 +250,47 @@ namespace S3ServerInterface
         /// </summary>
         /// <param name="s3request">S3Request.</param>
         /// <param name="error">ErrorCode.</param>
-        public S3Response(S3Request s3Request, ErrorCode error)
+        public S3Response(S3Request s3request, ErrorCode error)
         {
-            if (s3Request == null) throw new ArgumentNullException(nameof(s3Request));
+            if (s3request == null) throw new ArgumentNullException(nameof(s3request));
 
             Error errorBody = new Error(error);
 
             TimestampUtc = DateTime.Now.ToUniversalTime();
-            Request = s3Request;
+            Request = s3request;
             StatusCode = errorBody.HttpStatusCode;
             ContentType = "application/xml";
 
             Data = Encoding.UTF8.GetBytes(Common.SerializeXml(errorBody));
             ContentLength = Data.Length;
+
+            Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
+            Headers.Add("Host", s3request.Hostname);
+
             _UseStream = false;
         }
 
         /// <summary>
         /// Instantiate the object.
         /// </summary>
-        /// <param name="s3Request">S3Request.</param>
+        /// <param name="s3request">S3Request.</param>
         /// <param name="error">Error.</param>
-        public S3Response(S3Request s3Request, Error error)
+        public S3Response(S3Request s3request, Error error)
         {
-            if (s3Request == null) throw new ArgumentNullException(nameof(s3Request));
+            if (s3request == null) throw new ArgumentNullException(nameof(s3request));
             if (error == null) throw new ArgumentNullException(nameof(error));
 
             TimestampUtc = DateTime.Now.ToUniversalTime();
-            Request = s3Request;
+            Request = s3request;
             StatusCode = error.HttpStatusCode;
             ContentType = "application/xml";
 
             Data = Encoding.UTF8.GetBytes(Common.SerializeXml(error));
             ContentLength = Data.Length;
+
+            Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
+            Headers.Add("Host", s3request.Hostname);
+
             _UseStream = false;
         }
 
@@ -240,10 +303,11 @@ namespace S3ServerInterface
         /// </summary>
         /// <returns></returns>
         public HttpResponse ToHttpResponse()
-        {
+        { 
             if (_UseStream)
             {
-                return new HttpResponse(Request.Http,
+                return new HttpResponse(
+                    Request.Http,
                     StatusCode,
                     Headers,
                     ContentType,
