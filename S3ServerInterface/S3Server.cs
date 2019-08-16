@@ -333,6 +333,21 @@ namespace S3ServerInterface
                                     return resp;
                                 }
                             }
+                            else if (req.QuerystringEntries.ContainsKey("location"))
+                            {
+                                if (Bucket.ReadLocation != null)
+                                {
+                                    s3resp = Bucket.ReadLocation(s3req);
+                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
+                                    resp = s3resp.ToHttpResponse();
+                                    return resp;
+                                }
+                                else
+                                {
+                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Bucket read location not implemented.");
+                                    return resp;
+                                }
+                            }
                             else if (req.QuerystringEntries.ContainsKey("tagging"))
                             {
                                 if (Bucket.ReadTags != null)

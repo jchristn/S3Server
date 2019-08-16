@@ -13,6 +13,12 @@ namespace S3ServerInterface
         #region Public-Members
 
         /// <summary>
+        /// Retrieve location (region) constraint from the server for this bucket.
+        /// Success: return an S3Response object with status 200 and LocationConstraint in the body.
+        /// </summary>
+        public Func<S3Request, S3Response> ReadLocation = null;
+
+        /// <summary>
         /// Check for the existence of a bucket.
         /// Success: return an S3Response object with status 200.
         /// </summary>
