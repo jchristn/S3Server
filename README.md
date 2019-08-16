@@ -148,6 +148,7 @@ As of v1.4.x, the following callbacks are supported:
 | Bucket.WriteAcl          | Write an ACL to a bucket          |
 | Bucket.WriteTags         | Write tags to a bucket            |
 | Bucket.Read              | Enumerate a bucket                |
+| Bucket.ReadLocation      | Retrieve a bucket's region        |
 | Bucket.ReadAcl           | Read ACL on a bucket              |
 | Bucket.ReadTags          | Read tags on a bucket             |
 | Bucket.DeleteTags        | Delete tags from a bucket         |
