@@ -117,6 +117,7 @@ namespace S3ServerInterface
             Headers = new Dictionary<string, string>();
             Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
             Headers.Add("Host", "localhost");
+            Headers.Add("Server", "Less3");
         }
 
         /// <summary>
@@ -149,11 +150,16 @@ namespace S3ServerInterface
                 {
                     Headers.Add("Host", s3request.Hostname);
                 }
+                if (!Headers.ContainsKey("Server"))
+                {
+                    Headers.Add("Server", "Less3");
+                }
             }
             else
             {
                 Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
                 Headers.Add("Host", s3request.Hostname);
+                Headers.Add("Server", "Less3");
             }
 
             _UseStream = false;
@@ -187,11 +193,16 @@ namespace S3ServerInterface
                 {
                     Headers.Add("Host", s3request.Hostname);
                 }
+                if (!Headers.ContainsKey("Server"))
+                {
+                    Headers.Add("Server", "Less3");
+                }
             }
             else
             {
                 Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
                 Headers.Add("Host", s3request.Hostname);
+                Headers.Add("Server", "Less3");
             }
 
             _UseStream = false;
@@ -233,11 +244,16 @@ namespace S3ServerInterface
                 {
                     Headers.Add("Host", s3request.Hostname);
                 }
+                if (!Headers.ContainsKey("Server"))
+                {
+                    Headers.Add("Server", "Less3");
+                }
             }
             else
             {
                 Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
                 Headers.Add("Host", s3request.Hostname);
+                Headers.Add("Server", "Less3");
             } 
 
             ContentLength = contentLength;
@@ -266,6 +282,7 @@ namespace S3ServerInterface
 
             Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
             Headers.Add("Host", s3request.Hostname);
+            Headers.Add("Server", "Less3");
 
             _UseStream = false;
         }
@@ -290,6 +307,7 @@ namespace S3ServerInterface
 
             Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
             Headers.Add("Host", s3request.Hostname);
+            Headers.Add("Server", "Less3");
 
             _UseStream = false;
         }
