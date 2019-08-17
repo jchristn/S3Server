@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Runtime.Serialization;
 using System.Text;
 using WatsonWebserver; 
@@ -550,12 +551,12 @@ namespace S3ServerInterface
                     switch (style)
                     {
                         case RequestStyle.BucketInHostname:
-                            if (valsInner.Length > 0) objectKey = valsInner[0];
+                            if (valsInner.Length > 0) objectKey = WebUtility.UrlDecode(valsInner[0]);
                             break;
 
                         case RequestStyle.BucketNotInHostname:
-                            if (valsInner.Length > 0) bucketName = valsInner[0];
-                            if (valsInner.Length > 1) objectKey = valsInner[1];
+                            if (valsInner.Length > 0) bucketName = WebUtility.UrlDecode(valsInner[0]);
+                            if (valsInner.Length > 1) objectKey = WebUtility.UrlDecode(valsInner[1]);
                             break;
                     }
                 }
