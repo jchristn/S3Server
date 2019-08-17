@@ -409,7 +409,7 @@ namespace S3ServerInterface
                                 }
                             }
                         }
-                        else if (req.RawUrlEntries.Count == 2)
+                        else if (req.RawUrlEntries.Count >= 2)
                         {
                             if (req.Headers.ContainsKey("Range"))
                             {
@@ -591,7 +591,7 @@ namespace S3ServerInterface
                                 }
                             }
                         }
-                        else if (req.RawUrlEntries.Count == 2)
+                        else if (req.RawUrlEntries.Count >= 2)
                         {
                             if (req.QuerystringEntries.ContainsKey("tagging"))
                             {
@@ -700,7 +700,7 @@ namespace S3ServerInterface
                     case HttpMethod.POST:
                         #region POST
 
-                        if (req.RawUrlEntries.Count == 1)
+                        if (req.RawUrlEntries.Count >= 1)
                         {
                             if (req.QuerystringEntries.ContainsKey("delete"))
                             {
@@ -767,7 +767,7 @@ namespace S3ServerInterface
                                 }
                             }
                         }
-                        else if (req.RawUrlEntries.Count == 2)
+                        else if (req.RawUrlEntries.Count >= 2)
                         {
                             if (req.QuerystringEntries.ContainsKey("tagging"))
                             {
