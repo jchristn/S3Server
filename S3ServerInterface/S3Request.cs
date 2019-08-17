@@ -546,7 +546,7 @@ namespace S3ServerInterface
                 {
                     if (rawUrl.StartsWith("/")) rawUrl = rawUrl.Substring(1);
 
-                    string[] valsInner = rawUrl.Split('/');
+                    string[] valsInner = rawUrl.Split(new[] { '/' }, 2);
 
                     switch (style)
                     {

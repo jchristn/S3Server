@@ -12,6 +12,7 @@ Is there an API you'd like exposed that isn't currently?  Did you identify an is
 
 ## New in v1.5.x
 
+- Added support for object keys that include '/'
 - Added support for GET bucket location API and LocationConstraint object
 - Automatically add ```X-Amz-Date```, ```Host```, and ```Server``` headers to S3Response if not supplied
 - Stream support (more efficient memory use, support for large objects)
