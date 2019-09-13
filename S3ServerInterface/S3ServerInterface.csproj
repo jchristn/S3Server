@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net462</TargetFrameworks>
@@ -6,21 +6,28 @@
     <Authors>Joel Christner</Authors>
     <Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
     <Copyright>(c)2019 Joel Christner</Copyright>
-    <PackageReleaseNotes>Fix for keys that include '/' character</PackageReleaseNotes>
+    <PackageReleaseNotes>Async task-based callbacks, breaking changes to how responses are sent, fixes for chunked transfer-encoding and other reliability fixes.</PackageReleaseNotes>
     <PackageTags>aws s3 storage rest interface server</PackageTags>
-    <PackageLicenseUrl>https://github.com/jchristn/S3ServerInterface/blob/master/LICENSE.txt</PackageLicenseUrl>
+    <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/jchristn/S3ServerInterface</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jchristn/S3ServerInterface</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
-    <Version>1.5.1.9</Version>
+    <Version>2.0.1.1</Version>
     <PackageIconUrl>https://raw.githubusercontent.com/jchristn/S3ServerInterface/master/assets/logo.ico</PackageIconUrl>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.S3" Version="3.3.103" />
-    <PackageReference Include="ChunkDecoder" Version="1.0.2" />
+    <PackageReference Include="AWSSDK.S3" Version="3.3.104.24" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
-    <PackageReference Include="Watson" Version="2.1.2" />
+    <PackageReference Include="Watson" Version="3.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE.md">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

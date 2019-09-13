@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,13 +23,12 @@ namespace Test
 
         static void Main(string[] args)
         {
-            _Server = new S3Server("+", 8000, false, DefaultRequestHandler);
+            _Server = new S3Server("127.0.0.1", 8000, false, DefaultRequestHandler);
             _Server.ConsoleDebug.Exceptions = false;
             _Server.ConsoleDebug.HttpRequests = false;
             _Server.ConsoleDebug.S3Requests = false;
 
-            _Server.PreRequestHandler = PreRequestHandler;
-            _Server.PostRequestHandler = PostRequestHandler;
+            _Server.PreRequestHandler = PreRequestHandler; 
             _Server.DefaultRequestHandler = DefaultRequestHandler;
             
             _Server.Bucket.Delete = BucketDelete;
@@ -82,162 +83,141 @@ namespace Test
 
         #region S3-API-Handlers
 
-        static S3Response PreRequestHandler(S3Request req)
+        static async Task SendResponse(S3Request req, S3Response resp, string text)
         {
-            Console.WriteLine("");
-            Console.WriteLine("S3 Request Received");
-            Console.WriteLine(req.ToString());
+            Console.WriteLine("[" + req.SourceIp + ":" + req.SourcePort + "] " + text);
 
-            S3Response resp = new S3Response(req, 200, "text/plain", null, null);
-            return resp;
+            byte[] data = Encoding.UTF8.GetBytes(text);
+
+            resp.StatusCode = 200;
+            resp.ContentType = "text/plain";
+            resp.ContentLength = data.Length;
+            resp.Data = new MemoryStream();
+            resp.Data.Write(data, 0, data.Length);
+            resp.Data.Seek(0, SeekOrigin.Begin);
+
+            await resp.Send();
+            return;
         }
 
-        static bool PostRequestHandler(S3Request req, S3Response resp)
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        static async Task<bool> PreRequestHandler(S3Request req, S3Response resp)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            Console.WriteLine("");
-            Console.WriteLine("S3 Response Sending");
-            Console.WriteLine(resp.ToString());
-            return true;
+            return false;
         }
-
-        static S3Response DefaultRequestHandler(S3Request req)
+         
+        static async Task DefaultRequestHandler(S3Request req, S3Response resp)
         {
-            Console.WriteLine("");
-            Console.WriteLine("S3 Request Received");
-            Console.WriteLine(req.ToString());
-
-            S3Response resp = new S3Response(req, 200, "text/plain", null, null);
-            return resp;
+            await SendResponse(req, resp, "Default request handler");
         }
 
         #region Bucket-APIs
 
-        static S3Response BucketDelete(S3Request req)
+        static async Task BucketDelete(S3Request req, S3Response resp)
         {
-            Console.WriteLine("BucketDelete");
-            return new S3Response(req, 200, "text/plain", null, null);            
+            await SendResponse(req, resp, "Bucket delete");
         }
 
-        static S3Response BucketExists(S3Request req)
+        static async Task BucketExists(S3Request req, S3Response resp)
         {
-            Console.WriteLine("BucketExists");
-            return new S3Response(req, 200, "text/plain", null, null); 
-
+            await SendResponse(req, resp, "Bucket exists");
         }
 
-        static S3Response BucketDeleteTags(S3Request req)
+        static async Task BucketDeleteTags(S3Request req, S3Response resp)
         {
-            Console.WriteLine("BucketDeleteTags");
-            return new S3Response(req, 200, "text/plain", null, null);
+            await SendResponse(req, resp, "Bucket delete tags");
         }
 
-        static S3Response BucketReadVersioning(S3Request req)
+        static async Task BucketReadVersioning(S3Request req, S3Response resp)
         {
-            Console.WriteLine("BucketReadVersioning");
-            return new S3Response(req, 200, "text/plain", null, null);
+            await SendResponse(req, resp, "Bucket read versioning");
         }
 
-        static S3Response BucketRead(S3Request req)
+        static async Task BucketRead(S3Request req, S3Response resp)
         {
-            Console.WriteLine("BucketRead");
-            return new S3Response(req, 200, "text/plain", null, null);
+            await SendResponse(req, resp, "Bucket read");
         }
 
-        static S3Response BucketReadTags(S3Request req)
+        static async Task BucketReadTags(S3Request req, S3Response resp)
         {
-            Console.WriteLine("BucketReadTags");
-            return new S3Response(req, 200, "text/plain", null, null);
+            await SendResponse(req, resp, "Bucket read tags");
         }
 
-        static S3Response BucketWriteVersioning(S3Request req)
-        { 
-            Console.WriteLine("BucketWriteVersioning");
-            Console.WriteLine(req.ToString());
-            return new S3Response(req, 200, "text/plain", null, null);
-        }
-
-        static S3Response BucketWrite(S3Request req)
-        { 
-            Console.WriteLine("BucketWrite");
-            return new S3Response(req, 200, "text/plain", null, null);
-        }
-
-        static S3Response BucketWriteTags(S3Request req)
+        static async Task BucketWriteVersioning(S3Request req, S3Response resp)
         {
-            Console.WriteLine("BucketWriteTags");
-            return new S3Response(req, 200, "text/plain", null, null);
+            await SendResponse(req, resp, "Bucket write versioning");
+        }
+
+        static async Task BucketWrite(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "Bucket write");
+        }
+
+        static async Task BucketWriteTags(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "Bucket write tags");
         }
 
         #endregion
 
         #region Object-APIs
 
-        static S3Response ObjectDelete(S3Request req)
+        static async Task ObjectDelete(S3Request req, S3Response resp)
         {
-            Console.WriteLine("ObjectDelete");
-            return new S3Response(req, 200, "text/plain", null, null);
+            await SendResponse(req, resp, "Object delete");
         }
 
-        static S3Response ObjectDeleteMultiple(S3Request req)
-        { 
-            Console.WriteLine("ObjectDeleteMultiple");
-            return new S3Response(req, 200, "text/plain", null, null);
-        }
-
-        static S3Response ObjectDeleteTags(S3Request req)
+        static async Task ObjectDeleteMultiple(S3Request req, S3Response resp)
         {
-            Console.WriteLine("ObjectDeleteTags");
-            return new S3Response(req, 200, "text/plain", null, null);
+            await SendResponse(req, resp, "Object delete multiple");
         }
 
-        static S3Response ObjectExists(S3Request req)
+        static async Task ObjectDeleteTags(S3Request req, S3Response resp)
         {
-            Console.WriteLine("ObjectExists");
-            return new S3Response(req, 200, "text/plain", null, null);
+            await SendResponse(req, resp, "Object delete tags");
         }
 
-        static S3Response ObjectRead(S3Request req)
+        static async Task ObjectExists(S3Request req, S3Response resp)
         {
-            Console.WriteLine("ObjectRead");
-            return new S3Response(req, 200, "text/plain", null, null);
+            await SendResponse(req, resp, "Object exists");
         }
 
-        static S3Response ObjectReadAcl(S3Request req)
+        static async Task ObjectRead(S3Request req, S3Response resp)
         {
-            Console.WriteLine("ObjectReadAcl");
-            return new S3Response(req, 200, "text/plain", null, null);
+            await SendResponse(req, resp, "Object read");
         }
 
-        static S3Response ObjectReadRange(S3Request req)
+        static async Task ObjectReadAcl(S3Request req, S3Response resp)
         {
-            Console.WriteLine("ObjectReadRange");
-            return new S3Response(req, 200, "text/plain", null, null);
+            await SendResponse(req, resp, "Object read acl");
         }
 
-        static S3Response ObjectReadTags(S3Request req)
+        static async Task ObjectReadRange(S3Request req, S3Response resp)
         {
-            Console.WriteLine("ObjectReadTags");
-            return new S3Response(req, 200, "text/plain", null, null);
+            await SendResponse(req, resp, "Object read range");
         }
 
-        static S3Response ObjectWrite(S3Request req)
+        static async Task ObjectReadTags(S3Request req, S3Response resp)
         {
-            Console.WriteLine("ObjectWrite");
-            return new S3Response(req, 200, "text/plain", null, null);
+            await SendResponse(req, resp, "Object read tags");
         }
 
-        static S3Response ObjectWriteAcl(S3Request req)
-        { 
-            Console.WriteLine("ObjectWriteAcl");
-            return new S3Response(req, 200, "text/plain", null, null);
-        }
-
-        static S3Response ObjectWriteTags(S3Request req)
+        static async Task ObjectWrite(S3Request req, S3Response resp)
         {
-            Console.WriteLine("ObjectWriteTags");
-            return new S3Response(req, 200, "text/plain", null, null);
+            await SendResponse(req, resp, "Object write");
         }
-         
+
+        static async Task ObjectWriteAcl(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "Object write acl");
+        }
+
+        static async Task ObjectWriteTags(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "Object write tags");
+        }
+
         #endregion
 
         #endregion

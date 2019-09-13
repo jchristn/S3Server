@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 using WatsonWebserver;
 
@@ -15,21 +17,11 @@ namespace S3ServerInterface
     public class S3Response
     {
         #region Public-Members
-
-        /// <summary>
-        /// Time of creation in UTC.
-        /// </summary>
-        public DateTime TimestampUtc { get; set; }
-
-        /// <summary>
-        /// The original request to which this response is being sent.
-        /// </summary>
-        public S3Request Request;
          
         /// <summary>
         /// The HTTP status code to return to the requestor (client).
         /// </summary>
-        public int StatusCode;
+        public int StatusCode { get; set; }
 
         /// <summary>
         /// User-supplied headers to include in the response.
@@ -39,130 +31,76 @@ namespace S3ServerInterface
         /// <summary>
         /// User-supplied content-type to include in the response.
         /// </summary>
-        public string ContentType;
+        public string ContentType { get; set; }
 
         /// <summary>
-        /// The length of the supplied response data.  Value automatically set when setting Data.
+        /// The length of the data in the response stream.  This value must be set before assigning the stream.
         /// </summary>
-        public long ContentLength
-        {
-            get
-            {
-                return _ContentLength;
-            }
-            private set
-            {
-                _ContentLength = value;
-            }
-        }
+        public long ContentLength { get; set; }
+         
+        /// <summary>
+        /// The data to return to the requestor.  Set ContentLength before assigning the stream.
+        /// </summary>
+        public Stream Data { get; set; }
 
         /// <summary>
-        /// The data to return to the requestor in the response body.  Setting this will also update the ContentLength field.
+        /// Enable or disable chunked transfer-encoding.
+        /// By default this parameter is set to the value of Chunked in the S3Request object.
+        /// If Chunked is false, use Send() APIs.
+        /// If Chunked is true, use SendChunk() or SendFinalChunk() APIs.
+        /// The Send(ErrorCode) API is valid for both conditions.
         /// </summary>
-        public byte[] Data
-        {
-            get
-            {
-                return _Data;
-            }
-            set
-            {
-                if (value != null && value.Length > 0)
-                {
-                    _Data = new byte[value.Length];
-                    Buffer.BlockCopy(value, 0, _Data, 0, value.Length);
-                    _ContentLength = value.Length;
-                    _DataStream = null;
-                    _UseStream = false;
-                }
-            }
-        }
-
-        public Stream DataStream
-        {
-            get
-            {
-                return _DataStream;
-            }
-            set
-            {
-                if (value != null)
-                {
-                    _DataStream = value;
-                    _UseStream = true;
-                    _Data = null;
-                }
-            }
-        }
+        public bool Chunked { get; set; }
 
         #endregion
 
         #region Private-Members
-
-        private bool _UseStream = false;
-        private byte[] _Data = null;
-        private Stream _DataStream = null;
-        private long _ContentLength = 0;
+         
+        private S3Request _S3Request = null;
 
         #endregion
 
         #region Constructors-and-Factories
-
-        /// <summary>
-        /// Instantiate the object.
-        /// </summary>
-        public S3Response()
-        {
-            TimestampUtc = DateTime.Now.ToUniversalTime();
-            Headers = new Dictionary<string, string>();
-            Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
-            Headers.Add("Host", "localhost");
-            Headers.Add("Server", "Less3");
-        }
-
+        
         /// <summary>
         /// Instantiate the object.
         /// </summary>
         /// <param name="s3request">S3Request.</param>
+        public S3Response(S3Request s3request)
+        {
+            if (s3request == null) throw new ArgumentNullException(nameof(s3request));
+
+            _S3Request = s3request;
+
+            StatusCode = 200;
+            ContentLength = 0;
+            Chunked = s3request.Chunked;
+
+            Headers = new Dictionary<string, string>();
+        }
+
+        /// <summary>
+        /// Instantiate the object without supplying a stream.  Useful for HEAD responses.
+        /// </summary>
+        /// <param name="s3request">S3Request.</param>
         /// <param name="statusCode">HTTP status code.</param>
         /// <param name="contentType">Content-type.</param>
-        /// <param name="headers">HTTP headers.</param>
-        /// <param name="data">Data.</param>
-        /// <param name="contentLength">ContentLength.</param>
+        /// <param name="headers">HTTP headers.</param> 
+        /// <param name="contentLength">Content length.</param>
         public S3Response(S3Request s3request, int statusCode, string contentType, Dictionary<string, string> headers, long contentLength)
         {
             if (s3request == null) throw new ArgumentNullException(nameof(s3request));
 
-            TimestampUtc = DateTime.Now.ToUniversalTime();
-            Request = s3request;
+            _S3Request = s3request;
+
+            StatusCode = 200;
+            ContentLength = 0;
+
             StatusCode = statusCode;
             ContentType = contentType;
             ContentLength = contentLength;
-
-            if (headers != null)
-            {
-                Headers = headers;
-                if (!Headers.ContainsKey("X-Amz-Date"))
-                {
-                    Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
-                }
-                if (!Headers.ContainsKey("Host"))
-                {
-                    Headers.Add("Host", s3request.Hostname);
-                }
-                if (!Headers.ContainsKey("Server"))
-                {
-                    Headers.Add("Server", "Less3");
-                }
-            }
-            else
-            {
-                Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
-                Headers.Add("Host", s3request.Hostname);
-                Headers.Add("Server", "Less3");
-            }
-
-            _UseStream = false;
+            Chunked = s3request.Chunked;
+            Headers = new Dictionary<string, string>();
         }
 
         /// <summary>
@@ -172,190 +110,160 @@ namespace S3ServerInterface
         /// <param name="statusCode">HTTP status code.</param>
         /// <param name="contentType">Content-type.</param>
         /// <param name="headers">HTTP headers.</param>
-        /// <param name="data">Data.</param>
-        public S3Response(S3Request s3request, int statusCode, string contentType, Dictionary<string, string> headers, byte[] data)
-        {
-            if (s3request == null) throw new ArgumentNullException(nameof(s3request));
-
-            TimestampUtc = DateTime.Now.ToUniversalTime();
-            Request = s3request;
-            StatusCode = statusCode;
-            ContentType = contentType;
-
-            if (headers != null)
-            {
-                Headers = headers;
-                if (!Headers.ContainsKey("X-Amz-Date"))
-                {
-                    Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
-                }
-                if (!Headers.ContainsKey("Host"))
-                {
-                    Headers.Add("Host", s3request.Hostname);
-                }
-                if (!Headers.ContainsKey("Server"))
-                {
-                    Headers.Add("Server", "Less3");
-                }
-            }
-            else
-            {
-                Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
-                Headers.Add("Host", s3request.Hostname);
-                Headers.Add("Server", "Less3");
-            }
-
-            _UseStream = false;
-
-            if (data != null && data.Length > 0)
-            {
-                _Data = new byte[data.Length];
-                Buffer.BlockCopy(data, 0, _Data, 0, data.Length);
-                ContentLength = data.Length;
-            }
-        }
-
-        /// <summary>
-        /// Instantiate the object.
-        /// </summary>
-        /// <param name="s3request">S3Request.</param>
-        /// <param name="statusCode">HTTP status code.</param>
-        /// <param name="contentType">Content-type.</param>
-        /// <param name="headers">HTTP headers.</param>
-        /// <param name="contentLength">Content length of data in the stream.</param>
-        /// <param name="stream">Stream containing data.</param>
+        /// <param name="contentLength">Content length.</param>
+        /// <param name="stream">Stream containing response data.</param>
         public S3Response(S3Request s3request, int statusCode, string contentType, Dictionary<string, string> headers, long contentLength, Stream stream)
         {
             if (s3request == null) throw new ArgumentNullException(nameof(s3request));
 
-            TimestampUtc = DateTime.Now.ToUniversalTime();
-            Request = s3request;
+            _S3Request = s3request;
+
             StatusCode = statusCode;
             ContentType = contentType;
-
-            if (headers != null)
-            {
-                Headers = headers;
-                if (!Headers.ContainsKey("X-Amz-Date"))
-                {
-                    Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
-                }
-                if (!Headers.ContainsKey("Host"))
-                {
-                    Headers.Add("Host", s3request.Hostname);
-                }
-                if (!Headers.ContainsKey("Server"))
-                {
-                    Headers.Add("Server", "Less3");
-                }
-            }
-            else
-            {
-                Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
-                Headers.Add("Host", s3request.Hostname);
-                Headers.Add("Server", "Less3");
-            } 
-
             ContentLength = contentLength;
-            DataStream = stream;
-            _UseStream = true;
+            Chunked = s3request.Chunked;
+            Headers = new Dictionary<string, string>();
+            Data = stream;
         }
-
-        /// <summary>
-        /// Instantiate the object.
-        /// </summary>
-        /// <param name="s3request">S3Request.</param>
-        /// <param name="error">ErrorCode.</param>
-        public S3Response(S3Request s3request, ErrorCode error)
-        {
-            if (s3request == null) throw new ArgumentNullException(nameof(s3request));
-
-            Error errorBody = new Error(error);
-
-            TimestampUtc = DateTime.Now.ToUniversalTime();
-            Request = s3request;
-            StatusCode = errorBody.HttpStatusCode;
-            ContentType = "application/xml";
-
-            Data = Encoding.UTF8.GetBytes(Common.SerializeXml(errorBody));
-            ContentLength = Data.Length;
-
-            Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
-            Headers.Add("Host", s3request.Hostname);
-            Headers.Add("Server", "Less3");
-
-            _UseStream = false;
-        }
-
-        /// <summary>
-        /// Instantiate the object.
-        /// </summary>
-        /// <param name="s3request">S3Request.</param>
-        /// <param name="error">Error.</param>
-        public S3Response(S3Request s3request, Error error)
-        {
-            if (s3request == null) throw new ArgumentNullException(nameof(s3request));
-            if (error == null) throw new ArgumentNullException(nameof(error));
-
-            TimestampUtc = DateTime.Now.ToUniversalTime();
-            Request = s3request;
-            StatusCode = error.HttpStatusCode;
-            ContentType = "application/xml";
-
-            Data = Encoding.UTF8.GetBytes(Common.SerializeXml(error));
-            ContentLength = Data.Length;
-
-            Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
-            Headers.Add("Host", s3request.Hostname);
-            Headers.Add("Server", "Less3");
-
-            _UseStream = false;
-        }
-
+          
         #endregion
 
         #region Public-Methods
 
         /// <summary>
-        /// Create an HttpResponse from the S3Response.
+        /// Send the response to the requestor and close the connection.
         /// </summary>
-        /// <returns></returns>
-        public HttpResponse ToHttpResponse()
-        { 
-            if (_UseStream)
+        /// <returns>True if successful.</returns>
+        public async Task<bool> Send()
+        {
+            if (Chunked) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk().");
+
+            _S3Request.Http.Response.ChunkedTransfer = false;
+
+            SetResponseHeaders();
+
+            if (Data != null && ContentLength > 0)
             {
-                return new HttpResponse(
-                    Request.Http,
-                    StatusCode,
-                    Headers,
-                    ContentType,
-                    ContentLength,
-                    DataStream);
+                return await _S3Request.Http.Response.Send(ContentLength, Data);
             }
             else
             {
-                return new HttpResponse(
-                    Request.Http,
-                    StatusCode,
-                    Headers,
-                    ContentType,
-                    Data);
-            }
+                return await _S3Request.Http.Response.Send();
+            } 
         }
 
         /// <summary>
-        /// Create an HttpResponse from the S3Response for a HEAD response.
+        /// Send the response with the supplied data to the requestor and close the connection.
         /// </summary>
-        /// <returns>HttpResponse.</returns>
-        public HttpResponse ToHeadHttpResponse()
-        { 
-            return new HttpResponse(
-                Request.Http,
-                StatusCode,
-                Headers, 
-                ContentLength);
+        /// <param name="data">Data.</param>
+        /// <returns>True if successful.</returns>
+        public async Task<bool> Send(string data)
+        {
+            if (Chunked) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk()."); 
+            _S3Request.Http.Response.ChunkedTransfer = false; 
+            byte[] bytes = null;
+            if (!String.IsNullOrEmpty(data)) bytes = Encoding.UTF8.GetBytes(data); 
+            return await Send(bytes); 
         }
 
+        /// <summary>
+        /// Send the response with the supplied data to the requestor and close the connection.
+        /// </summary>
+        /// <param name="data">Data.</param>
+        /// <returns>True if successful.</returns>
+        public async Task<bool> Send(byte[] data)
+        {
+            if (Chunked) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk().");
+
+            _S3Request.Http.Response.ChunkedTransfer = false;
+
+            MemoryStream ms = null;
+            long contentLength = 0;
+
+            if (data != null && data.Length > 0)
+            {
+                ms = new MemoryStream();
+                ms.Write(data, 0, data.Length);
+                contentLength = data.Length;
+            }
+            else
+            {
+                ms = new MemoryStream(new byte[0]);
+            }
+
+            ms.Seek(0, SeekOrigin.Begin); 
+            return await Send(contentLength, ms);
+        }
+
+        /// <summary>
+        /// Send the response with the supplied stream to the requestor and close the connection.
+        /// </summary>
+        /// <param name="contentLength">Content length.</param>
+        /// <param name="stream">Stream containing data.</param>
+        /// <returns>True if successful.</returns>
+        public async Task<bool> Send(long contentLength, Stream stream)
+        {
+            if (Chunked) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk()."); 
+            _S3Request.Http.Response.ChunkedTransfer = false; 
+            ContentLength = contentLength;
+            Data = stream;
+            return await Send();
+        }
+
+        /// <summary>
+        /// Send an error response to the requestor and close the connection.
+        /// </summary>
+        /// <param name="error">ErrorCode.</param>
+        /// <returns>True if successful.</returns>
+        public async Task<bool> Send(ErrorCode error)
+        {
+            Chunked = false;
+            _S3Request.Http.Response.ChunkedTransfer = false; 
+
+            Error errorBody = new Error(error);
+
+            byte[] data = Encoding.UTF8.GetBytes(Common.SerializeXml(errorBody));
+            Data = new MemoryStream(data);
+            Data.Seek(0, SeekOrigin.Begin);
+
+            ContentLength = data.Length;
+            StatusCode = errorBody.HttpStatusCode;
+            ContentType = "application/xml";
+            Headers = new Dictionary<string, string>();
+
+            return await Send();
+        }
+           
+        /// <summary>
+        /// Send a chunk of data using chunked transfer-encoding to the requestor.
+        /// </summary>
+        /// <param name="data">Chunk of data.</param>
+        /// <returns>True if successful.</returns>
+        public async Task<bool> SendChunk(byte[] data)
+        {
+            if (!Chunked) throw new IOException("Responses with chunked transfer-encoding disabled require use of Send().");
+
+            _S3Request.Http.Response.ChunkedTransfer = true;
+
+            SetResponseHeaders(); 
+            return await _S3Request.Http.Response.SendChunk(data);
+        }
+
+        /// <summary>
+        /// Send the final chunk of data using chunked transfer-encoding to the requestor and close the connection.
+        /// </summary>
+        /// <param name="data">Final chunk of data.</param>
+        /// <returns>True if successful.</returns>
+        public async Task<bool> SendFinalChunk(byte[] data)
+        {
+            if (!Chunked) throw new IOException("Responses with chunked transfer-encoding disabled require use of Send().");
+
+            _S3Request.Http.Response.ChunkedTransfer = true;
+
+            SetResponseHeaders();
+            return await _S3Request.Http.Response.SendFinalChunk(data); 
+        }
+         
         /// <summary>
         /// Returns a human-readable string with the object details.
         /// </summary>
@@ -381,36 +289,54 @@ namespace S3ServerInterface
                 ret += "(none)" + Environment.NewLine;
             }
 
-            ret += "  Data           : ";
-            if (_UseStream)
+            ret += "  Data           : "; 
+            if (Data != null)
             {
-                if (DataStream != null)
-                {
-                    ret += "(stream)" + Environment.NewLine;
-                }
-                else
-                {
-                    ret += "(none)" + Environment.NewLine;
-                }
+                ret += "(stream, " + ContentLength + " bytes)" + Environment.NewLine;
             }
             else
             {
-                if (Data != null && Data.Length > 0)
-                {
-                    ret += Data.Length + " bytes" + Environment.NewLine;
-                }
-                else
-                {
-                    ret += "(none)" + Environment.NewLine;
-                }
-            }
-             
+                ret += "(none)" + Environment.NewLine;
+            } 
+
             return ret;
         }
 
         #endregion
 
         #region Private-Methods
+
+        private void SetResponseHeaders()
+        {
+            _S3Request.Http.Response.StatusCode = StatusCode;
+            _S3Request.Http.Response.ContentType = ContentType;
+            _S3Request.Http.Response.ContentLength = ContentLength;
+
+            if (Headers != null)
+            {
+                if (!Headers.ContainsKey("X-Amz-Date"))
+                {
+                    Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
+                }
+                if (!Headers.ContainsKey("Host"))
+                {
+                    Headers.Add("Host", _S3Request.Hostname);
+                }
+                if (!Headers.ContainsKey("Server"))
+                {
+                    Headers.Add("Server", "Less3");
+                }
+            }
+            else
+            {
+                Headers = new Dictionary<string, string>();
+                Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
+                Headers.Add("Host", _S3Request.Hostname);
+                Headers.Add("Server", "Less3");
+            }
+
+            _S3Request.Http.Response.Headers = Headers;
+        }
 
         #endregion
     }

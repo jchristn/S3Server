@@ -3,12 +3,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
-using Amazon;
-using Amazon.S3;
-using Amazon.S3.Model;
-
-using ChunkDecoder;
+ 
 using WatsonWebserver;
 
 using S3ServerInterface.Callbacks;
@@ -17,8 +12,7 @@ namespace S3ServerInterface
 {
     /// <summary>
     /// S3 server.  
-    /// Bucket names must not be in the hostname; they must be in the URL path.
-    /// Chunk-style encoding must be disabled.
+    /// Bucket names must not be in the hostname; they must be in the URL path. 
     /// </summary>
     public class S3Server : IDisposable
     {
@@ -46,27 +40,20 @@ namespace S3ServerInterface
 
         /// <summary>
         /// Callback method to use prior to examining requests for AWS S3 APIs.
-        /// Return null if you wish to allow the request to proceed, otherwise, return an S3Response, which will be sent to the requestor with no further processing.
+        /// Return true if you wish to terminate the request, otherwise, return false, which will further route the request.
         /// </summary>
-        public Func<S3Request, S3Response> PreRequestHandler = null;
-
-        /// <summary>
-        /// Callback method to use after a request has been processed.
-        /// Return a modified S3Response if you wish to modify the response, otherwise, return the original S3Response.
-        /// </summary>
-        public Func<S3Request, S3Response, bool> PostRequestHandler = null;
-
+        public Func<S3Request, S3Response, Task<bool>> PreRequestHandler = null;
+         
         /// <summary>
         /// Callback method to call when no matching AWS S3 API callback could be found.
         /// This callback should return an S3Response at all times.
         /// </summary>
-        public Func<S3Request, S3Response> DefaultRequestHandler = null;
+        public Func<S3Request, S3Response, Task> DefaultRequestHandler = null;
 
         /// <summary>
-        /// When set to 'true', S3Server will fully read incoming streams, and supply the data to you in the .Data field, and expect .Data in the S3Response that you return.
-        /// When set to 'false', S3Server will not read incoming streams, but the data will be supplied in the .DataStream field, and expect .DataStream in the S3Response that you return.
+        /// Specify whether or not exceptions should be included in status 500 Internal Server Error messages.
         /// </summary>
-        public bool ReadStreamFully = false;
+        public bool SendExceptionsInResponses = true;
 
         #endregion
 
@@ -77,8 +64,7 @@ namespace S3ServerInterface
         private string _Hostname;
         private int _Port;
         private bool _Ssl;
-        private Server _Server;
-        private ChunkDecoder.Decoder _Decoder = new ChunkDecoder.Decoder();
+        private Server _Server; 
 
         #endregion
 
@@ -106,8 +92,7 @@ namespace S3ServerInterface
             PreRequestHandler = null;
             DefaultRequestHandler = null;
 
-            _Server = new Server(_Hostname, _Port, _Ssl, RequestHandler);
-            _Server.ReadInputStream = false;
+            _Server = new Server(_Hostname, _Port, _Ssl, RequestHandler); 
         }
 
         /// <summary>
@@ -122,7 +107,7 @@ namespace S3ServerInterface
             string hostname,
             int port,
             bool ssl,
-            Func<S3Request, S3Response> defaultRequestHandler)
+            Func<S3Request, S3Response, Task> defaultRequestHandler)
         {
             if (String.IsNullOrEmpty(hostname)) throw new ArgumentNullException(nameof(hostname));
             if (port < 0 || port > 65535) throw new ArgumentException("Port must be between 0 and 65535.");
@@ -133,8 +118,7 @@ namespace S3ServerInterface
             PreRequestHandler = null;
             DefaultRequestHandler = defaultRequestHandler;
 
-            _Server = new Server(_Hostname, _Port, _Ssl, RequestHandler);
-            _Server.ReadInputStream = false;
+            _Server = new Server(_Hostname, _Port, _Ssl, RequestHandler); 
         }
 
         /// <summary>
@@ -150,8 +134,8 @@ namespace S3ServerInterface
             string hostname,
             int port,
             bool ssl,
-            Func<S3Request, S3Response> preRequestHandler,
-            Func<S3Request, S3Response> defaultRequestHandler)
+            Func<S3Request, S3Response, Task<bool>> preRequestHandler,
+            Func<S3Request, S3Response, Task> defaultRequestHandler)
         {
             if (String.IsNullOrEmpty(hostname)) throw new ArgumentNullException(nameof(hostname));
             if (port < 0 || port > 65535) throw new ArgumentException("Port must be between 0 and 65535."); 
@@ -162,8 +146,7 @@ namespace S3ServerInterface
             PreRequestHandler = preRequestHandler;
             DefaultRequestHandler = defaultRequestHandler;
 
-            _Server = new Server(_Hostname, _Port, _Ssl, RequestHandler);
-            _Server.ReadInputStream = false;
+            _Server = new Server(_Hostname, _Port, _Ssl, RequestHandler); 
         }
 
         #endregion
@@ -198,60 +181,33 @@ namespace S3ServerInterface
             _Disposed = true;
         }
 
-        private HttpResponse RequestHandler(HttpRequest req)
+        private async Task RequestHandler(HttpContext ctx)
         {
-            if (req == null) throw new ArgumentNullException(nameof(req));
+            if (ctx == null) throw new ArgumentNullException(nameof(ctx));
             DateTime startTime = DateTime.Now.ToUniversalTime();
-            HttpResponse resp = new HttpResponse(req, 200, null, "text/plain", "");
+
+            S3Request s3req = new S3Request(ctx, ConsoleDebug.S3Requests);
+            S3Response s3resp = new S3Response(s3req);
+            bool success = false;
 
             try
             {
-                S3Request s3req = new S3Request(req, ConsoleDebug.S3Requests);
-                S3Response s3resp = new S3Response(s3req, 400, "text/plain", null, Encoding.UTF8.GetBytes("Unknown endpoint."));
-
-                if (ReadStreamFully)
-                {
-                    if (req.ContentLength > 0)
-                    {
-                        MemoryStream dataStream = new MemoryStream();
-                        long bytesRemaining = req.ContentLength;
-                        int bytesRead = 0;
-                        byte[] buffer = new byte[65536];
-
-                        while (bytesRemaining > 0)
-                        {
-                            bytesRead = req.DataStream.Read(buffer, 0, buffer.Length);
-                            if (bytesRead > 0)
-                            {
-                                dataStream.Write(buffer, 0, bytesRead);
-                                bytesRemaining -= bytesRead;
-                            }
-                        }
-
-                        req.Data = dataStream.ToArray();
-                    }
-                }
 
                 if (ConsoleDebug.HttpRequests)
                 {
-                    Console.WriteLine(Common.SerializeJson(req, true));
+                    Console.WriteLine(Common.SerializeJson(s3req, true));
                     Console.WriteLine(Environment.NewLine);
                     Console.WriteLine(Common.SerializeJson(s3req, true));
                 }
 
                 if (PreRequestHandler != null)
                 {
-                    s3resp = PreRequestHandler(s3req);
-                    if (s3resp == null)
+                    success = await PreRequestHandler(s3req, s3resp);
+                    if (success)
                     {
-                        s3resp = new S3Response(s3req, 500, "text/plain", null, Encoding.UTF8.GetBytes("Unknown endpoint."));
-                    }
-                    else
-                    {
-                        if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                        resp = s3resp.ToHttpResponse();
-                        return resp;
-                    }
+                        await s3resp.Send();
+                        return;
+                    } 
                 }
 
                 switch (s3req.Method)
@@ -259,570 +215,315 @@ namespace S3ServerInterface
                     case HttpMethod.HEAD:
                         #region HEAD
 
-                        if (req.RawUrlEntries.Count == 1)
+                        if (ctx.Request.RawUrlEntries.Count == 1)
                         { 
                             if (Bucket.Exists != null)
                             {
-                                s3resp = Bucket.Exists(s3req);
-                                if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                resp = s3resp.ToHeadHttpResponse();
-                                return resp;
-                            }
-                            else
-                            {
-                                resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Bucket exists not implemented.");
-                                return resp;
+                                await Bucket.Exists(s3req, s3resp);
+                                return;
                             } 
                         }
-                        else if (req.RawUrlEntries.Count == 2)
+                        else if (ctx.Request.RawUrlEntries.Count == 2)
                         { 
                             if (Object.Exists != null)
                             {
-                                s3resp = Object.Exists(s3req);
-                                if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                resp = s3resp.ToHeadHttpResponse();
-                                return resp;
-                            }
-                            else
-                            {
-                                resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object exists not implemented.");
-                                return resp;
+                                await Object.Exists(s3req, s3resp);
+                                return;
                             } 
                         }
-                        else
-                        {
-                            resp = new HttpResponse(req, 400, null, "text/plain", Encoding.UTF8.GetBytes("Bad request."));
-                            return resp;
-                        }
+
+                        break;
 
                     #endregion
 
                     case HttpMethod.GET:
                         #region GET
 
-                        if (req.RawUrlEntries.Count == 0)
+                        if (ctx.Request.RawUrlEntries.Count == 0)
                         {
                             if (Service.ListBuckets != null)
                             {
-                                s3resp = Service.ListBuckets(s3req);
-                                if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                resp = s3resp.ToHttpResponse();
-                                return resp;
-                            }
-                            else
-                            {
-                                resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Service read not implemented.");
-                                return resp;
-
-                            }
+                                await Service.ListBuckets(s3req, s3resp);
+                                return;
+                            } 
                         }
-                        else if (req.RawUrlEntries.Count == 1)
+                        else if (ctx.Request.RawUrlEntries.Count == 1)
                         {
-                            if (req.QuerystringEntries.ContainsKey("acl"))
+                            if (ctx.Request.QuerystringEntries.ContainsKey("acl"))
                             {
                                 if (Bucket.ReadAcl != null)
                                 {
-                                    s3resp = Bucket.ReadAcl(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Bucket read ACL not implemented.");
-                                    return resp;
-                                }
+                                    await Bucket.ReadAcl(s3req, s3resp);
+                                    return;
+                                } 
                             }
-                            else if (req.QuerystringEntries.ContainsKey("location"))
+                            else if (ctx.Request.QuerystringEntries.ContainsKey("location"))
                             {
                                 if (Bucket.ReadLocation != null)
                                 {
-                                    s3resp = Bucket.ReadLocation(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Bucket read location not implemented.");
-                                    return resp;
-                                }
+                                    await Bucket.ReadLocation(s3req, s3resp);
+                                    return;
+                                } 
                             }
-                            else if (req.QuerystringEntries.ContainsKey("tagging"))
+                            else if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
                             {
                                 if (Bucket.ReadTags != null)
                                 {
-                                    s3resp = Bucket.ReadTags(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Bucket read tags not implemented.");
-                                    return resp;
-                                }
+                                    await Bucket.ReadTags(s3req, s3resp);
+                                    return;
+                                } 
                             }
-                            else if (req.QuerystringEntries.ContainsKey("versions"))
+                            else if (ctx.Request.QuerystringEntries.ContainsKey("versions"))
                             {
                                 if (Bucket.ReadVersions != null)
                                 {
-                                    s3resp = Bucket.ReadVersions(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Bucket get versioning not implemented.");
-                                    return resp;
-                                }
+                                    await Bucket.ReadVersions(s3req, s3resp);
+                                    return;
+                                } 
                             }
-                            else if (req.QuerystringEntries.ContainsKey("versioning"))
+                            else if (ctx.Request.QuerystringEntries.ContainsKey("versioning"))
                             {
                                 if (Bucket.ReadVersioning != null)
                                 {
-                                    s3resp = Bucket.ReadVersioning(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Bucket get versioning not implemented.");
-                                    return resp;
-                                }
+                                    await Bucket.ReadVersioning(s3req, s3resp);
+                                    return;
+                                } 
                             }
                             else
                             {
                                 if (Bucket.Read != null)
                                 {
-                                    s3resp = Bucket.Read(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Bucket read not implemented.");
-                                    return resp;
-                                }
+                                    await Bucket.Read(s3req, s3resp);
+                                    return;
+                                } 
                             }
                         }
-                        else if (req.RawUrlEntries.Count >= 2)
+                        else if (ctx.Request.RawUrlEntries.Count >= 2)
                         {
-                            if (req.Headers.ContainsKey("Range"))
+                            if (ctx.Request.Headers.ContainsKey("Range"))
                             {
                                 if (Object.ReadRange != null)
                                 {
-                                    s3resp = Object.ReadRange(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object read range not implemented.");
-                                    return resp;
-                                }
+                                    await Object.ReadRange(s3req, s3resp);
+                                    return;
+                                } 
                             }
-                            else if (req.QuerystringEntries.ContainsKey("acl"))
+                            else if (ctx.Request.QuerystringEntries.ContainsKey("acl"))
                             {
                                 if (Object.ReadAcl != null)
                                 {
-                                    s3resp = Object.ReadAcl(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object read ACL not implemented.");
-                                    return resp;
-                                }
+                                    await Object.ReadAcl(s3req, s3resp);
+                                    return;
+                                } 
                             }
-                            else if (req.QuerystringEntries.ContainsKey("tagging"))
+                            else if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
                             {
                                 if (Object.ReadTags != null)
                                 {
-                                    s3resp = Object.ReadTags(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object read tags not implemented.");
-                                    return resp;
-                                }
+                                    await Object.ReadTags(s3req, s3resp);
+                                    return;
+                                } 
                             }
-                            else if (req.QuerystringEntries.ContainsKey("acl"))
+                            else if (ctx.Request.QuerystringEntries.ContainsKey("acl"))
                             {
                                 if (Object.ReadAcl != null)
                                 {
-                                    s3resp = Object.ReadAcl(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object read ACL not implemented.");
-                                    return resp;
-                                }
+                                    await Object.ReadAcl(s3req, s3resp);
+                                    return;
+                                } 
                             }
-                            else if (req.QuerystringEntries.ContainsKey("legal-hold"))
+                            else if (ctx.Request.QuerystringEntries.ContainsKey("legal-hold"))
                             {
                                 if (Object.ReadLegalHold != null)
                                 {
-                                    s3resp = Object.ReadLegalHold(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object read legal hold not implemented.");
-                                    return resp;
-                                }
+                                    await Object.ReadLegalHold(s3req, s3resp);
+                                    return;
+                                } 
                             }
-                            else if (req.QuerystringEntries.ContainsKey("retention"))
+                            else if (ctx.Request.QuerystringEntries.ContainsKey("retention"))
                             {
                                 if (Object.ReadRetention != null)
                                 {
-                                    s3resp = Object.ReadRetention(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object read retention not implemented.");
-                                    return resp;
-                                }
+                                    await Object.ReadRetention(s3req, s3resp);
+                                    return;
+                                } 
                             }
                             else
                             {
                                 if (Object.Read != null)
                                 {
-                                    s3resp = Object.Read(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object read not implemented.");
-                                    return resp;
-                                }
+                                    await Object.Read(s3req, s3resp);
+                                    return;
+                                } 
                             }
                         }
-                        else
-                        {
-                            resp = new HttpResponse(req, 400, null, "text/plain", Encoding.UTF8.GetBytes("Bad request."));
-                            return resp;
-                        }
+
+                        break;
 
                     #endregion
 
                     case HttpMethod.PUT:
                         #region PUT
 
-                        if (req.RawUrlEntries.Count == 1)
+                        if (ctx.Request.RawUrlEntries.Count == 1)
                         {
-                            if (req.QuerystringEntries.ContainsKey("acl"))
+                            if (ctx.Request.QuerystringEntries.ContainsKey("acl"))
                             {
                                 if (Bucket.WriteAcl != null)
                                 {
-                                    s3resp = Bucket.WriteAcl(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Bucket write tags not implemented.");
-                                    return resp;
-                                }
+                                    await Bucket.WriteAcl(s3req, s3resp);
+                                    return;
+                                } 
                             }
-                            else if (req.QuerystringEntries.ContainsKey("tagging"))
+                            else if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
                             {
                                 if (Bucket.WriteTags != null)
                                 {
-                                    s3resp = Bucket.WriteTags(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Bucket write tags not implemented.");
-                                    return resp;
-                                }
+                                    await Bucket.WriteTags(s3req, s3resp);
+                                    return;
+                                } 
                             }
-                            else if (req.QuerystringEntries.ContainsKey("versioning"))
+                            else if (ctx.Request.QuerystringEntries.ContainsKey("versioning"))
                             {
                                 if (Bucket.WriteVersioning != null)
                                 {
-                                    s3resp = Bucket.WriteVersioning(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Bucket set versioning not implemented.");
-                                    return resp;
-                                }
+                                    await Bucket.WriteVersioning(s3req, s3resp);
+                                    return;
+                                } 
                             }
                             else
                             {
                                 if (Bucket.Write != null)
                                 { 
-                                    s3resp = Bucket.Write(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Bucket write not implemented.");
-                                    return resp;
-                                }
+                                    await Bucket.Write(s3req, s3resp);
+                                    return;
+                                } 
                             }
                         }
-                        else if (req.RawUrlEntries.Count >= 2)
+                        else if (ctx.Request.RawUrlEntries.Count >= 2)
                         {
-                            if (req.QuerystringEntries.ContainsKey("tagging"))
+                            if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
                             {
                                 if (Object.WriteTags != null)
                                 {
-                                    s3resp = Object.WriteTags(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object write tags not implemented.");
-                                    return resp;
-                                }
+                                    await Object.WriteTags(s3req, s3resp);
+                                    return;
+                                } 
                             }
-                            else if (req.QuerystringEntries.ContainsKey("acl"))
+                            else if (ctx.Request.QuerystringEntries.ContainsKey("acl"))
                             {
                                 if (Object.WriteAcl != null)
                                 { 
-                                    s3resp = Object.WriteAcl(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object write ACL not implemented.");
-                                    return resp;
-                                }
+                                    await Object.WriteAcl(s3req, s3resp);
+                                    return;
+                                } 
                             }
-                            else if (req.QuerystringEntries.ContainsKey("legal-hold"))
+                            else if (ctx.Request.QuerystringEntries.ContainsKey("legal-hold"))
                             {
                                 if (Object.WriteLegalHold != null)
                                 { 
-                                    s3resp = Object.WriteLegalHold(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object write legal hold not implemented.");
-                                    return resp;
-                                }
+                                    await Object.WriteLegalHold(s3req, s3resp);
+                                    return;
+                                } 
                             }
-                            else if (req.QuerystringEntries.ContainsKey("retention"))
+                            else if (ctx.Request.QuerystringEntries.ContainsKey("retention"))
                             {
                                 if (Object.WriteRetention != null)
                                 { 
-                                    s3resp = Object.WriteRetention(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object write retention not implemented.");
-                                    return resp;
-                                }
+                                    await Object.WriteRetention(s3req, s3resp);
+                                    return;
+                                } 
                             }
                             else
                             {
                                 if (Object.Write != null)
                                 {
-                                    if (IsChunkTransferEncoded(s3req))
-                                    {
-                                        byte[] decodedData = null;
-                                        long decodedContentLength = 0;
-                                        if (!_Decoder.Decode(s3req.Data, out decodedData))
-                                        {
-                                            s3resp = new S3Response(s3req, 400, "text/plain", null, Encoding.UTF8.GetBytes("Decode error"));
-                                        }
-                                        else
-                                        {
-                                            s3req.ContentLength = decodedContentLength;
-                                            s3req.Data = new byte[decodedData.Length];
-                                            Buffer.BlockCopy(decodedData, 0, s3req.Data, 0, decodedData.Length);
-                                            s3resp = Object.Write(s3req);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        s3resp = Object.Write(s3req);
-                                    }
-
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object write not implemented.");
-                                    return resp;
-                                }
+                                    await Object.Write(s3req, s3resp);
+                                    return;
+                                } 
                             }
                         }
-                        else
-                        {
-                            resp = new HttpResponse(req, 400, null, "text/plain", Encoding.UTF8.GetBytes("Bad request."));
-                            return resp;
-                        }
+
+                        break;
 
                     #endregion
 
                     case HttpMethod.POST:
                         #region POST
 
-                        if (req.RawUrlEntries.Count >= 1)
+                        if (ctx.Request.RawUrlEntries.Count >= 1)
                         {
-                            if (req.QuerystringEntries.ContainsKey("delete"))
+                            if (ctx.Request.QuerystringEntries.ContainsKey("delete"))
                             {
                                 if (Object.DeleteMultiple != null)
                                 { 
-                                    s3resp = Object.DeleteMultiple(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object delete multiple not implemented.");
-                                    return resp;
-                                }
-                            } 
-                            else
-                            {
-                                resp = new HttpResponse(req, 400, null, "text/plain", Encoding.UTF8.GetBytes("Bad request."));
-                                return resp;
-                            }
-                        } 
-                        else
-                        {
-                            resp = new HttpResponse(req, 400, null, "text/plain", Encoding.UTF8.GetBytes("Bad request."));
-                            return resp;
+                                    await Object.DeleteMultiple(s3req, s3resp);
+                                    return;
+                                } 
+                            }  
                         }
+
+                        break;
 
                     #endregion
 
                     case HttpMethod.DELETE:
                         #region DELETE
 
-                        if (req.RawUrlEntries.Count == 1)
+                        if (ctx.Request.RawUrlEntries.Count == 1)
                         {
-                            if (req.QuerystringEntries.ContainsKey("tagging"))
+                            if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
                             {
                                 if (Bucket.DeleteTags != null)
                                 {
-                                    s3resp = Bucket.DeleteTags(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Bucket delete tags not implemented.");
-                                    return resp;
-                                }
+                                    await Bucket.DeleteTags(s3req, s3resp);
+                                    return;
+                                } 
                             }
                             else
                             {
                                 if (Bucket.Delete != null)
                                 {
-                                    s3resp = Bucket.Delete(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Bucket delete not implemented.");
-                                    return resp;
-                                }
+                                    await Bucket.Delete(s3req, s3resp);
+                                    return;
+                                } 
                             }
                         }
-                        else if (req.RawUrlEntries.Count >= 2)
+                        else if (ctx.Request.RawUrlEntries.Count >= 2)
                         {
-                            if (req.QuerystringEntries.ContainsKey("tagging"))
+                            if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
                             {
                                 if (Object.DeleteTags != null)
                                 {
-                                    s3resp = Object.DeleteTags(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object delete tags not implemented.");
-                                    return resp;
-                                }
+                                    await Object.DeleteTags(s3req, s3resp);
+                                    return;
+                                } 
                             }
                             else
                             {
                                 if (Object.Delete != null)
                                 {
-                                    s3resp = Object.Delete(s3req);
-                                    if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                                    resp = s3resp.ToHttpResponse();
-                                    return resp;
-                                }
-                                else
-                                {
-                                    resp.Data = Encoding.UTF8.GetBytes("Unknown endpoint.  Object delete not implemented.");
-                                    return resp;
-                                }
+                                    await Object.Delete(s3req, s3resp);
+                                    return;
+                                } 
                             }
-                        }
-                        else
-                        {
-                            resp = new HttpResponse(req, 400, null, "text/plain", Encoding.UTF8.GetBytes("Bad request."));
-                            return resp;
-                        }
+                        } 
+
+                        break;
 
                     #endregion
 
                     default:
                         if (DefaultRequestHandler != null)
                         {
-                            S3Response defaultResp = DefaultRequestHandler(s3req);
-                            if (PostRequestHandler != null) PostRequestHandler(s3req, defaultResp);
-                            resp = defaultResp.ToHttpResponse();
+                            await DefaultRequestHandler(s3req, s3resp);
+                            return;
                         }
-                        else
-                        {
-                            s3resp = new S3Response(s3req, 400, "text/plain", null, Encoding.UTF8.GetBytes("Unknown endpoint."));
-                            if (PostRequestHandler != null) PostRequestHandler(s3req, s3resp);
-                            resp = s3resp.ToHttpResponse();
-                        }
-                        return resp;
+                        break;
                 }
+
+                await Send400Response(s3resp);
+                return;
             }
             catch (Exception e)
             {
@@ -831,33 +532,59 @@ namespace S3ServerInterface
                     Console.WriteLine(Common.SerializeJson(e, true));
                 }
 
-                resp = new HttpResponse(req, 500, null, "text/plain", "");
-                return resp;
+                await Send500Response(s3resp, e);
+                return;
             }
             finally
-            {
+            { 
                 if (ConsoleDebug.HttpRequests)
                 {
                     Console.WriteLine(
-                        req.SourceIp + ":" + 
-                        req.SourcePort + " " + 
-                        req.Method.ToString() + " " + 
-                        req.RawUrlWithoutQuery + " " + 
-                        resp.StatusCode + 
-                        " [" + Common.TotalMsFrom(startTime) + "]");
+                        ctx.Request.SourceIp + ":" +
+                        ctx.Request.SourcePort + " " +
+                        ctx.Request.Method.ToString() + " " +
+                        ctx.Request.RawUrlWithoutQuery + " " +
+                        s3resp.StatusCode + 
+                        " [" + Common.TotalMsFrom(startTime) + "ms]");
                 }
             }
         }
 
-        private bool IsChunkTransferEncoded(S3Request req)
+        private async Task SendUnknownEndpointResponse(S3Response resp, string endpoint)
         {
-            string headerTest = req.RetrieveHeaderValue("X-Amz-Content-SHA256");
-            if (!String.IsNullOrEmpty(headerTest))
-            {
-                if (headerTest.Contains("STREAMING")) return true;
-            }
+            resp.StatusCode = 400;
+            resp.ContentType = "text/plain";
+            await resp.Send("Unknown endpoint: " + endpoint);
+        }
 
-            return false;
+        private async Task Send400Response(S3Response resp)
+        {
+            resp.StatusCode = 400;
+            resp.ContentType = "text/plain";
+            await resp.Send("Bad request");
+        }
+
+        private async Task Send500Response(S3Response resp, Exception e)
+        {
+            resp.StatusCode = 500;
+            resp.ContentLength = 0;
+            resp.Data = new MemoryStream();
+            resp.ContentType = "text/plain";
+
+            string msg = null;
+
+            if (SendExceptionsInResponses)
+            {
+                resp.ContentType = "application/json";
+                msg = Common.SerializeJson(e, true);
+            }
+            else
+            {
+                msg = "Internal server error";
+            }
+             
+            await resp.Send(msg);
+            return;
         }
 
         #endregion

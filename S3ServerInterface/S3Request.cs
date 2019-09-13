@@ -4,6 +4,8 @@ using System.IO;
 using System.Net;
 using System.Runtime.Serialization;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using WatsonWebserver; 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -24,9 +26,9 @@ namespace S3ServerInterface
         public DateTime TimestampUtc { get; set; }
 
         /// <summary>
-        /// HTTP request from which this response was created.
+        /// HTTP context from which this response was created.
         /// </summary>
-        public HttpRequest Http { get; set; }
+        public HttpContext Http { get; set; } 
 
         /// <summary>
         /// IP address of the client.
@@ -69,6 +71,11 @@ namespace S3ServerInterface
         public string ContentType { get; set; }
 
         /// <summary>
+        /// Indicates if chunked transfer-encoding is in use.
+        /// </summary>
+        public bool Chunked { get; set; }
+
+        /// <summary>
         /// URL querystring.
         /// </summary>
         public Dictionary<string, string> Querystring { get; set; }
@@ -104,6 +111,16 @@ namespace S3ServerInterface
         public string Key { get; set; }
 
         /// <summary>
+        /// Object key prefix.
+        /// </summary>
+        public string Prefix { get; set; }
+
+        /// <summary>
+        /// Maximum number of keys to retrieve in an enumeration.
+        /// </summary>
+        public long MaxKeys { get; set; }
+
+        /// <summary>
         /// Object version ID.
         /// </summary>
         public string VersionId { get; set; }
@@ -122,49 +139,18 @@ namespace S3ServerInterface
         /// Access key, parsed from authorization header.
         /// </summary>
         public string AccessKey { get; set; }
-
-        /// <summary>
-        /// Request body.
-        /// </summary>
-        public byte[] Data
-        {
-            get
-            {
-                return _Data;
-            }
-            set
-            {
-                _Data = value;
-                if (value != null) ContentLength = value.Length;
-                _UseStream = false;
-            }
-        }
-
+         
         /// <summary>
         /// Stream containing the request body.
         /// </summary>
-        public Stream DataStream
-        {
-            get
-            {
-                return _DataStream;
-            }
-            set
-            {
-                _Data = null;
-                _DataStream = value;
-                _UseStream = true;
-            }
-        }
+        [JsonIgnore]
+        public Stream Data { get; set; }
 
         #endregion
 
         #region Private-Members
 
-        private bool _Debug = false;
-        private bool _UseStream = false;
-        private byte[] _Data = null; 
-        private Stream _DataStream = null;
+        private bool _Debug = false;  
         
         #endregion
 
@@ -179,86 +165,72 @@ namespace S3ServerInterface
         }
 
         /// <summary>
-        /// Instantiate the object and populate from an HTTP request.
+        /// Instantiates the object.
         /// </summary>
-        /// <param name="req">HttpRequest.</param>
-        public S3Request(HttpRequest req, bool debug)
-        { 
-            if (req == null) throw new ArgumentNullException(nameof(req));
+        /// <param name="ctx">HttpContext.</param>
+        /// <param name="debug"></param>
+        /// <param name="debug">Enable or disable console logging of construction.</param> 
+        public S3Request(HttpContext ctx, bool debug)
+        {
+            if (ctx == null) throw new ArgumentNullException(nameof(ctx));
+            if (ctx.Request == null) throw new ArgumentNullException(nameof(ctx.Request));
 
             _Debug = debug;
+
+            Http = ctx;
 
             #region Initialize
 
             TimestampUtc = DateTime.Now.ToUniversalTime();
-            Http = req;
-            SourceIp = req.SourceIp;
-            SourcePort = req.SourcePort;
-            Method = req.Method;
-            FullUrl = req.FullUrl;
-            RawUrl = req.RawUrlWithoutQuery;
+            SourceIp = Http.Request.SourceIp;
+            SourcePort = Http.Request.SourcePort;
+            Method = Http.Request.Method;
+            FullUrl = Http.Request.FullUrl;
+            RawUrl = Http.Request.RawUrlWithoutQuery;
             while (RawUrl.Contains("\\\\")) RawUrl.Replace("\\\\", "\\");
 
-            RawUrlEntries = req.RawUrlEntries;
-            ContentLength = 0;
-            ContentType = req.ContentType;
-            Querystring = req.QuerystringEntries;
-            Headers = req.Headers;
+            RawUrlEntries = Http.Request.RawUrlEntries;
+            ContentLength = Http.Request.ContentLength;
+            ContentType = Http.Request.ContentType;
+            Chunked = Http.Request.ChunkedTransfer;
+            Querystring = Http.Request.QuerystringEntries;
+            Headers = Http.Request.Headers;
             Region = null;
-            Hostname = req.DestHostname;
+            Hostname = Http.Request.DestHostname;
             Style = RequestStyle.Unknown;
             Bucket = null;
             Key = null;
             Authorization = null;
             AccessKey = null;
-            Data = null;
-            DataStream = null;
+            Data = Http.Request.Data;
 
             #endregion
 
-            #region Set-Data-and-Content-Length
+            #region Set-Authorization-Access-Key-and-Streaming
 
-            if (req.Data != null && req.Data.Length > 0)
-            {
-                ContentLength = req.Data.Length;
-                Data = new byte[req.Data.Length];
-                Buffer.BlockCopy(req.Data, 0, Data, 0, req.Data.Length);
-                _UseStream = false;
-            }
-
-            if (req.DataStream != null)
-            {
-                DataStream = req.DataStream;
-                ContentLength = req.ContentLength;
-                _UseStream = true;
-            }
-
-            #endregion
-
-            #region Set-Authorization-and-Access-Key
-            
             if (Headers != null && Headers.Count > 0)
             {
                 if (Headers.ContainsKey("Authorization"))
                 {
                     if (_Debug) Console.WriteLine("Processing Authorization header");
 
-                    Authorization = Headers["Authorization"]; 
-                    string accessKey = null;
-                    string signature = null;
-                    string region = null;
-                    ParseAuthorizationHeader(Authorization, out accessKey, out signature, out region);
+                    Authorization = Headers["Authorization"];
+                    ParseAuthorizationHeader(Authorization, out string accessKey, out string signature, out string region);
 
                     if (!String.IsNullOrEmpty(accessKey)) AccessKey = accessKey;
                     if (!String.IsNullOrEmpty(region)) Region = region;
                     if (!String.IsNullOrEmpty(signature)) Signature = signature;
                 }
             }
+             
+            string sha256content = Http.Request.RetrieveHeaderValue("X-Amz-Content-SHA256");
+            if (!String.IsNullOrEmpty(sha256content))
+                if (sha256content.Contains("STREAMING")) Chunked = true;
 
             #endregion
 
             #region Set-Region-Bucket-Style-and-Key
-             
+
             if (!String.IsNullOrEmpty(Hostname) && !String.IsNullOrEmpty(RawUrl))
             {
                 string bucketName = null;
@@ -282,18 +254,34 @@ namespace S3ServerInterface
 
             #endregion
 
-            #region Set-Version-ID
+            #region Set-Parameters-from-Querystring
 
-            if (req.QuerystringEntries != null && req.QuerystringEntries.ContainsKey("versionId"))
+            if (Http.Request.QuerystringEntries != null && Http.Request.QuerystringEntries.ContainsKey("versionId"))
             {
-                VersionId = req.QuerystringEntries["versionId"];
+                VersionId = Http.Request.QuerystringEntries["versionId"];
             }
 
-            #endregion
+            if (Http.Request.QuerystringEntries != null && Http.Request.QuerystringEntries.ContainsKey("prefix"))
+            {
+                Prefix = Http.Request.QuerystringEntries["prefix"];
+            }
 
-            return;
+            if (Http.Request.QuerystringEntries != null && Http.Request.QuerystringEntries.ContainsKey("max-keys"))
+            {
+                long maxKeys = 0;
+                if (!Int64.TryParse(Http.Request.QuerystringEntries["max-keys"], out maxKeys))
+                {
+                    MaxKeys = 0;
+                }
+                else
+                {
+                    MaxKeys = maxKeys;
+                }
+            }
+
+            #endregion 
         }
-         
+
         #endregion
 
         #region Public-Methods
@@ -350,29 +338,15 @@ namespace S3ServerInterface
             ret += "  Signature      : " + Signature + Environment.NewLine;
             ret += "  AccessKey      : " + AccessKey + Environment.NewLine;
 
-            ret += "  Data           : ";
-            if (_UseStream)
+            ret += "  Data           : "; 
+            if (Data != null)
             {
-                if (DataStream != null)
-                {
-                    ret += "(stream)" + Environment.NewLine;
-                }
-                else
-                {
-                    ret += "(none)" + Environment.NewLine;
-                }
+                ret += "(stream, " + ContentLength + " bytes)" + Environment.NewLine;
             }
             else
             {
-                if (Data != null && Data.Length > 0)
-                {
-                    ret += Data.Length + " bytes" + Environment.NewLine;
-                }
-                else
-                {
-                    ret += "(none)" + Environment.NewLine;
-                }
-            }
+                ret += "(none)" + Environment.NewLine;
+            } 
 
             return ret;
         }
@@ -384,13 +358,22 @@ namespace S3ServerInterface
         /// <returns>Value.</returns>
         public string RetrieveHeaderValue(string key)
         {
-            return Http.RetrieveHeaderValue(key);
+            return Http.Request.RetrieveHeaderValue(key);
+        }
+
+        /// <summary>
+        /// Read a chunk from the request body.
+        /// </summary>
+        /// <returns>Chunk.</returns>
+        public async Task<Chunk> ReadChunk()
+        {
+            return await Http.Request.ReadChunk();
         }
 
         #endregion
 
         #region Private-Methods
-
+         
         private void ParseAuthorizationHeader(
             string authHeader, 
             out string accessKey, 

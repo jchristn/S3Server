@@ -10,14 +10,16 @@ Simple S3 server-side interface, produced using Amazon's public documentation.
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v1.5.x
+## New in v2.0.x
 
-- Added support for object keys that include '/'
-- Added support for GET bucket location API and LocationConstraint object
-- Automatically add ```X-Amz-Date```, ```Host```, and ```Server``` headers to S3Response if not supplied
-- Stream support (more efficient memory use, support for large objects)
-- Classes for commonly-used S3 server requests and responses
-- Added VersionId to S3Request
+- Breaking changes
+- Async task-based callbacks
+- Changes to callback signatures (response object is now also included) and to how responses are sent
+- Stream support to better support large objects, memory efficiency, and throughput
+- Better support for chunked transfer-encoding both on request as well as sending the response
+- Added ```Prefix``` and ```MaxKeys``` to ```S3Request```
+- Reliability and performance fixes
+- Dependency updates
 
 ## Examples
 
@@ -28,8 +30,7 @@ Refer to ```S3ClientTest``` and ```S3ServerTest``` projects for full examples.
 The following notes should be read prior to using S3ServerInterface:
 
 - IP addresses are not supported for the hostname.  You *must* use ```localhost``` or a DNS FQDN.
-- If you use ```*``` or ```+``` for the hostname, you *must* run under administrative privileges.
-- Chunk encoding is not supported.  It *must* be disabled in the client SDK
+- If you use ```*``` or ```+``` for the hostname, you *must* run under administrative privileges. 
 - Bucket names *must* appear in the URL and not in the hostname, i.e. ```ForcePathStyle```.
 
 ## Server
@@ -38,7 +39,7 @@ The following notes should be read prior to using S3ServerInterface:
 using S3ServerInterface;
 
 // Initialize the server
-_Server = new S3Server("+", 8000, false, DefaultRequestHandler// host, port, SSL
+_Server = new S3Server("+", 8000, false, DefaultRequestHandler); // host, port, SSL
 
 // Set callbacks
 _Server.Bucket.Exists = BucketExists;
@@ -51,16 +52,18 @@ _Server.Object.Delete = ObjectDelete;
 // etc
 
 // Example callback definition
-static S3Response DefaultRequestHandler(S3Request req)
+static async Task DefaultRequestHandler(S3Request req, S3Response resp)
 {
-   // unknown API
-   return new S3Response(req, 400, "text/plain", null, Encoding.UTF8.GetBytes("Unknown API"));
+	resp.StatusCode = 400;
+	resp.ContentType = "text/plain";
+	resp.Send("Bad request");
 }
 
 static S3Response BucketExists(S3Request req)
 {
    // implement your logic here
-   return new S3Response(req, 200, "text/plain", null, Encoding.UTF8.GetBytes("Hello, world!"));
+   resp.StatusCode = 200;
+   resp.Send();
 }
 ```
 
@@ -86,99 +89,133 @@ IAmazonS3 client = new AmazonS3Client(cred, config);
 
 ## Request and Responses
 
-An ```S3Request``` object is passed to the callback, and in certain cases, an object of the type ```S3Objects.*``` is passed along with it.  S3ServerInterface expects an ```S3Response``` in return.  S3ServerInterface will parse the request body for you and place it into an object of the type ```S3Objects.*``` where appropriate, but it is up to you to create well-formed responses.
+Both an ```S3Request``` and ```S3Response``` object are passed to the callback.  
+
+S3ServerInterface expects the code you implement in your callbacks to directly set values in the supplied ```S3Response``` and trigger the end of the connection either:
+
+- When chunk transfer-encoding is not indicated in the request, through the use of one of the ```Send()``` APIs
+- When chunk transfer-encoding is indicated in the request, through the use of ```SendChunk()``` and ```SendFinalChunk()``` APIs
+- Whether chunk transfer-encoding is enabled or disabled, through the use of ```Send(ErrorCode)``` API
+
+S3ServerInterface provides a series of classes that you can use to deserialize request bodies or to serialize your responses.  These are in the namespace ```S3ServerInterface.S3Objects```.
 
 ### S3Request
 ```
-public HttpRequest Http;
-public string SourceIp;
-public int SourcePort;
-public HttpMethod Method;
-public string FullUrl;
-public string RawUrl;
-public long ContentLength;
-public string ContentType;
-public Dictionary<string, string> Querystring;
-public Dictionary<string, string> Headers;
-public string Region;
-public string Hostname;
-public RequestStyle Style;
-public string Bucket;
-public string Key;
-public string VersionId;
-public string Authorization;
-public string Signature;
-public string AccessKey;
-public byte[] Data;        // see note below
-public Stream DataStream;  // see note below
+public DateTime TimestampUtc { get; set; }
+public HttpContext Http { get; set; } 
+public string SourceIp { get; set; }
+public int SourcePort { get; set; }
+public HttpMethod Method { get; set; }
+public string FullUrl { get; set; }
+public string RawUrl { get; set; }
+public List<string> RawUrlEntries { get; set; }
+public long ContentLength { get; set; }
+public string ContentType { get; set; }
+public bool Chunked { get; set; }
+public Dictionary<string, string> Querystring { get; set; }
+public Dictionary<string, string> Headers { get; set; }
+public string Region { get; set; }
+public string Hostname { get; set; }
+public RequestStyle Style { get; set; }
+public string Bucket { get; set; }
+public string Key { get; set; }
+public string VersionId { get; set; }
+public string Authorization { get; set; }
+public string Signature { get; set; }
+public string AccessKey { get; set; }
+public Stream Data { get; set; }
 ```
 
 ### S3Response
 ```
-public S3Request Request;
-public int StatusCode;
-public Dictionary<string, string> Headers;
-public string ContentType;
-public long ContentLength;
-public byte[] Data;         // see note below
-public Stream DataStream;   // see note below
+public int StatusCode { get; set; }
+public Dictionary<string, string> { get; set; }
+public string ContentType { get; set; }
+public long ContentLength { get; set; }
+public Stream Data { get; set; }
+public bool Chunked { get; set; }
 ```
 
-### Important: Streams vs Bytes
+### Reading Request Body Data
 
-If you wish to use ```S3Request.Data``` and ```S3Response.Data```, set ```S3Server.ReadStreamFully``` to ```true```.
+All request body metadata is included in the ```S3Request``` object and all payload/request body data is included in ```S3Request.Data```.
 
-Otherwise, leave ```S3Server.ReadStreamFully``` as ```false```, and use ```S3Request.DataStream``` and ```S3Response.DataStream```.
+If ```S3Request.Chunked``` is **TRUE**, then request body data should be read from the ```S3Request``` object using ```S3Request.ReadChunk()```.  This method returns a ```Chunk``` object which is of the form:
 
-Using ```DataStream``` has several advantages, including memory utilization efficiency and better support for large objects.
+```        
+public int Length;
+public byte[] Data;
+public string Metadata;
+public bool IsFinalChunk;
+```
+
+If ```S3Request.Chunk``` is **FALSE**, then the request body can be read directly from ```S3Request.Data``` using the content length specified in ```S3Request.ContentLength```.
+
+```
+byte[] buffer = new byte[65536];
+long bytesRemaining = req.ContentLength;
+while (bytesRemaining > 0)
+{
+	int bytesRead = req.Data.ReadAsync(buffer, 0, buffer.Length);
+	if (bytesRead > 0)
+	{
+		// do something with data in buffer from 0 to bytesRead
+	}
+}
+```
 
 ## Operation
 
-S3ServerInterface parses incoming HTTP requests, extracting key pieces of information to determine the type of request sent by the caller.  The logic to handle these requests is NOT provided by S3ServerInterface; you have to create that logic yourself.  Callbacks are called when a request of that type has been received, otherwise, a 500 error is returned to the client.
+S3ServerInterface parses incoming HTTP requests, extracting key pieces of information to determine the type of request sent by the caller.  The logic to handle these requests is NOT provided by S3ServerInterface; you have to create that logic yourself in your callbacks.  Callbacks are called when a request of that type has been received, otherwise, a generic 400 error is returned to the client.
 
 Refer to https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html for the S3 API documentation used to create this project.
 
-As of v1.4.x, the following callbacks are supported:
+As of v2.0.x, the following callbacks are supported:
 
 ### Bucket Callbacks
 
-| Callback Name            | Description                       |
-|--------------------------|-----------------------------------|
-| Bucket.Exists            | Check if a bucket exists          |
-| Bucket.Write             | Create a bucket                   |
-| Bucket.WriteAcl          | Write an ACL to a bucket          |
-| Bucket.WriteTags         | Write tags to a bucket            |
-| Bucket.Read              | Enumerate a bucket                |
-| Bucket.ReadLocation      | Retrieve a bucket's region        |
-| Bucket.ReadAcl           | Read ACL on a bucket              |
-| Bucket.ReadTags          | Read tags on a bucket             |
-| Bucket.DeleteTags        | Delete tags from a bucket         |
-| Bucket.SetVersioning     | Set bucket versioning             |
-| Bucket.GetVersioning     | Get bucket versioning             |
+| Callback Name            | Description                       | Method | URL                  |
+|--------------------------|-----------------------------------|--------|----------------------|
+| Bucket.Exists            | Check if a bucket exists          | HEAD   | /[bucket]            |
+| Bucket.Write             | Create a bucket                   | PUT    | /[bucket]            |
+| Bucket.WriteAcl          | Write an ACL to a bucket          | PUT    | /[bucket]?acl        |
+| Bucket.WriteTags         | Write tags to a bucket            | PUT    | /[bucket]?tags       |
+| Bucket.Read              | Enumerate a bucket                | GET    | /[bucket]            |
+| Bucket.ReadLocation      | Retrieve a bucket's region        | GET    | /[bucket]?location   |
+| Bucket.ReadAcl           | Read ACL on a bucket              | GET    | /[bucket]?acl        |
+| Bucket.ReadTags          | Read tags on a bucket             | GET    | /[bucket]?tags       |
+| Bucket.ReadVersions      | Read object versions in a bucket  | GET    | /[bucket]?versions   |
+| Bucket.DeleteTags        | Delete tags from a bucket         | GET    | /[bucket]?tags       |
+| Bucket.SetVersioning     | Set bucket versioning             | PUT    | /[bucket]?versioning |
+| Bucket.GetVersioning     | Get bucket versioning             | PUT    | /[bucket]?versioning |
+
 
 ### Object Callbacks
 
-| Callback Name            | Description                                    |
-|--------------------------|------------------------------------------------|
-| Object.Exists            | Check if an object exists                      |
-| Object.Write             | Write an object                                |
-| Object.WriteAcl          | Write an object access control list            |
-| Object.WriteTags         | Write tags to an object                        |
-| Object.WriteLegalHold    | Write a legal hold status to an object         |
-| Object.WriteRetention    | Write a retention status to an object          |
-| Object.Read              | Read an object                                 |
-| Object.ReadAcl           | Read an object's access control list           |
-| Object.ReadRange         | Read a range of bytes from an object           |
-| Object.ReadTags          | Read an object's tags                          |
-| Object.ReadLegalHold     | Read an object's legal hold status             |
-| Object.ReadRetention     | Read an object's retention status              |
-| Object.Delete            | Delete an object                               |
-| Object.DeleteTags        | Delete an object's tags                        |
-| Object.DeleteMultiple    | Delete multiple objects                        |
+| Callback Name            | Description                             | Method | URL                         |
+|--------------------------|-----------------------------------------|--------|-----------------------------|
+| Object.Exists            | Check if an object exists               | HEAD   | /[bucket]/[key]             |
+| Object.Write             | Write an object                         | PUT    | /[bucket]/[key]             |
+| Object.WriteAcl          | Write an object access control list     | PUT    | /[bucket]/[key]?acl         |
+| Object.WriteTags         | Write tags to an object                 | PUT    | /[bucket]/[key]?tags        |
+| Object.WriteLegalHold    | Write a legal hold status to an object  | PUT    | /[bucket]/[key]?legal-hold  |
+| Object.WriteRetention    | Write a retention status to an object   | PUT    | /[bucket]/[key]?retention   |
+| Object.Read              | Read an object                          | GET    | /[bucket]/[key]             |
+| Object.ReadAcl           | Read an object's access control list    | GET    | /[bucket]/[key]?acl         |
+| Object.ReadRange         | Read a range of bytes from an object    | GET    | /[bucket]/[key]^1           |
+| Object.ReadTags          | Read an object's tags                   | GET    | /[bucket]/[key]?tags        |
+| Object.ReadLegalHold     | Read an object's legal hold status      | GET    | /[bucket]/[key]?legal-hold  |
+| Object.ReadRetention     | Read an object's retention status       | GET    | /[bucket]/[key]?retention   |
+| Object.Delete            | Delete an object                        | DELETE | /[bucket]/[key]             |
+| Object.DeleteTags        | Delete an object's tags                 | DELETE | /[bucket]/[key]?tags        |
+| Object.DeleteMultiple    | Delete multiple objects                 | POST   | /[bucket]?delete^2          |
+
+^1 Refer to the Bytes header in ```S3Request.Headers``` for the range that should be retrieved.
+^2 A delete multiple request body must be supplied.
 
 ### Unsupported / Not Yet Available
 
-Operations against the service or AWS accounts is not exposed through callbacks.
+Operations against the service or AWS accounts is not exposed through callbacks.  
 
 The following bucket operations are not exposed through callbacks:
 
@@ -207,38 +244,8 @@ The following object operations are not exposed through callbacks:
 - Restore 
 - Torrent
 
-## Future Enhancements
-
-The roadmap for this project includes:
-
-- Adding stream support (instead of byte arrays for data in the request and response) 
-- Adding more callbacks for the ones listed above as not supported / not yet available
-- Better error handling (using native Error objects) and greater degrees of abstraction (more streamlined API callbacks)
+These items may be addressed in a future release.
 
 ## Version History
 
-v1.4.x
-
-- Added Service callbacks including ListBuckets
-- TimestampUtc in both S3Response/S3Request
-- Owner, Error, and ErrorCode objects
-- Now supports authorization v2 and v4 headers
-
-v1.3.x
-
-- Legal hold and retention callbacks
-
-v1.2.x
-
-- Default request handler (when no appropriate callback can be found) caused breaking change to constructor
-- Pre-request handler (to allow you to implement your own APIs prior to attempting to match an S3 API)
-- Additional constructors
-- Various console debugging settings can be found in ```S3Server.ConsoleDebug.*``` 
-
-v1.1.x
-
-- Separate callbacks for each of the various operations (breaking change)
-
-v1.0.x
-
-- Initial release, one request handler method
+Refer to CHANGELOG.md for details.

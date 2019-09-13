@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-
-using S3ServerInterface;
-
+using System.Threading;
+using System.Threading.Tasks;
+ 
 namespace S3ServerInterface
 {
+    /// <summary>
+    /// Callback methods for service operations.
+    /// </summary>
     public class ServiceCallbacks
     {
         #region Public-Members
@@ -14,7 +17,7 @@ namespace S3ServerInterface
         /// List all buckets.
         /// Success: return an S3Response object with status 200 and ListAllMyBucketsResult in the body.
         /// </summary>
-        public Func<S3Request, S3Response> ListBuckets = null;
+        public Func<S3Request, S3Response, Task> ListBuckets = null;
 
         #endregion
 

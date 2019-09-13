@@ -599,7 +599,7 @@ namespace S3ClientTest
         static void BucketExists()
         {
             string id = Common.InputString("Bucket:", null, false);
-            Console.WriteLine("Exists: " + AmazonS3Util.DoesS3BucketExistAsync(_S3Client, id).Result);
+            Console.WriteLine("Exists: " + AmazonS3Util.DoesS3BucketExistV2Async(_S3Client, id).Result);
         }
 
         #endregion
