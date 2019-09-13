@@ -149,7 +149,7 @@ public string Metadata;
 public bool IsFinalChunk;
 ```
 
-If ```S3Request.Chunk``` is **FALSE**, then the request body can be read directly from ```S3Request.Data``` using the content length specified in ```S3Request.ContentLength```.
+If ```S3Request.Chunked``` is **FALSE**, then the request body can be read directly from ```S3Request.Data``` using the content length specified in ```S3Request.ContentLength```.
 
 ```
 byte[] buffer = new byte[65536];
