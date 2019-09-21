@@ -10,16 +10,9 @@ Simple S3 server-side interface, produced using Amazon's public documentation.
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v2.0.x
+## New in v2.0.1.2
 
-- Breaking changes
-- Async task-based callbacks
-- Changes to callback signatures (response object is now also included) and to how responses are sent
-- Stream support to better support large objects, memory efficiency, and throughput
-- Better support for chunked transfer-encoding both on request as well as sending the response
-- Added ```Prefix``` and ```MaxKeys``` to ```S3Request```
-- Reliability and performance fixes
-- Dependency updates
+- XML documentation
 
 ## Examples
 

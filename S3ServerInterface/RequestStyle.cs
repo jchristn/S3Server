@@ -14,10 +14,19 @@ namespace S3ServerInterface
     [JsonConverter(typeof(StringEnumConverter))]
     public enum RequestStyle
     {
+        /// <summary>
+        /// Unknown request style.
+        /// </summary>
         [EnumMember(Value = "Unknown")]
         Unknown,
+        /// <summary>
+        /// Bucket is not in the hostname, rather, it is in the URL.
+        /// </summary>
         [EnumMember(Value = "BucketNotInHostname")]
         BucketNotInHostname,
+        /// <summary>
+        /// Bucket is in the hostname and not in the URL.
+        /// </summary>
         [EnumMember(Value = "BucketInHostname")]
         BucketInHostname
     }

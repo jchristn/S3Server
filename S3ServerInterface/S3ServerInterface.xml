@@ -1,0 +1,628 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>S3ServerInterface</name>
+    </assembly>
+    <members>
+        <member name="T:S3ServerInterface.BucketCallbacks">
+            <summary>
+            Callback methods for bucket operations.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.ReadLocation">
+            <summary>
+            Retrieve location (region) constraint from the server for this bucket.
+            Success: return an S3Response object with status 200 and LocationConstraint in the body.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.Exists">
+            <summary>
+            Check for the existence of a bucket.
+            Success: return an S3Response object with status 200.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.Write">
+            <summary>
+            Write a bucket.  
+            Success: return an S3Response object with status 200.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.WriteAcl">
+            <summary>
+            Write an ACL to a bucket, deleting the previous ACL.
+            Success: return an S3Response object with status 200.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.WriteTags">
+            <summary>
+            Write tags to a bucket, deleting the previous tags.
+            Success: return an S3Response object with status 204.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.WriteVersioning">
+            <summary>
+            Set a bucket's versioning policy.  
+            Success: return an S3Response object with status 200.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.Read">
+            <summary>
+            Enumerate a bucket.  
+            Success: return an S3Response object with status 200 and a ListBucketResult object as its data.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.ReadAcl">
+            <summary>
+            Read a bucket's access control policy.
+            Success: return an S3Response object with status 200 and an AccessControlPolicy object as its data.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.ReadTags">
+            <summary>
+            Read a bucket's tags. 
+            Success: return an S3Response object with status 200 and a Tagging object as its data. 
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.ReadVersions">
+            <summary>
+            Get a list of object versions in the bucket. 
+            Success: return an S3Response object with status 200 and a ListVersionsResult object as its data.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.ReadVersioning">
+            <summary>
+            Get a bucket's versioning policy.  
+            Success: return an S3Response object with status 200 and a VersioningConfiguration object as its data.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.Delete">
+            <summary>
+            Delete a bucket.  
+            Success: return an S3Response object with status 204. 
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.DeleteTags">
+            <summary>
+            Delete a bucket's tags. 
+            Success: return an S3Response object with status 204. 
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.BucketCallbacks.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.Callbacks.ObjectCallbacks">
+            <summary>
+            Callback methods for object operations.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.Callbacks.ObjectCallbacks.Exists">
+            <summary>
+            Check for the existence of an object.  
+            Success: return an S3Response object with status 200.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.Callbacks.ObjectCallbacks.Write">
+            <summary>
+            Write an object.
+            Success: return an S3Response object with status 200.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.Callbacks.ObjectCallbacks.WriteAcl">
+            <summary>
+            Write an object's access control list, replacing the previous ACL.  
+            Success: return an S3Response object with status 200. 
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.Callbacks.ObjectCallbacks.WriteTags">
+            <summary>
+            Write tags to an object, replacing the previous tags.
+            Success: return an S3Response object with status 200.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.Callbacks.ObjectCallbacks.WriteLegalHold">
+            <summary>
+            Write a legal hold status to an object. 
+            Success: return an S3Response object with status 200.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.Callbacks.ObjectCallbacks.WriteRetention">
+            <summary>
+            Write a retention status to an object.
+            Success: return an S3Response object with status 200. 
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.Callbacks.ObjectCallbacks.Read">
+            <summary>
+            Read an object.  
+            Success: return an S3Response object with status 200 and the object data.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.Callbacks.ObjectCallbacks.ReadAcl">
+            <summary>
+            Read an object's access control list.  
+            Success: return an S3Response object with status 200 and an AccessControlPolicy as its data.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.Callbacks.ObjectCallbacks.ReadRange">
+            <summary>
+            Read a range of bytes from an object.  
+            Success: return an S3Response object with status 200 and the range of bytes as its data. 
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.Callbacks.ObjectCallbacks.ReadTags">
+            <summary>
+            Read an object's tags.  
+            Success: return an S3Response object with status 200 and a Tagging object as its data.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.Callbacks.ObjectCallbacks.ReadLegalHold">
+            <summary>
+            Read an object's legal hold status.
+            Success: return an S3Response object with status 200 and a LegalHold object as its data. 
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.Callbacks.ObjectCallbacks.ReadRetention">
+            <summary>
+            Read an object's retention status.  
+            Success: return an S3Response object with status 200 and a Retention object as its data.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.Callbacks.ObjectCallbacks.Delete">
+            <summary>
+            Delete an object. 
+            Success: return an S3Response object with status 204.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.Callbacks.ObjectCallbacks.DeleteTags">
+            <summary>
+            Delete an object's tags.  
+            Success: return an S3Response object with status 204.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.Callbacks.ObjectCallbacks.DeleteMultiple">
+            <summary>
+            Delete multiple objects.  
+            Success: return an S3Response object with status 200 and a DeleteResult as its data.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.Callbacks.ObjectCallbacks.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.ServiceCallbacks">
+            <summary>
+            Callback methods for service operations.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.ServiceCallbacks.ListBuckets">
+            <summary>
+            List all buckets.
+            Success: return an S3Response object with status 200 and ListAllMyBucketsResult in the body.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.ServiceCallbacks.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.Common">
+            <summary>
+            Common static methods.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.ConsoleDebugging">
+            <summary>
+            Enable or disable console debugging for various items.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.ConsoleDebugging.HttpRequests">
+            <summary>
+            Enable or disable console debugging for HTTP requests.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.ConsoleDebugging.S3Requests">
+            <summary>
+            Enable or disable console debugging for S3 request construction.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.ConsoleDebugging.Exceptions">
+            <summary>
+            Enable or disable console debugging for exceptions.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.ConsoleDebugging.#ctor">
+            <summary>
+            Instantiates the object.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.RequestStyle">
+            <summary>
+            The type of request, specifically whether or not the bucket is included in the hostname.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.RequestStyle.Unknown">
+            <summary>
+            Unknown request style.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.RequestStyle.BucketNotInHostname">
+            <summary>
+            Bucket is not in the hostname, rather, it is in the URL.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.RequestStyle.BucketInHostname">
+            <summary>
+            Bucket is in the hostname and not in the URL.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Request">
+            <summary>
+            S3 request object.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.TimestampUtc">
+            <summary>
+            Time of creation in UTC.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Http">
+            <summary>
+            HTTP context from which this response was created.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.SourceIp">
+            <summary>
+            IP address of the client.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.SourcePort">
+            <summary>
+            TCP port of the client.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Method">
+            <summary>
+            HTTP method (GET, PUT, POST, DELETE, etc).
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.FullUrl">
+            <summary>
+            Full URL.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.RawUrl">
+            <summary>
+            The raw URL without querystring.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.RawUrlEntries">
+            <summary>
+            The individual elements in the raw URL.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.ContentLength">
+            <summary>
+            The length of the payload.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.ContentType">
+            <summary>
+            The content type of the payload.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Chunked">
+            <summary>
+            Indicates if chunked transfer-encoding is in use.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Querystring">
+            <summary>
+            URL querystring.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Headers">
+            <summary>
+            Full set of HTTP headers.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Region">
+            <summary>
+            AWS region.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Hostname">
+            <summary>
+            Hostname.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Style">
+            <summary>
+            Indicates if the request includes the bucket name in the hostname or not.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Bucket">
+            <summary>
+            Bucket.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Key">
+            <summary>
+            Object key.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Prefix">
+            <summary>
+            Object key prefix.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.MaxKeys">
+            <summary>
+            Maximum number of keys to retrieve in an enumeration.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.VersionId">
+            <summary>
+            Object version ID.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Authorization">
+            <summary>
+            Authorization header string, in full.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Signature">
+            <summary>
+            Signature from authorization header.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.AccessKey">
+            <summary>
+            Access key, parsed from authorization header.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Data">
+            <summary>
+            Stream containing the request body.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Request.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Request.#ctor(WatsonWebserver.HttpContext,System.Boolean)">
+            <summary>
+            Instantiates the object.
+            </summary>
+            <param name="ctx">HttpContext.</param> 
+            <param name="debug">Enable or disable console logging of construction.</param> 
+        </member>
+        <member name="M:S3ServerInterface.S3Request.ToString">
+            <summary>
+            Returns a human-readable string with the object details.
+            </summary>
+            <returns>String.</returns>
+        </member>
+        <member name="M:S3ServerInterface.S3Request.RetrieveHeaderValue(System.String)">
+            <summary>
+            Retrieve a header (or querystring) value.
+            </summary>
+            <param name="key">Key.</param>
+            <returns>Value.</returns>
+        </member>
+        <member name="M:S3ServerInterface.S3Request.ReadChunk">
+            <summary>
+            Read a chunk from the request body.
+            </summary>
+            <returns>Chunk.</returns>
+        </member>
+        <member name="T:S3ServerInterface.S3Response">
+            <summary>
+            S3 response.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Response.StatusCode">
+            <summary>
+            The HTTP status code to return to the requestor (client).
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Response.Headers">
+            <summary>
+            User-supplied headers to include in the response.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Response.ContentType">
+            <summary>
+            User-supplied content-type to include in the response.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Response.ContentLength">
+            <summary>
+            The length of the data in the response stream.  This value must be set before assigning the stream.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Response.Data">
+            <summary>
+            The data to return to the requestor.  Set ContentLength before assigning the stream.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Response.Chunked">
+            <summary>
+            Enable or disable chunked transfer-encoding.
+            By default this parameter is set to the value of Chunked in the S3Request object.
+            If Chunked is false, use Send() APIs.
+            If Chunked is true, use SendChunk() or SendFinalChunk() APIs.
+            The Send(ErrorCode) API is valid for both conditions.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Response.#ctor(S3ServerInterface.S3Request)">
+            <summary>
+            Instantiate the object.
+            </summary>
+            <param name="s3request">S3Request.</param>
+        </member>
+        <member name="M:S3ServerInterface.S3Response.#ctor(S3ServerInterface.S3Request,System.Int32,System.String,System.Collections.Generic.Dictionary{System.String,System.String},System.Int64)">
+            <summary>
+            Instantiate the object without supplying a stream.  Useful for HEAD responses.
+            </summary>
+            <param name="s3request">S3Request.</param>
+            <param name="statusCode">HTTP status code.</param>
+            <param name="contentType">Content-type.</param>
+            <param name="headers">HTTP headers.</param> 
+            <param name="contentLength">Content length.</param>
+        </member>
+        <member name="M:S3ServerInterface.S3Response.#ctor(S3ServerInterface.S3Request,System.Int32,System.String,System.Collections.Generic.Dictionary{System.String,System.String},System.Int64,System.IO.Stream)">
+            <summary>
+            Instantiate the object.
+            </summary>
+            <param name="s3request">S3Request.</param>
+            <param name="statusCode">HTTP status code.</param>
+            <param name="contentType">Content-type.</param>
+            <param name="headers">HTTP headers.</param>
+            <param name="contentLength">Content length.</param>
+            <param name="stream">Stream containing response data.</param>
+        </member>
+        <member name="M:S3ServerInterface.S3Response.Send">
+            <summary>
+            Send the response to the requestor and close the connection.
+            </summary>
+            <returns>True if successful.</returns>
+        </member>
+        <member name="M:S3ServerInterface.S3Response.Send(System.String)">
+            <summary>
+            Send the response with the supplied data to the requestor and close the connection.
+            </summary>
+            <param name="data">Data.</param>
+            <returns>True if successful.</returns>
+        </member>
+        <member name="M:S3ServerInterface.S3Response.Send(System.Byte[])">
+            <summary>
+            Send the response with the supplied data to the requestor and close the connection.
+            </summary>
+            <param name="data">Data.</param>
+            <returns>True if successful.</returns>
+        </member>
+        <member name="M:S3ServerInterface.S3Response.Send(System.Int64,System.IO.Stream)">
+            <summary>
+            Send the response with the supplied stream to the requestor and close the connection.
+            </summary>
+            <param name="contentLength">Content length.</param>
+            <param name="stream">Stream containing data.</param>
+            <returns>True if successful.</returns>
+        </member>
+        <member name="M:S3ServerInterface.S3Response.Send(S3ServerInterface.S3Objects.ErrorCode)">
+            <summary>
+            Send an error response to the requestor and close the connection.
+            </summary>
+            <param name="error">ErrorCode.</param>
+            <returns>True if successful.</returns>
+        </member>
+        <member name="M:S3ServerInterface.S3Response.SendChunk(System.Byte[])">
+            <summary>
+            Send a chunk of data using chunked transfer-encoding to the requestor.
+            </summary>
+            <param name="data">Chunk of data.</param>
+            <returns>True if successful.</returns>
+        </member>
+        <member name="M:S3ServerInterface.S3Response.SendFinalChunk(System.Byte[])">
+            <summary>
+            Send the final chunk of data using chunked transfer-encoding to the requestor and close the connection.
+            </summary>
+            <param name="data">Final chunk of data.</param>
+            <returns>True if successful.</returns>
+        </member>
+        <member name="M:S3ServerInterface.S3Response.ToString">
+            <summary>
+            Returns a human-readable string with the object details.
+            </summary>
+            <returns>String.</returns>
+        </member>
+        <member name="T:S3ServerInterface.S3Server">
+            <summary>
+            S3 server.  
+            Bucket names must not be in the hostname; they must be in the URL path. 
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Server.ConsoleDebug">
+            <summary>
+            Enable or disable console debugging for various items.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Server.Service">
+            <summary>
+            Callback methods for requests received for service operations.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Server.Bucket">
+            <summary>
+            Callback methods for requests received for bucket operations.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Server.Object">
+            <summary>
+            Callback methods for requests received for object operations.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Server.PreRequestHandler">
+            <summary>
+            Callback method to use prior to examining requests for AWS S3 APIs.
+            Return true if you wish to terminate the request, otherwise, return false, which will further route the request.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Server.DefaultRequestHandler">
+            <summary>
+            Callback method to call when no matching AWS S3 API callback could be found.
+            This callback should return an S3Response at all times.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Server.SendExceptionsInResponses">
+            <summary>
+            Specify whether or not exceptions should be included in status 500 Internal Server Error messages.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Server.#ctor(System.String,System.Int32,System.Boolean)">
+            <summary>
+            Instantiate the object.
+            Using this constructor results in no pre-request handler (your own API handler), and no custom default request handler (when an S3 API cannot be matched).
+            </summary>
+            <param name="hostname">The hostname on which to listen.</param>
+            <param name="port">The TCP port number.</param>
+            <param name="ssl">Enable or disable SSL.</param> 
+        </member>
+        <member name="M:S3ServerInterface.S3Server.#ctor(System.String,System.Int32,System.Boolean,System.Func{S3ServerInterface.S3Request,S3ServerInterface.S3Response,System.Threading.Tasks.Task})">
+            <summary>
+            Instantiate the object.
+            Using this constructor results in no pre-request handler (your own API handler), but (if not null) allows a custom default request handler (when an S3 API cannot be matched).
+            </summary>
+            <param name="hostname">The hostname on which to listen.</param>
+            <param name="port">The TCP port number.</param>
+            <param name="ssl">Enable or disable SSL.</param> 
+            <param name="defaultRequestHandler">Default request handler used when no other callbacks can be found.</param>
+        </member>
+        <member name="M:S3ServerInterface.S3Server.#ctor(System.String,System.Int32,System.Boolean,System.Func{S3ServerInterface.S3Request,S3ServerInterface.S3Response,System.Threading.Tasks.Task{System.Boolean}},System.Func{S3ServerInterface.S3Request,S3ServerInterface.S3Response,System.Threading.Tasks.Task})">
+            <summary>
+            Instantiate the object.
+            Using this constructor results in (if not null) a pre-request handler (your own API handler), and (if not null) a custom default request handler (when an S3 API cannot be matched).
+            </summary>
+            <param name="hostname">The hostname on which to listen.</param>
+            <param name="port">The TCP port number.</param>
+            <param name="ssl">Enable or disable SSL.</param>
+            <param name="preRequestHandler">Request handler to call prior to evaluating for S3 requests, can be null.</param>
+            <param name="defaultRequestHandler">Default request handler used when no other callbacks can be found.</param>
+        </member>
+        <member name="M:S3ServerInterface.S3Server.Dispose">
+            <summary>
+            Tear down the client and dispose of background workers.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Server.Dispose(System.Boolean)">
+            <summary>
+            Dispose of the server.
+            </summary>
+            <param name="disposing">Disposing.</param>
+        </member>
+    </members>
+</doc>

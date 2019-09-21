@@ -12,9 +12,13 @@
     <PackageProjectUrl>https://github.com/jchristn/S3ServerInterface</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jchristn/S3ServerInterface</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
-    <Version>2.0.1.1</Version>
+    <Version>2.0.1.2</Version>
     <PackageIconUrl>https://raw.githubusercontent.com/jchristn/S3ServerInterface/master/assets/logo.ico</PackageIconUrl>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
+    <DocumentationFile>C:\Code\Misc\S3ServerInterface-2.0\S3ServerInterface\S3ServerInterface.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

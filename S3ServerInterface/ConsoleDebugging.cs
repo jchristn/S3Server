@@ -34,6 +34,9 @@ namespace S3ServerInterface
 
         #region Constructors-and-Factories
 
+        /// <summary>
+        /// Instantiates the object.
+        /// </summary>
         public ConsoleDebugging()
         {
 

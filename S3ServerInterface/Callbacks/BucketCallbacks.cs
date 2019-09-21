@@ -60,8 +60,7 @@ namespace S3ServerInterface
         /// Success: return an S3Response object with status 200 and an AccessControlPolicy object as its data.
         /// </summary>
         public Func<S3Request, S3Response, Task> ReadAcl = null;
-
-        /// <summary>
+         
         /// <summary>
         /// Read a bucket's tags. 
         /// Success: return an S3Response object with status 200 and a Tagging object as its data. 
@@ -80,6 +79,7 @@ namespace S3ServerInterface
         /// </summary>
         public Func<S3Request, S3Response, Task> ReadVersioning = null;
 
+        /// <summary>
         /// Delete a bucket.  
         /// Success: return an S3Response object with status 204. 
         /// </summary>

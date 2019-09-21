@@ -2,6 +2,12 @@
 
 ## Current Version
 
+v2.0.1.2
+
+- XML documentation
+
+## Previous Versions
+
 v2.0.0.0
 
 - Breaking changes
@@ -12,8 +18,6 @@ v2.0.0.0
 - Added ```Prefix``` and ```MaxKeys``` to ```S3Request```
 - Reliability and performance fixes
 - Dependency updates
-
-## Previous Versions
 
 v1.5.x
 

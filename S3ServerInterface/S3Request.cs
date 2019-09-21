@@ -167,8 +167,7 @@ namespace S3ServerInterface
         /// <summary>
         /// Instantiates the object.
         /// </summary>
-        /// <param name="ctx">HttpContext.</param>
-        /// <param name="debug"></param>
+        /// <param name="ctx">HttpContext.</param> 
         /// <param name="debug">Enable or disable console logging of construction.</param> 
         public S3Request(HttpContext ctx, bool debug)
         {

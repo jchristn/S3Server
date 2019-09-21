@@ -166,6 +166,10 @@ namespace S3ServerInterface
 
         #region Private-Methods
 
+        /// <summary>
+        /// Dispose of the server.
+        /// </summary>
+        /// <param name="disposing">Disposing.</param>
         protected virtual void Dispose(bool disposing)
         {
             if (_Disposed)
