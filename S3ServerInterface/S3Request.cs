@@ -21,6 +21,16 @@ namespace S3ServerInterface
         #region Public-Members
 
         /// <summary>
+        /// Indicates if the request includes the bucket name in the hostname or not.
+        /// </summary>
+        public S3RequestStyle RequestStyle { get; set; }
+
+        /// <summary>
+        /// Indicates the type of S3 request.
+        /// </summary>
+        public S3RequestType RequestType { get; set; }
+        
+        /// <summary>
         /// Time of creation in UTC.
         /// </summary>
         public DateTime TimestampUtc { get; set; }
@@ -94,11 +104,6 @@ namespace S3ServerInterface
         /// Hostname.
         /// </summary>
         public string Hostname { get; set; }
-
-        /// <summary>
-        /// Indicates if the request includes the bucket name in the hostname or not.
-        /// </summary>
-        public RequestStyle Style { get; set; }
 
         /// <summary>
         /// Bucket.
@@ -175,12 +180,11 @@ namespace S3ServerInterface
             if (ctx.Request == null) throw new ArgumentNullException(nameof(ctx.Request));
 
             _Debug = debug;
-
-            Http = ctx;
-
+             
             #region Initialize
 
             TimestampUtc = DateTime.Now.ToUniversalTime();
+            Http = ctx;
             SourceIp = Http.Request.SourceIp;
             SourcePort = Http.Request.SourcePort;
             Method = Http.Request.Method;
@@ -196,7 +200,8 @@ namespace S3ServerInterface
             Headers = Http.Request.Headers;
             Region = null;
             Hostname = Http.Request.DestHostname;
-            Style = RequestStyle.Unknown;
+            RequestType = S3RequestType.Unknown;
+            RequestStyle = S3RequestStyle.Unknown;
             Bucket = null;
             Key = null;
             Authorization = null;
@@ -234,7 +239,7 @@ namespace S3ServerInterface
             {
                 string bucketName = null;
                 string region = null;
-                RequestStyle style = RequestStyle.Unknown;
+                S3RequestStyle style = S3RequestStyle.Unknown;
                 string objectKey = null;
 
                 ParseHostnameAndUrl(
@@ -247,7 +252,7 @@ namespace S3ServerInterface
 
                 if (!String.IsNullOrEmpty(bucketName)) Bucket = bucketName;
                 if (!String.IsNullOrEmpty(region)) Region = region;
-                if (style != RequestStyle.Unknown) Style = style;
+                if (style != S3RequestStyle.Unknown) RequestStyle = style;
                 if (!String.IsNullOrEmpty(objectKey)) Key = objectKey;
             }
 
@@ -294,6 +299,7 @@ namespace S3ServerInterface
             string ret = "---" + Environment.NewLine;
             ret += "  Source IP:Port : " + SourceIp + ":" + SourcePort + Environment.NewLine;
             ret += "  Method         : " + Method.ToString() + Environment.NewLine;
+            ret += "  Hostname       : " + Hostname + Environment.NewLine;
             ret += "  FullUrl        : " + FullUrl + Environment.NewLine;
             ret += "  RawUrl         : " + RawUrl + Environment.NewLine;
             ret += "  Content Length : " + ContentLength + " bytes " + Environment.NewLine;
@@ -330,7 +336,8 @@ namespace S3ServerInterface
             }
 
             ret += "  Region         : " + Region + Environment.NewLine;
-            ret += "  Hostname       : " + Hostname + Environment.NewLine;
+            ret += "  Type           : " + RequestType.ToString() + Environment.NewLine;
+            ret += "  Style          : " + RequestStyle.ToString() + Environment.NewLine;
             ret += "  Bucket         : " + Bucket + Environment.NewLine;
             ret += "  Key            : " + Key + Environment.NewLine;
             ret += "  Authorization  : " + Authorization + Environment.NewLine;
@@ -480,12 +487,12 @@ namespace S3ServerInterface
             string rawUrl,
             out string bucketName,
             out string region,
-            out RequestStyle style,
+            out S3RequestStyle style,
             out string objectKey)
         {
             bucketName = null;
             region = null;
-            style = RequestStyle.Unknown;
+            style = S3RequestStyle.Unknown;
             objectKey = null;
             if (String.IsNullOrEmpty(fullUrl)) return;
             if (String.IsNullOrEmpty(rawUrl)) return;
@@ -502,7 +509,7 @@ namespace S3ServerInterface
                 // bucket.s3-<region>.amazonaws.com
                 bucketName = hostnameVals[0];
                 if (hostnameVals[1].Length > 3) region = hostnameVals[1].Substring(3);
-                style = RequestStyle.BucketInHostname;
+                style = S3RequestStyle.BucketInHostname;
 
                 if (_Debug) Console.WriteLine("- Bucket name [" + bucketName + "] style [" + style.ToString() + "]");
 
@@ -513,13 +520,13 @@ namespace S3ServerInterface
                 // s3-region.amazonaws.com
                 // do not return, URL processing required for bucketname
                 if (hostnameVals[0].Length > 3) region = hostnameVals[1].Substring(3);
-                style = RequestStyle.BucketNotInHostname;
+                style = S3RequestStyle.BucketNotInHostname;
 
                 if (_Debug) Console.WriteLine("- Region [" + region + "] style [" + style.ToString() + "]"); 
             }
             else
             {
-                style = RequestStyle.BucketNotInHostname;
+                style = S3RequestStyle.BucketNotInHostname;
             }
 
             if (String.IsNullOrEmpty(bucketName))
@@ -532,11 +539,11 @@ namespace S3ServerInterface
 
                     switch (style)
                     {
-                        case RequestStyle.BucketInHostname:
+                        case S3RequestStyle.BucketInHostname:
                             if (valsInner.Length > 0) objectKey = WebUtility.UrlDecode(valsInner[0]);
                             break;
 
-                        case RequestStyle.BucketNotInHostname:
+                        case S3RequestStyle.BucketNotInHostname:
                             if (valsInner.Length > 0) bucketName = WebUtility.UrlDecode(valsInner[0]);
                             if (valsInner.Length > 1) objectKey = WebUtility.UrlDecode(valsInner[1]);
                             break;

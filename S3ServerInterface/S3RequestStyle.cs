@@ -12,7 +12,7 @@ namespace S3ServerInterface
     /// The type of request, specifically whether or not the bucket is included in the hostname.
     /// </summary>
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum RequestStyle
+    public enum S3RequestStyle
     {
         /// <summary>
         /// Unknown request style.

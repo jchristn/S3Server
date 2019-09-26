@@ -2,9 +2,9 @@
 
 ## Current Version
 
-v2.0.1.2
+v2.0.1.3
 
-- XML documentation
+- S3RequestStyle and S3RequestType enumerations
 
 ## Previous Versions
 

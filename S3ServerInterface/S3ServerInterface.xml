@@ -238,29 +238,19 @@
             Instantiates the object.
             </summary>
         </member>
-        <member name="T:S3ServerInterface.RequestStyle">
-            <summary>
-            The type of request, specifically whether or not the bucket is included in the hostname.
-            </summary>
-        </member>
-        <member name="F:S3ServerInterface.RequestStyle.Unknown">
-            <summary>
-            Unknown request style.
-            </summary>
-        </member>
-        <member name="F:S3ServerInterface.RequestStyle.BucketNotInHostname">
-            <summary>
-            Bucket is not in the hostname, rather, it is in the URL.
-            </summary>
-        </member>
-        <member name="F:S3ServerInterface.RequestStyle.BucketInHostname">
-            <summary>
-            Bucket is in the hostname and not in the URL.
-            </summary>
-        </member>
         <member name="T:S3ServerInterface.S3Request">
             <summary>
             S3 request object.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.RequestStyle">
+            <summary>
+            Indicates if the request includes the bucket name in the hostname or not.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.RequestType">
+            <summary>
+            Indicates the type of S3 request.
             </summary>
         </member>
         <member name="P:S3ServerInterface.S3Request.TimestampUtc">
@@ -338,11 +328,6 @@
             Hostname.
             </summary>
         </member>
-        <member name="P:S3ServerInterface.S3Request.Style">
-            <summary>
-            Indicates if the request includes the bucket name in the hostname or not.
-            </summary>
-        </member>
         <member name="P:S3ServerInterface.S3Request.Bucket">
             <summary>
             Bucket.
@@ -418,6 +403,181 @@
             Read a chunk from the request body.
             </summary>
             <returns>Chunk.</returns>
+        </member>
+        <member name="T:S3ServerInterface.S3RequestStyle">
+            <summary>
+            The type of request, specifically whether or not the bucket is included in the hostname.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestStyle.Unknown">
+            <summary>
+            Unknown request style.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestStyle.BucketNotInHostname">
+            <summary>
+            Bucket is not in the hostname, rather, it is in the URL.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestStyle.BucketInHostname">
+            <summary>
+            Bucket is in the hostname and not in the URL.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3RequestType">
+            <summary>
+            The type of S3 request, identified by parsing the request.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.Unknown">
+            <summary>
+            Unknown request type.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.ListBuckets">
+            <summary>
+            List buckets owned by the user.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketDelete">
+            <summary>
+            Delete a bucket.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketDeleteTags">
+            <summary>
+            Delete bucket tags.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketExists">
+            <summary>
+            Check if a bucket exists.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketRead">
+            <summary>
+            List objects in a bucket.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketReadAcl">
+            <summary>
+            Read a bucket's access control list.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketReadLocation">
+            <summary>
+            Read a bucket's location, i.e. its region.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketReadTags">
+            <summary>
+            Read a bucket's tags.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketReadVersioning">
+            <summary>
+            Read a bucket's versioning configuration.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketReadVersions">
+            <summary>
+            List object versions.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketWriteAcl">
+            <summary>
+            Write a bucket's access control list.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketWriteTags">
+            <summary>
+            Write a bucket's tags.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketWriteVersioning">
+            <summary>
+            Write a bucket's versioning policy.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketWrite">
+            <summary>
+            Create a bucket.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.ObjectDelete">
+            <summary>
+            Delete an object.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.ObjectDeleteMultiple">
+            <summary>
+            Delete multiple objects.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.ObjectDeleteTags">
+            <summary>
+            Delete object tags.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.ObjectExists">
+            <summary>
+            Check if an object exists.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.ObjectRead">
+            <summary>
+            Read an object's contents.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.ObjectReadAcl">
+            <summary>
+            Read an object's access control list.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.ObjectReadLegalHold">
+            <summary>
+            Read an object's legal hold status.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.ObjectReadRange">
+            <summary>
+            Read a specific range of bytes from an object.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.ObjectReadRetention">
+            <summary>
+            Read an object's retention policy.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.ObjectReadTags">
+            <summary>
+            Read an object's tags.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.ObjectWrite">
+            <summary>
+            Create an object.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.ObjectWriteAcl">
+            <summary>
+            Write an object's access control list.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.ObjectWriteLegalHold">
+            <summary>
+            Write an object's legal hold status.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.ObjectWriteRetention">
+            <summary>
+            Write an object's retention policy.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.ObjectWriteTags">
+            <summary>
+            Write tags to an object.
+            </summary>
         </member>
         <member name="T:S3ServerInterface.S3Response">
             <summary>

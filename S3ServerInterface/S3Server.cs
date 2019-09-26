@@ -199,9 +199,7 @@ namespace S3ServerInterface
 
                 if (ConsoleDebug.HttpRequests)
                 {
-                    Console.WriteLine(Common.SerializeJson(s3req, true));
-                    Console.WriteLine(Environment.NewLine);
-                    Console.WriteLine(Common.SerializeJson(s3req, true));
+                    Console.WriteLine(Common.SerializeJson(s3req, true)); 
                 }
 
                 if (PreRequestHandler != null)
@@ -223,6 +221,7 @@ namespace S3ServerInterface
                         { 
                             if (Bucket.Exists != null)
                             {
+                                s3req.RequestType = S3RequestType.BucketExists;
                                 await Bucket.Exists(s3req, s3resp);
                                 return;
                             } 
@@ -231,6 +230,7 @@ namespace S3ServerInterface
                         { 
                             if (Object.Exists != null)
                             {
+                                s3req.RequestType = S3RequestType.ObjectExists;
                                 await Object.Exists(s3req, s3resp);
                                 return;
                             } 
@@ -247,6 +247,7 @@ namespace S3ServerInterface
                         {
                             if (Service.ListBuckets != null)
                             {
+                                s3req.RequestType = S3RequestType.ListBuckets;
                                 await Service.ListBuckets(s3req, s3resp);
                                 return;
                             } 
@@ -257,6 +258,7 @@ namespace S3ServerInterface
                             {
                                 if (Bucket.ReadAcl != null)
                                 {
+                                    s3req.RequestType = S3RequestType.BucketReadAcl;
                                     await Bucket.ReadAcl(s3req, s3resp);
                                     return;
                                 } 
@@ -265,6 +267,7 @@ namespace S3ServerInterface
                             {
                                 if (Bucket.ReadLocation != null)
                                 {
+                                    s3req.RequestType = S3RequestType.BucketReadLocation;
                                     await Bucket.ReadLocation(s3req, s3resp);
                                     return;
                                 } 
@@ -273,6 +276,7 @@ namespace S3ServerInterface
                             {
                                 if (Bucket.ReadTags != null)
                                 {
+                                    s3req.RequestType = S3RequestType.BucketReadTags;
                                     await Bucket.ReadTags(s3req, s3resp);
                                     return;
                                 } 
@@ -281,6 +285,7 @@ namespace S3ServerInterface
                             {
                                 if (Bucket.ReadVersions != null)
                                 {
+                                    s3req.RequestType = S3RequestType.BucketReadVersions;
                                     await Bucket.ReadVersions(s3req, s3resp);
                                     return;
                                 } 
@@ -289,6 +294,7 @@ namespace S3ServerInterface
                             {
                                 if (Bucket.ReadVersioning != null)
                                 {
+                                    s3req.RequestType = S3RequestType.BucketReadVersioning;
                                     await Bucket.ReadVersioning(s3req, s3resp);
                                     return;
                                 } 
@@ -297,6 +303,7 @@ namespace S3ServerInterface
                             {
                                 if (Bucket.Read != null)
                                 {
+                                    s3req.RequestType = S3RequestType.BucketRead;
                                     await Bucket.Read(s3req, s3resp);
                                     return;
                                 } 
@@ -308,6 +315,7 @@ namespace S3ServerInterface
                             {
                                 if (Object.ReadRange != null)
                                 {
+                                    s3req.RequestType = S3RequestType.ObjectReadRange; 
                                     await Object.ReadRange(s3req, s3resp);
                                     return;
                                 } 
@@ -316,6 +324,7 @@ namespace S3ServerInterface
                             {
                                 if (Object.ReadAcl != null)
                                 {
+                                    s3req.RequestType = S3RequestType.ObjectReadAcl;
                                     await Object.ReadAcl(s3req, s3resp);
                                     return;
                                 } 
@@ -324,22 +333,16 @@ namespace S3ServerInterface
                             {
                                 if (Object.ReadTags != null)
                                 {
+                                    s3req.RequestType = S3RequestType.ObjectReadTags;
                                     await Object.ReadTags(s3req, s3resp);
                                     return;
                                 } 
-                            }
-                            else if (ctx.Request.QuerystringEntries.ContainsKey("acl"))
-                            {
-                                if (Object.ReadAcl != null)
-                                {
-                                    await Object.ReadAcl(s3req, s3resp);
-                                    return;
-                                } 
-                            }
+                            } 
                             else if (ctx.Request.QuerystringEntries.ContainsKey("legal-hold"))
                             {
                                 if (Object.ReadLegalHold != null)
                                 {
+                                    s3req.RequestType = S3RequestType.ObjectReadLegalHold;
                                     await Object.ReadLegalHold(s3req, s3resp);
                                     return;
                                 } 
@@ -348,6 +351,7 @@ namespace S3ServerInterface
                             {
                                 if (Object.ReadRetention != null)
                                 {
+                                    s3req.RequestType = S3RequestType.ObjectReadRetention;
                                     await Object.ReadRetention(s3req, s3resp);
                                     return;
                                 } 
@@ -356,6 +360,7 @@ namespace S3ServerInterface
                             {
                                 if (Object.Read != null)
                                 {
+                                    s3req.RequestType = S3RequestType.ObjectRead;
                                     await Object.Read(s3req, s3resp);
                                     return;
                                 } 
@@ -375,6 +380,7 @@ namespace S3ServerInterface
                             {
                                 if (Bucket.WriteAcl != null)
                                 {
+                                    s3req.RequestType = S3RequestType.BucketWriteAcl; 
                                     await Bucket.WriteAcl(s3req, s3resp);
                                     return;
                                 } 
@@ -383,6 +389,7 @@ namespace S3ServerInterface
                             {
                                 if (Bucket.WriteTags != null)
                                 {
+                                    s3req.RequestType = S3RequestType.BucketWriteTags;
                                     await Bucket.WriteTags(s3req, s3resp);
                                     return;
                                 } 
@@ -391,6 +398,7 @@ namespace S3ServerInterface
                             {
                                 if (Bucket.WriteVersioning != null)
                                 {
+                                    s3req.RequestType = S3RequestType.BucketWriteVersioning;
                                     await Bucket.WriteVersioning(s3req, s3resp);
                                     return;
                                 } 
@@ -398,7 +406,8 @@ namespace S3ServerInterface
                             else
                             {
                                 if (Bucket.Write != null)
-                                { 
+                                {
+                                    s3req.RequestType = S3RequestType.BucketWrite;
                                     await Bucket.Write(s3req, s3resp);
                                     return;
                                 } 
@@ -410,6 +419,7 @@ namespace S3ServerInterface
                             {
                                 if (Object.WriteTags != null)
                                 {
+                                    s3req.RequestType = S3RequestType.ObjectWriteTags;
                                     await Object.WriteTags(s3req, s3resp);
                                     return;
                                 } 
@@ -417,7 +427,8 @@ namespace S3ServerInterface
                             else if (ctx.Request.QuerystringEntries.ContainsKey("acl"))
                             {
                                 if (Object.WriteAcl != null)
-                                { 
+                                {
+                                    s3req.RequestType = S3RequestType.ObjectWriteAcl;
                                     await Object.WriteAcl(s3req, s3resp);
                                     return;
                                 } 
@@ -425,7 +436,8 @@ namespace S3ServerInterface
                             else if (ctx.Request.QuerystringEntries.ContainsKey("legal-hold"))
                             {
                                 if (Object.WriteLegalHold != null)
-                                { 
+                                {
+                                    s3req.RequestType = S3RequestType.ObjectWriteLegalHold;
                                     await Object.WriteLegalHold(s3req, s3resp);
                                     return;
                                 } 
@@ -433,7 +445,8 @@ namespace S3ServerInterface
                             else if (ctx.Request.QuerystringEntries.ContainsKey("retention"))
                             {
                                 if (Object.WriteRetention != null)
-                                { 
+                                {
+                                    s3req.RequestType = S3RequestType.ObjectWriteRetention;
                                     await Object.WriteRetention(s3req, s3resp);
                                     return;
                                 } 
@@ -442,6 +455,7 @@ namespace S3ServerInterface
                             {
                                 if (Object.Write != null)
                                 {
+                                    s3req.RequestType = S3RequestType.ObjectWrite;
                                     await Object.Write(s3req, s3resp);
                                     return;
                                 } 
@@ -460,7 +474,8 @@ namespace S3ServerInterface
                             if (ctx.Request.QuerystringEntries.ContainsKey("delete"))
                             {
                                 if (Object.DeleteMultiple != null)
-                                { 
+                                {
+                                    s3req.RequestType = S3RequestType.ObjectDeleteMultiple;
                                     await Object.DeleteMultiple(s3req, s3resp);
                                     return;
                                 } 
@@ -480,6 +495,7 @@ namespace S3ServerInterface
                             {
                                 if (Bucket.DeleteTags != null)
                                 {
+                                    s3req.RequestType = S3RequestType.BucketDeleteTags;
                                     await Bucket.DeleteTags(s3req, s3resp);
                                     return;
                                 } 
@@ -488,6 +504,7 @@ namespace S3ServerInterface
                             {
                                 if (Bucket.Delete != null)
                                 {
+                                    s3req.RequestType = S3RequestType.BucketDelete;
                                     await Bucket.Delete(s3req, s3resp);
                                     return;
                                 } 
@@ -499,6 +516,7 @@ namespace S3ServerInterface
                             {
                                 if (Object.DeleteTags != null)
                                 {
+                                    s3req.RequestType = S3RequestType.ObjectDeleteTags;
                                     await Object.DeleteTags(s3req, s3resp);
                                     return;
                                 } 
@@ -507,6 +525,7 @@ namespace S3ServerInterface
                             {
                                 if (Object.Delete != null)
                                 {
+                                    s3req.RequestType = S3RequestType.ObjectDelete;
                                     await Object.Delete(s3req, s3resp);
                                     return;
                                 } 
