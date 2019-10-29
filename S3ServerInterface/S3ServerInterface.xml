@@ -238,6 +238,927 @@
             Instantiates the object.
             </summary>
         </member>
+        <member name="T:S3ServerInterface.S3Objects.AccessControlList">
+            <summary>
+            Amazon S3 access control list for a resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.AccessControlList.Grant">
+            <summary>
+            Grant specifying to whom rights are provided to the resource.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.AccessControlPolicy">
+            <summary>
+            Amazon S3 access control policy for a resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.AccessControlPolicy.Owner">
+            <summary>
+            Resource owner.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.AccessControlPolicy.AccessControlList">
+            <summary>
+            Access control list for the resource.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.Bucket">
+            <summary>
+            Amazon S3 bucket.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Bucket.Name">
+            <summary>
+            The name of the bucket.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Bucket.CreationDate">
+            <summary>
+            The timestamp from bucket creation.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.Buckets">
+            <summary>
+            A collection of buckets.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Buckets.Bucket">
+            <summary>
+            A list of individual buckets.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.Contents">
+            <summary>
+            Bucket contents.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Contents.Key">
+            <summary>
+            Object key.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Contents.LastModified">
+            <summary>
+            Timestamp from the last modification of the resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Contents.ETag">
+            <summary>
+            ETag of the resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Contents.Size">
+            <summary>
+            The size in bytes of the resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Contents.StorageClass">
+            <summary>
+            The class of storage where the resource resides.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.Deleted">
+            <summary>
+            Metadata about a deleted resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Deleted.Key">
+            <summary>
+            Object key.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Deleted.VersionId">
+            <summary>
+            The version identifier for the resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Deleted.DeleteMarker">
+            <summary>
+            Indicates if the key represents a delete marker for the resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Deleted.DeleteMarkerVersionId">
+            <summary>
+            The version ID associated with the delete marker.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.DeleteMarker">
+            <summary>
+            Delete marker representing a deleted resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.DeleteMarker.Key">
+            <summary>
+            Object key.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.DeleteMarker.VersionId">
+            <summary>
+            The version identifier for the resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.DeleteMarker.IsLatest">
+            <summary>
+            Indicates if this version is the latest version of the resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.DeleteMarker.LastModified">
+            <summary>
+            Timestamp from the last modification of the resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.DeleteMarker.Owner">
+            <summary>
+            Information about the resource owner.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.DeleteMultiple">
+            <summary>
+            Request to delete multiple resources.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.DeleteMultiple.Quiet">
+            <summary>
+            Enable or disable quiet deletion.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.DeleteMultiple.Object">
+            <summary>
+            List of objects to delete.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.DeleteResult">
+            <summary>
+            Result from a delete operation.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.DeleteResult.Deleted">
+            <summary>
+            List of deleted resources.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.DeleteResult.Error">
+            <summary>
+            List of errors encountered during the operation.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.DeleteResult.Xmlns">
+            <summary>
+            XML namespace attribute.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.DeleteResult.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.Error">
+            <summary>
+            Amazon S3 error.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Error.Key">
+            <summary>
+            Object key.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Error.VersionId">
+            <summary>
+            The version identifier for the resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Error.RequestId">
+            <summary>
+            Unique identifier for the request.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Error.Resource">
+            <summary>
+            The resource incident to the request.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Error.Code">
+            <summary>
+            Error code.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Error.Message">
+            <summary>
+            Message associated with the error.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Error.HttpStatusCode">
+            <summary>
+            HTTP status code.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.Error.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.Error.#ctor(S3ServerInterface.S3Objects.ErrorCode)">
+            <summary>
+            Instantiate the object.
+            </summary>
+            <param name="error">ErrorCode.</param>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.ErrorCode">
+            <summary>
+            Amazon S3 error code.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.AccessDenied">
+            <summary>
+            Access denied.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.AccountProblem">
+            <summary>
+            There is a problem with your AWS account that prevents the operation from completing successfully.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.AllAccessDisabled">
+            <summary>
+            All access to this Amazon S3 resource has been disabled.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.AmbiguousGrantByEmailAddress">
+            <summary>
+            The email address you provided is associated with more than one account.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.AuthorizationHeaderMalformed">
+            <summary>
+            The authorization header you provided is invalid.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.BadDigest">
+            <summary>
+            The Content-MD5 you specified did not match what we received.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.BucketAlreadyExists">
+            <summary>
+            The requested bucket name is not available. The bucket namespace is shared by all users of the system. Please select a different name and try again.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.BucketAlreadyOwnedByYou">
+            <summary>
+            The bucket you tried to create already exists, and you own it.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.BucketNotEmpty">
+            <summary>
+            The bucket you tried to delete is not empty.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.CredentialsNotSupported">
+            <summary>
+            This request does not support credentials.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.CrossLocationLoggingProhibited">
+            <summary>
+            Cross-location logging not allowed. Buckets in one geographic location cannot log information to a bucket in another location.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.EntityTooSmall">
+            <summary>
+            Your proposed upload is smaller than the minimum allowed object size.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.EntityTooLarge">
+            <summary>
+            Your proposed upload exceeds the maximum allowed object size.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.ExpiredToken">
+            <summary>
+            The provided token has expired.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.IllegalVersioningConfigurationException">
+            <summary>
+            Indicates that the versioning configuration specified in the request is invalid.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.IncompleteBody">
+            <summary>
+            You did not provide the number of bytes specified by the Content-Length HTTP header.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.IncorrectNumberOfFilesInPostRequest">
+            <summary>
+            POST requires exactly one file upload per request.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InlineDataTooLarge">
+            <summary>
+            Inline data exceeds the maximum allowed size.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InternalError">
+            <summary>
+            We encountered an internal error. Please try again.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidAccessKeyId">
+            <summary>
+            The AWS access key ID you provided does not exist in our records.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidAddressingHeader">
+            <summary>
+            You must specify the Anonymous role.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidArgument">
+            <summary>
+            Invalid Argument.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidBucketName">
+            <summary>
+            The specified bucket is not valid.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidBucketState">
+            <summary>
+            The request is not valid with the current state of the bucket.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidDigest">
+            <summary>
+            The Content-MD5 you specified is not valid.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidEncryptionAlgorithmError">
+            <summary>
+            The encryption request you specified is not valid. The valid value is AES256.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidLocationConstraint">
+            <summary>
+            The specified location constraint is not valid.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidObjectState">
+            <summary>
+            The operation is not valid for the current state of the object.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidPart">
+            <summary>
+            One or more of the specified parts could not be found. The part might not have been uploaded, or the specified entity tag might not have matched the part's entity tag.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidPartOrder">
+            <summary>
+            The list of parts was not in ascending order. Parts list must be specified in order by part number.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidPayer">
+            <summary>
+            All access to this object has been disabled.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidPolicyDocument">
+            <summary>
+            The content of the form does not meet the conditions specified in the policy document.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidRange">
+            <summary>
+            The requested range cannot be satisfied.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidRequest">
+            <summary>
+            Your request is invalid.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidSecurity">
+            <summary>
+            The provided security credentials are not valid.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidSOAPRequest">
+            <summary>
+            The SOAP request body is invalid.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidStorageClass">
+            <summary>
+            The storage class you specified is not valid.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidTargetBucketForLogging">
+            <summary>
+            The target bucket for logging does not exist, is not owned by you, or does not have the appropriate grants for the log-delivery group.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidToken">
+            <summary>
+            The provided token is malformed or otherwise invalid.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.InvalidURI">
+            <summary>
+            Couldn't parse the specified URI.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.KeyTooLongError">
+            <summary>
+            Your key is too long.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.MalformedACLError">
+            <summary>
+            The XML you provided was not well-formed or did not validate against our published schema.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.MalformedPOSTRequest">
+            <summary>
+            The body of your POST request is not well-formed multipart/form-data.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.MalformedXML">
+            <summary>
+            The XML you provided was not well-formed or did not validate against our published schema.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.MaxMessageLengthExceeded">
+            <summary>
+            Your request was too big.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.MaxPostPreDataLengthExceededError">
+            <summary>
+            Your POST request fields preceding the upload file were too large.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.MetadataTooLarge">
+            <summary>
+            Your metadata headers exceed the maximum allowed metadata size.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.MethodNotAllowed">
+            <summary>
+            The specified method is not allowed against this resource.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.MissingAttachment">
+            <summary>
+            A SOAP attachment was expected, but none were found.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.MissingContentLength">
+            <summary>
+            You must provide the Content-Length HTTP header.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.MissingRequestBodyError">
+            <summary>
+            Request body is empty.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.MissingSecurityElement">
+            <summary>
+            The SOAP 1.1 request is missing a security element.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.MissingSecurityHeader">
+            <summary>
+            Your request is missing a required header.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.NoLoggingStatusForKey">
+            <summary>
+            There is no such thing as a logging status subresource for a key.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.NoSuchBucket">
+            <summary>
+            The specified bucket does not exist.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.NoSuchBucketPolicy">
+            <summary>
+            The specified bucket does not have a bucket policy.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.NoSuchKey">
+            <summary>
+            The specified key does not exist.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.NoSuchLifecycleConfiguration">
+            <summary>
+            The lifecycle configuration does not exist.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.NoSuchUpload">
+            <summary>
+            The specified multipart upload does not exist. The upload ID might be invalid, or the multipart upload might have been aborted or completed.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.NoSuchVersion">
+            <summary>
+            The version ID specified in the request does not match an existing version.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.NotImplemented">
+            <summary>
+            A header you provided implies functionality that is not implemented.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.NotSignedUp">
+            <summary>
+            Your account is not signed up for the Amazon S3 service.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.OperationAborted">
+            <summary>
+            A conflicting conditional operation is currently in progress against this resource. Try again.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.PermanentRedirect">
+            <summary>
+            The bucket you are attempting to access must be addressed using the specified endpoint. Send all future requests to this endpoint.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.PreconditionFailed">
+            <summary>
+            At least one of the preconditions you specified did not hold.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.Redirect">
+            <summary>
+            Temporary redirect.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.RestoreAlreadyInProgress">
+            <summary>
+            Object restore is already in progress.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.RequestIsNotMultiPartContent">
+            <summary>
+            Bucket POST must be of the enclosure-type multipart/form-data.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.RequestTimeout">
+            <summary>
+            Your socket connection to the server was not read from or written to within the timeout period.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.RequestTimeTooSkewed">
+            <summary>
+            The difference between the request time and the server's time is too large.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.RequestTorrentOfBucketError">
+            <summary>
+            Requesting the torrent file of a bucket is not permitted.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.SignatureDoesNotMatch">
+            <summary>
+            The request signature we calculated does not match the signature you provided.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.ServiceUnavailable">
+            <summary>
+            Service unavailable.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.SlowDown">
+            <summary>
+            Reduce your request rate.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.TemporaryRedirect">
+            <summary>
+            You are being redirected to the bucket while DNS updates.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.TokenRefreshRequired">
+            <summary>
+            The provided token must be refreshed.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.TooManyBuckets">
+            <summary>
+            You have attempted to create more buckets than allowed.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.UnexpectedContent">
+            <summary>
+            This request does not support content.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.UnresolvableGrantByEmailAddress">
+            <summary>
+            The email address you provided does not match any account on record.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.UserKeyMustBeSpecified">
+            <summary>
+            The bucket POST must contain the specified field name. If it is specified, check the order of the fields.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Objects.ErrorCode.ServerSideEncryptionConfigurationNotFoundError">
+            <summary>
+            The server side encryption configuration was not found.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.Grant">
+            <summary>
+            A grant allowing a grantee permissiont to a resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Grant.Grantee">
+            <summary>
+            The recipient of the permission.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Grant.Permission">
+            <summary>
+            The permission given to the recipient.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.Grantee">
+            <summary>
+            A permission recipient.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Grantee.ID">
+            <summary>
+            ID of the grantee.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Grantee.DisplayName">
+            <summary>
+            Display name.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Grantee.URI">
+            <summary>
+            For a group, the URI of the group.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.CanonicalUser">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.Group">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.LegalHold">
+            <summary>
+            Legal hold status of a resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.LegalHold.Status">
+            <summary>
+            Legal hold status.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.ListAllMyBucketsResult">
+            <summary>
+            Result from a ListAllMyBuckets request.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListAllMyBucketsResult.Owner">
+            <summary>
+            Bucket owner.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListAllMyBucketsResult.Buckets">
+            <summary>
+            Buckets owned by the user.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListAllMyBucketsResult.Xmlns">
+            <summary>
+            XML namespace.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.ListBucketResult">
+            <summary>
+            Result from a ListBucket operation.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListBucketResult.Name">
+            <summary>
+            Name of the bucket.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListBucketResult.Prefix">
+            <summary>
+            Prefix specified in the request.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListBucketResult.KeyCount">
+            <summary>
+            Number of keys.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListBucketResult.MaxKeys">
+            <summary>
+            Maximum number of keys.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListBucketResult.IsTruncated">
+            <summary>
+            Indicates if the response is truncated.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListBucketResult.NextContinuationToken">
+            <summary>
+            The next continuation token to supply to continue the query.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListBucketResult.Contents">
+            <summary>
+            Bucket contents.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListBucketResult.Xmlns">
+            <summary>
+            XML namespace.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.ListVersionsResult">
+            <summary>
+            Result from a ListVersions operation.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListVersionsResult.Name">
+            <summary>
+            Name of the bucket.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListVersionsResult.Prefix">
+            <summary>
+            Prefix specified in the request.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListVersionsResult.KeyMarker">
+            <summary>
+            Key marker.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListVersionsResult.VersionIdMarker">
+            <summary>
+            Version ID marker.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListVersionsResult.MaxKeys">
+            <summary>
+            Maximum number of keys.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListVersionsResult.IsTruncated">
+            <summary>
+            Indicates if the response is truncated.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListVersionsResult.Version">
+            <summary>
+            Object versions.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListVersionsResult.DeleteMarker">
+            <summary>
+            Delete markers.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListVersionsResult.Xmlns">
+            <summary>
+            XML namespace.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.ListVersionsResult.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.LocationConstraint">
+            <summary>
+            Location constraint for a resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.LocationConstraint.Xmlns">
+            <summary>
+            XML namespace.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.LocationConstraint.Text">
+            <summary>
+            Text, i.e. the region.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.Object">
+            <summary>
+            Object.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Object.Key">
+            <summary>
+            Object key.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Object.VersionId">
+            <summary>
+            Version ID for the object.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.Owner">
+            <summary>
+            Resource owner.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Owner.ID">
+            <summary>
+            ID of the owner.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Owner.DisplayName">
+            <summary>
+            Display name of the owner.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.Version">
+            <summary>
+            Object version.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Version.Key">
+            <summary>
+            Object key.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Version.VersionId">
+            <summary>
+            Version identifier.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Version.IsLatest">
+            <summary>
+            Indicates if this version is the latest version for the object.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Version.LastModified">
+            <summary>
+            Timestamp from the last modification.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Version.ETag">
+            <summary>
+            Object ETag.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Version.Size">
+            <summary>
+            Content length of the object.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Version.StorageClass">
+            <summary>
+            Storage class for the object.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Version.Owner">
+            <summary>
+            Object owner.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.VersioningConfiguration">
+            <summary>
+            Bucket versioning configuration.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.VersioningConfiguration.Status">
+            <summary>
+            Status of the versioning configuration.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.VersioningConfiguration.MfaDelete">
+            <summary>
+            Indicates if multi-factor authentication is enabled for delete operations.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.VersioningConfiguration.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Request">
             <summary>
             S3 request object.
