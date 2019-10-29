@@ -2,11 +2,20 @@
 
 ## Current Version
 
+v2.0.1.5
+
+- Added Retention object
+
+## Previous Versions
+
+v2.0.1.4
+
+- Added LegalHold object
+- Added more XML documentation
+
 v2.0.1.3
 
 - S3RequestStyle and S3RequestType enumerations
-
-## Previous Versions
 
 v2.0.0.0
 

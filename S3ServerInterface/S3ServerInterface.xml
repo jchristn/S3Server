@@ -1094,6 +1094,21 @@
             Display name of the owner.
             </summary>
         </member>
+        <member name="T:S3ServerInterface.S3Objects.Retention">
+            <summary>
+            Retention status of a resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Retention.Mode">
+            <summary>
+            Retention mode.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Retention.RetainUntilDate">
+            <summary>
+            Date upon which the resource shall no longer be retained.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.Version">
             <summary>
             Object version.
