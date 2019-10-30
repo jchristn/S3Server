@@ -212,340 +212,221 @@ namespace S3ServerInterface
                     } 
                 }
 
-                switch (s3req.Method)
+                switch (s3req.RequestType)
                 {
-                    case HttpMethod.HEAD:
-                        #region HEAD
-
-                        if (ctx.Request.RawUrlEntries.Count == 1)
-                        { 
-                            if (Bucket.Exists != null)
-                            {
-                                s3req.RequestType = S3RequestType.BucketExists;
-                                await Bucket.Exists(s3req, s3resp);
-                                return;
-                            } 
+                    case S3RequestType.ListBuckets:
+                        if (Service.ListBuckets != null)
+                        {
+                            await Service.ListBuckets(s3req, s3resp);
+                            return;
                         }
-                        else if (ctx.Request.RawUrlEntries.Count == 2)
-                        { 
-                            if (Object.Exists != null)
-                            {
-                                s3req.RequestType = S3RequestType.ObjectExists;
-                                await Object.Exists(s3req, s3resp);
-                                return;
-                            } 
-                        }
-
                         break;
-
-                    #endregion
-
-                    case HttpMethod.GET:
-                        #region GET
-
-                        if (ctx.Request.RawUrlEntries.Count == 0)
+                         
+                    case S3RequestType.BucketDelete:
+                        if (Bucket.Delete != null)
                         {
-                            if (Service.ListBuckets != null)
-                            {
-                                s3req.RequestType = S3RequestType.ListBuckets;
-                                await Service.ListBuckets(s3req, s3resp);
-                                return;
-                            } 
+                            await Bucket.Delete(s3req, s3resp);
+                            return;
                         }
-                        else if (ctx.Request.RawUrlEntries.Count == 1)
-                        {
-                            if (ctx.Request.QuerystringEntries.ContainsKey("acl"))
-                            {
-                                if (Bucket.ReadAcl != null)
-                                {
-                                    s3req.RequestType = S3RequestType.BucketReadAcl;
-                                    await Bucket.ReadAcl(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                            else if (ctx.Request.QuerystringEntries.ContainsKey("location"))
-                            {
-                                if (Bucket.ReadLocation != null)
-                                {
-                                    s3req.RequestType = S3RequestType.BucketReadLocation;
-                                    await Bucket.ReadLocation(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                            else if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
-                            {
-                                if (Bucket.ReadTags != null)
-                                {
-                                    s3req.RequestType = S3RequestType.BucketReadTags;
-                                    await Bucket.ReadTags(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                            else if (ctx.Request.QuerystringEntries.ContainsKey("versions"))
-                            {
-                                if (Bucket.ReadVersions != null)
-                                {
-                                    s3req.RequestType = S3RequestType.BucketReadVersions;
-                                    await Bucket.ReadVersions(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                            else if (ctx.Request.QuerystringEntries.ContainsKey("versioning"))
-                            {
-                                if (Bucket.ReadVersioning != null)
-                                {
-                                    s3req.RequestType = S3RequestType.BucketReadVersioning;
-                                    await Bucket.ReadVersioning(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                            else
-                            {
-                                if (Bucket.Read != null)
-                                {
-                                    s3req.RequestType = S3RequestType.BucketRead;
-                                    await Bucket.Read(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                        }
-                        else if (ctx.Request.RawUrlEntries.Count >= 2)
-                        {
-                            if (ctx.Request.Headers.ContainsKey("Range"))
-                            {
-                                if (Object.ReadRange != null)
-                                {
-                                    s3req.RequestType = S3RequestType.ObjectReadRange; 
-                                    await Object.ReadRange(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                            else if (ctx.Request.QuerystringEntries.ContainsKey("acl"))
-                            {
-                                if (Object.ReadAcl != null)
-                                {
-                                    s3req.RequestType = S3RequestType.ObjectReadAcl;
-                                    await Object.ReadAcl(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                            else if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
-                            {
-                                if (Object.ReadTags != null)
-                                {
-                                    s3req.RequestType = S3RequestType.ObjectReadTags;
-                                    await Object.ReadTags(s3req, s3resp);
-                                    return;
-                                } 
-                            } 
-                            else if (ctx.Request.QuerystringEntries.ContainsKey("legal-hold"))
-                            {
-                                if (Object.ReadLegalHold != null)
-                                {
-                                    s3req.RequestType = S3RequestType.ObjectReadLegalHold;
-                                    await Object.ReadLegalHold(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                            else if (ctx.Request.QuerystringEntries.ContainsKey("retention"))
-                            {
-                                if (Object.ReadRetention != null)
-                                {
-                                    s3req.RequestType = S3RequestType.ObjectReadRetention;
-                                    await Object.ReadRetention(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                            else
-                            {
-                                if (Object.Read != null)
-                                {
-                                    s3req.RequestType = S3RequestType.ObjectRead;
-                                    await Object.Read(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                        }
-
                         break;
-
-                    #endregion
-
-                    case HttpMethod.PUT:
-                        #region PUT
-
-                        if (ctx.Request.RawUrlEntries.Count == 1)
+                    case S3RequestType.BucketDeleteTags:
+                        if (Bucket.DeleteTags != null)
                         {
-                            if (ctx.Request.QuerystringEntries.ContainsKey("acl"))
-                            {
-                                if (Bucket.WriteAcl != null)
-                                {
-                                    s3req.RequestType = S3RequestType.BucketWriteAcl; 
-                                    await Bucket.WriteAcl(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                            else if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
-                            {
-                                if (Bucket.WriteTags != null)
-                                {
-                                    s3req.RequestType = S3RequestType.BucketWriteTags;
-                                    await Bucket.WriteTags(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                            else if (ctx.Request.QuerystringEntries.ContainsKey("versioning"))
-                            {
-                                if (Bucket.WriteVersioning != null)
-                                {
-                                    s3req.RequestType = S3RequestType.BucketWriteVersioning;
-                                    await Bucket.WriteVersioning(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                            else
-                            {
-                                if (Bucket.Write != null)
-                                {
-                                    s3req.RequestType = S3RequestType.BucketWrite;
-                                    await Bucket.Write(s3req, s3resp);
-                                    return;
-                                } 
-                            }
+                            await Bucket.DeleteTags(s3req, s3resp);
+                            return;
                         }
-                        else if (ctx.Request.RawUrlEntries.Count >= 2)
-                        {
-                            if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
-                            {
-                                if (Object.WriteTags != null)
-                                {
-                                    s3req.RequestType = S3RequestType.ObjectWriteTags;
-                                    await Object.WriteTags(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                            else if (ctx.Request.QuerystringEntries.ContainsKey("acl"))
-                            {
-                                if (Object.WriteAcl != null)
-                                {
-                                    s3req.RequestType = S3RequestType.ObjectWriteAcl;
-                                    await Object.WriteAcl(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                            else if (ctx.Request.QuerystringEntries.ContainsKey("legal-hold"))
-                            {
-                                if (Object.WriteLegalHold != null)
-                                {
-                                    s3req.RequestType = S3RequestType.ObjectWriteLegalHold;
-                                    await Object.WriteLegalHold(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                            else if (ctx.Request.QuerystringEntries.ContainsKey("retention"))
-                            {
-                                if (Object.WriteRetention != null)
-                                {
-                                    s3req.RequestType = S3RequestType.ObjectWriteRetention;
-                                    await Object.WriteRetention(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                            else
-                            {
-                                if (Object.Write != null)
-                                {
-                                    s3req.RequestType = S3RequestType.ObjectWrite;
-                                    await Object.Write(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                        }
-
                         break;
-
-                    #endregion
-
-                    case HttpMethod.POST:
-                        #region POST
-
-                        if (ctx.Request.RawUrlEntries.Count >= 1)
+                    case S3RequestType.BucketExists:
+                        if (Bucket.Exists != null)
                         {
-                            if (ctx.Request.QuerystringEntries.ContainsKey("delete"))
-                            {
-                                if (Object.DeleteMultiple != null)
-                                {
-                                    s3req.RequestType = S3RequestType.ObjectDeleteMultiple;
-                                    await Object.DeleteMultiple(s3req, s3resp);
-                                    return;
-                                } 
-                            }  
+                            await Bucket.Exists(s3req, s3resp);
+                            return;
                         }
-
                         break;
-
-                    #endregion
-
-                    case HttpMethod.DELETE:
-                        #region DELETE
-
-                        if (ctx.Request.RawUrlEntries.Count == 1)
+                    case S3RequestType.BucketRead:
+                        if (Bucket.Read != null)
                         {
-                            if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
-                            {
-                                if (Bucket.DeleteTags != null)
-                                {
-                                    s3req.RequestType = S3RequestType.BucketDeleteTags;
-                                    await Bucket.DeleteTags(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                            else
-                            {
-                                if (Bucket.Delete != null)
-                                {
-                                    s3req.RequestType = S3RequestType.BucketDelete;
-                                    await Bucket.Delete(s3req, s3resp);
-                                    return;
-                                } 
-                            }
+                            await Bucket.Read(s3req, s3resp);
+                            return;
                         }
-                        else if (ctx.Request.RawUrlEntries.Count >= 2)
-                        {
-                            if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
-                            {
-                                if (Object.DeleteTags != null)
-                                {
-                                    s3req.RequestType = S3RequestType.ObjectDeleteTags;
-                                    await Object.DeleteTags(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                            else
-                            {
-                                if (Object.Delete != null)
-                                {
-                                    s3req.RequestType = S3RequestType.ObjectDelete;
-                                    await Object.Delete(s3req, s3resp);
-                                    return;
-                                } 
-                            }
-                        } 
-
                         break;
-
-                    #endregion
-
-                    default:
-                        if (DefaultRequestHandler != null)
+                    case S3RequestType.BucketReadAcl:
+                        if (Bucket.ReadAcl != null)
                         {
-                            await DefaultRequestHandler(s3req, s3resp);
+                            await Bucket.ReadAcl(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.BucketReadLocation:
+                        if (Bucket.ReadLocation != null)
+                        {
+                            await Bucket.ReadLocation(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.BucketReadTags:
+                        if (Bucket.ReadTags != null)
+                        {
+                            await Bucket.ReadTags(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.BucketReadVersioning:
+                        if (Bucket.ReadVersioning != null)
+                        {
+                            await Bucket.ReadVersioning(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.BucketReadVersions:
+                        if (Bucket.ReadVersions != null)
+                        {
+                            await Bucket.ReadVersions(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.BucketWrite:
+                        if (Bucket.Write != null)
+                        {
+                            await Bucket.Write(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.BucketWriteAcl:
+                        if (Bucket.WriteAcl != null)
+                        {
+                            await Bucket.WriteAcl(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.BucketWriteTags:
+                        if (Bucket.WriteTags != null)
+                        {
+                            await Bucket.WriteTags(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.BucketWriteVersioning:
+                        if (Bucket.WriteVersioning != null)
+                        {
+                            await Bucket.WriteVersioning(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.ObjectDelete:
+                        if (Object.Delete!= null)
+                        {
+                            await Object.Delete(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.ObjectDeleteMultiple:
+                        if (Object.DeleteMultiple != null)
+                        {
+                            await Object.DeleteMultiple(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.ObjectDeleteTags:
+                        if (Object.DeleteTags != null)
+                        {
+                            await Object.DeleteTags(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.ObjectExists:
+                        if (Object.Exists != null)
+                        {
+                            await Object.Exists(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.ObjectRead:
+                        if (Object.Read != null)
+                        {
+                            await Object.Read(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.ObjectReadAcl:
+                        if (Object.ReadAcl != null)
+                        {
+                            await Object.ReadAcl(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.ObjectReadLegalHold:
+                        if (Object.ReadLegalHold != null)
+                        {
+                            await Object.ReadLegalHold(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.ObjectReadRange:
+                        if (Object.ReadRange != null)
+                        {
+                            await Object.ReadRange(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.ObjectReadRetention:
+                        if (Object.ReadRetention != null)
+                        {
+                            await Object.ReadRetention(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.ObjectReadTags:
+                        if (Object.ReadTags != null)
+                        {
+                            await Object.ReadTags(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.ObjectWrite:
+                        if (Object.Write != null)
+                        {
+                            await Object.Write(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.ObjectWriteAcl:
+                        if (Object.WriteAcl != null)
+                        {
+                            await Object.WriteAcl(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.ObjectWriteLegalHold:
+                        if (Object.WriteLegalHold != null)
+                        {
+                            await Object.WriteLegalHold(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.ObjectWriteRetention:
+                        if (Object.WriteRetention != null)
+                        {
+                            await Object.WriteRetention(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.ObjectWriteTags:
+                        if (Object.WriteTags != null)
+                        {
+                            await Object.WriteTags(s3req, s3resp);
                             return;
                         }
                         break;
                 }
 
-                await Send400Response(s3resp);
+                if (DefaultRequestHandler != null)
+                {
+                    await DefaultRequestHandler(s3req, s3resp);
+                    return;
+                }
+
+                await s3resp.Send(S3Objects.ErrorCode.InvalidRequest);
                 return;
             }
             catch (Exception e)
@@ -555,7 +436,7 @@ namespace S3ServerInterface
                     Console.WriteLine(Common.SerializeJson(e, true));
                 }
 
-                await Send500Response(s3resp, e);
+                await s3resp.Send(S3Objects.ErrorCode.InternalError);
                 return;
             }
             finally
@@ -572,44 +453,7 @@ namespace S3ServerInterface
                 }
             }
         }
-
-        private async Task SendUnknownEndpointResponse(S3Response resp, string endpoint)
-        {
-            resp.StatusCode = 400;
-            resp.ContentType = "text/plain";
-            await resp.Send("Unknown endpoint: " + endpoint);
-        }
-
-        private async Task Send400Response(S3Response resp)
-        {
-            resp.StatusCode = 400;
-            resp.ContentType = "text/plain";
-            await resp.Send("Bad request");
-        }
-
-        private async Task Send500Response(S3Response resp, Exception e)
-        {
-            resp.StatusCode = 500;
-            resp.ContentLength = 0;
-            resp.Data = new MemoryStream();
-            resp.ContentType = "text/plain";
-
-            string msg = null;
-
-            if (SendExceptionsInResponses)
-            {
-                resp.ContentType = "application/json";
-                msg = Common.SerializeJson(e, true);
-            }
-            else
-            {
-                msg = "Internal server error";
-            }
-             
-            await resp.Send(msg);
-            return;
-        }
-
+         
         #endregion
     }
 }

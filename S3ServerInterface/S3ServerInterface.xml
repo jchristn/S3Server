@@ -1189,7 +1189,7 @@
             Indicates the type of S3 request.
             </summary>
         </member>
-        <member name="P:S3ServerInterface.S3Request.TimestampUtc">
+        <member name="F:S3ServerInterface.S3Request.TimestampUtc">
             <summary>
             Time of creation in UTC.
             </summary>
@@ -1224,7 +1224,7 @@
             The raw URL without querystring.
             </summary>
         </member>
-        <member name="P:S3ServerInterface.S3Request.RawUrlEntries">
+        <member name="F:S3ServerInterface.S3Request.RawUrlEntries">
             <summary>
             The individual elements in the raw URL.
             </summary>
@@ -1244,12 +1244,12 @@
             Indicates if chunked transfer-encoding is in use.
             </summary>
         </member>
-        <member name="P:S3ServerInterface.S3Request.Querystring">
+        <member name="F:S3ServerInterface.S3Request.Querystring">
             <summary>
             URL querystring.
             </summary>
         </member>
-        <member name="P:S3ServerInterface.S3Request.Headers">
+        <member name="F:S3ServerInterface.S3Request.Headers">
             <summary>
             Full set of HTTP headers.
             </summary>
@@ -1279,7 +1279,7 @@
             Object key prefix.
             </summary>
         </member>
-        <member name="P:S3ServerInterface.S3Request.MaxKeys">
+        <member name="F:S3ServerInterface.S3Request.MaxKeys">
             <summary>
             Maximum number of keys to retrieve in an enumeration.
             </summary>
@@ -1302,6 +1302,16 @@
         <member name="P:S3ServerInterface.S3Request.AccessKey">
             <summary>
             Access key, parsed from authorization header.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Request.RangeStart">
+            <summary>
+            Start value from the Range header.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Request.RangeEnd">
+            <summary>
+            End value from the Range header.
             </summary>
         </member>
         <member name="P:S3ServerInterface.S3Request.Data">

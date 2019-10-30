@@ -23,14 +23,16 @@ namespace Test
 
         static void Main(string[] args)
         {
-            _Server = new S3Server("127.0.0.1", 8000, false, DefaultRequestHandler);
-            _Server.ConsoleDebug.Exceptions = false;
-            _Server.ConsoleDebug.HttpRequests = false;
-            _Server.ConsoleDebug.S3Requests = false;
+            _Server = new S3Server("localhost", 8000, false, DefaultRequestHandler);
+            _Server.ConsoleDebug.Exceptions = true;
+            _Server.ConsoleDebug.HttpRequests = true;
+            _Server.ConsoleDebug.S3Requests = true;
 
             _Server.PreRequestHandler = PreRequestHandler; 
             _Server.DefaultRequestHandler = DefaultRequestHandler;
-            
+
+            _Server.Service.ListBuckets = ListBuckets;
+
             _Server.Bucket.Delete = BucketDelete;
             _Server.Bucket.DeleteTags = BucketDeleteTags;
             _Server.Bucket.Exists = BucketExists;
@@ -111,6 +113,15 @@ namespace Test
         {
             await SendResponse(req, resp, "Default request handler");
         }
+
+        #region Service-APIs
+
+        static async Task ListBuckets(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "List buckets");
+        }
+
+        #endregion
 
         #region Bucket-APIs
 

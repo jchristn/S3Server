@@ -2,11 +2,16 @@
 
 ## Current Version
 
+v2.0.1.8
+
+- Moved population of RequestType into the S3Request constructor to fix issues with use of PreRequestHandler
+- Added RangeStart and RangeEnd parameters to S3Request, automatically populated if Range header is set
+
+## Previous Versions
+
 v2.0.1.7
 
 - Dependency update
-
-## Previous Versions
 
 v2.0.1.6
 

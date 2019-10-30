@@ -29,11 +29,11 @@ namespace S3ServerInterface
         /// Indicates the type of S3 request.
         /// </summary>
         public S3RequestType RequestType { get; set; }
-        
+
         /// <summary>
         /// Time of creation in UTC.
         /// </summary>
-        public DateTime TimestampUtc { get; set; }
+        public DateTime TimestampUtc = DateTime.Now.ToUniversalTime();
 
         /// <summary>
         /// HTTP context from which this response was created.
@@ -68,7 +68,7 @@ namespace S3ServerInterface
         /// <summary>
         /// The individual elements in the raw URL.
         /// </summary>
-        public List<string> RawUrlEntries { get; set; }
+        public List<string> RawUrlEntries = new List<string>();
 
         /// <summary>
         /// The length of the payload.
@@ -88,12 +88,12 @@ namespace S3ServerInterface
         /// <summary>
         /// URL querystring.
         /// </summary>
-        public Dictionary<string, string> Querystring { get; set; }
+        public Dictionary<string, string> Querystring = new Dictionary<string, string>();
 
         /// <summary>
         /// Full set of HTTP headers.
         /// </summary>
-        public Dictionary<string, string> Headers { get; set; }
+        public Dictionary<string, string> Headers = new Dictionary<string, string>();
 
         /// <summary>
         /// AWS region.
@@ -123,7 +123,7 @@ namespace S3ServerInterface
         /// <summary>
         /// Maximum number of keys to retrieve in an enumeration.
         /// </summary>
-        public long MaxKeys { get; set; }
+        public long? MaxKeys = null;
 
         /// <summary>
         /// Object version ID.
@@ -144,7 +144,17 @@ namespace S3ServerInterface
         /// Access key, parsed from authorization header.
         /// </summary>
         public string AccessKey { get; set; }
-         
+
+        /// <summary>
+        /// Start value from the Range header.
+        /// </summary>
+        public long? RangeStart = null;
+
+        /// <summary>
+        /// End value from the Range header.
+        /// </summary>
+        public long? RangeEnd = null;
+
         /// <summary>
         /// Stream containing the request body.
         /// </summary>
@@ -283,7 +293,208 @@ namespace S3ServerInterface
                 }
             }
 
-            #endregion 
+            #endregion
+
+            #region Set-Parameters-from-Headers
+
+            if (Headers != null)
+            {
+                if (Headers.ContainsKey("Range"))
+                {
+                    long start = 0;
+                    long end = 0;
+                    ParseRangeHeader(Headers["Range"], out start, out end);
+
+                    RangeStart = start;
+                    RangeEnd = end;
+                }
+            }
+
+            #endregion
+
+            #region Set-RequestType
+
+            switch (Method)
+            {
+                case HttpMethod.HEAD:
+                    #region HEAD
+
+                    if (ctx.Request.RawUrlEntries.Count == 1)
+                    {
+                       RequestType = S3RequestType.BucketExists;
+                    }
+                    else if (ctx.Request.RawUrlEntries.Count == 2)
+                    {
+                        RequestType = S3RequestType.ObjectExists;
+                    }
+
+                    break;
+
+                #endregion
+
+                case HttpMethod.GET:
+                    #region GET
+
+                    if (ctx.Request.RawUrlEntries.Count == 0)
+                    {
+                        RequestType = S3RequestType.ListBuckets;
+                    }
+                    else if (ctx.Request.RawUrlEntries.Count == 1)
+                    {
+                        if (ctx.Request.QuerystringEntries.ContainsKey("acl"))
+                        {
+                            RequestType = S3RequestType.BucketReadAcl;
+                        }
+                        else if (ctx.Request.QuerystringEntries.ContainsKey("location"))
+                        {
+                            RequestType = S3RequestType.BucketReadLocation;
+                        }
+                        else if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
+                        {
+                            RequestType = S3RequestType.BucketReadTags;
+                        }
+                        else if (ctx.Request.QuerystringEntries.ContainsKey("versions"))
+                        {
+                            RequestType = S3RequestType.BucketReadVersions;
+                        }
+                        else if (ctx.Request.QuerystringEntries.ContainsKey("versioning"))
+                        {
+                            RequestType = S3RequestType.BucketReadVersioning;
+                        }
+                        else
+                        {
+                            RequestType = S3RequestType.BucketRead;
+                        }
+                    }
+                    else if (ctx.Request.RawUrlEntries.Count >= 2)
+                    {
+                        if (ctx.Request.Headers.ContainsKey("Range"))
+                        {
+                            RequestType = S3RequestType.ObjectReadRange;
+                        }
+                        else if (ctx.Request.QuerystringEntries.ContainsKey("acl"))
+                        {
+                            RequestType = S3RequestType.ObjectReadAcl;
+                        }
+                        else if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
+                        {
+                            RequestType = S3RequestType.ObjectReadTags;
+                        }
+                        else if (ctx.Request.QuerystringEntries.ContainsKey("legal-hold"))
+                        {
+                            RequestType = S3RequestType.ObjectReadLegalHold;
+                        }
+                        else if (ctx.Request.QuerystringEntries.ContainsKey("retention"))
+                        {
+                            RequestType = S3RequestType.ObjectReadRetention;
+                        }
+                        else
+                        {
+                            RequestType = S3RequestType.ObjectRead;
+                        }
+                    }
+
+                    break;
+
+                #endregion
+
+                case HttpMethod.PUT:
+                    #region PUT
+
+                    if (ctx.Request.RawUrlEntries.Count == 1)
+                    {
+                        if (ctx.Request.QuerystringEntries.ContainsKey("acl"))
+                        {
+                            RequestType = S3RequestType.BucketWriteAcl;
+                        }
+                        else if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
+                        {
+                            RequestType = S3RequestType.BucketWriteTags;
+                        }
+                        else if (ctx.Request.QuerystringEntries.ContainsKey("versioning"))
+                        {
+                            RequestType = S3RequestType.BucketWriteVersioning;
+                        }
+                        else
+                        {
+                            RequestType = S3RequestType.BucketWrite;
+                        }
+                    }
+                    else if (ctx.Request.RawUrlEntries.Count >= 2)
+                    {
+                        if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
+                        {
+                            RequestType = S3RequestType.ObjectWriteTags;
+                        }
+                        else if (ctx.Request.QuerystringEntries.ContainsKey("acl"))
+                        {
+                            RequestType = S3RequestType.ObjectWriteAcl;
+                        }
+                        else if (ctx.Request.QuerystringEntries.ContainsKey("legal-hold"))
+                        {
+                            RequestType = S3RequestType.ObjectWriteLegalHold;
+                        }
+                        else if (ctx.Request.QuerystringEntries.ContainsKey("retention"))
+                        {
+                            RequestType = S3RequestType.ObjectWriteRetention;
+                        }
+                        else
+                        {
+                            RequestType = S3RequestType.ObjectWrite;
+                        }
+                    }
+
+                    break;
+
+                #endregion
+
+                case HttpMethod.POST:
+                    #region POST
+
+                    if (ctx.Request.RawUrlEntries.Count >= 1)
+                    {
+                        if (ctx.Request.QuerystringEntries.ContainsKey("delete"))
+                        {
+                            RequestType = S3RequestType.ObjectDeleteMultiple;
+                        }
+                    }
+
+                    break;
+
+                #endregion
+
+                case HttpMethod.DELETE:
+                    #region DELETE
+
+                    if (ctx.Request.RawUrlEntries.Count == 1)
+                    {
+                        if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
+                        {
+                            RequestType = S3RequestType.BucketDeleteTags;
+                        }
+                        else
+                        {
+                            RequestType = S3RequestType.BucketDelete;
+                        }
+                    }
+                    else if (ctx.Request.RawUrlEntries.Count >= 2)
+                    {
+                        if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
+                        {
+                            RequestType = S3RequestType.ObjectDeleteTags;
+                        }
+                        else
+                        {
+                            RequestType = S3RequestType.ObjectDelete;
+                        }
+                    }
+
+                    break;
+
+                #endregion 
+            }
+
+            #endregion
         }
 
         #endregion
@@ -296,7 +507,7 @@ namespace S3ServerInterface
         /// <returns>String.</returns>
         public override string ToString()
         {
-            string ret = "---" + Environment.NewLine;
+            string ret = Environment.NewLine + "---" + Environment.NewLine;
             ret += "  Source IP:Port : " + SourceIp + ":" + SourcePort + Environment.NewLine;
             ret += "  Method         : " + Method.ToString() + Environment.NewLine;
             ret += "  Hostname       : " + Hostname + Environment.NewLine;
@@ -561,6 +772,21 @@ namespace S3ServerInterface
             }
 
             return;
+        }
+
+        private void ParseRangeHeader(string header, out long start, out long end)
+        {
+            if (String.IsNullOrEmpty(header)) throw new ArgumentNullException(nameof(header));
+            header = header.ToLower();
+            if (header.StartsWith("bytes=")) header = header.Substring(6);
+            string[] vals = header.Split('-');
+            if (vals.Length != 2) throw new ArgumentException("Invalid range header: " + header);
+
+            start = 0;
+            end = 0;
+
+            if (!String.IsNullOrEmpty(vals[0])) start = Convert.ToInt64(vals[0]);
+            if (!String.IsNullOrEmpty(vals[1])) end = Convert.ToInt64(vals[1]);
         }
 
         #endregion

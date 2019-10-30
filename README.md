@@ -10,9 +10,10 @@ Simple S3 server-side interface, produced using Amazon's public documentation.
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v2.0.1.7
+## New in v2.0.1.8
  
-- Dependency update
+- Moved population of RequestType into the S3Request constructor to fix issues with use of PreRequestHandler
+- Added RangeStart and RangeEnd parameters to S3Request, automatically populated if Range header is set
 
 ## Examples
 

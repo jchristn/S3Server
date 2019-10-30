@@ -270,7 +270,7 @@ namespace S3ServerInterface
         /// <returns>String.</returns>
         public override string ToString()
         {
-            string ret = "---" + Environment.NewLine;
+            string ret = Environment.NewLine + "---" + Environment.NewLine;
             ret += "  Status Code    : " + StatusCode + Environment.NewLine;
             ret += "  Content Type   : " + ContentType + Environment.NewLine;
             ret += "  Content Length : " + ContentLength + Environment.NewLine;
