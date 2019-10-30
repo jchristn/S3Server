@@ -2,11 +2,19 @@
 
 ## Current Version
 
+v2.0.1.7
+
+- Dependency update
+
+## Previous Versions
+
+v2.0.1.6
+
+- Retention fix (nullable RetainUntil timestamp)
+
 v2.0.1.5
 
 - Added Retention object
-
-## Previous Versions
 
 v2.0.1.4
 

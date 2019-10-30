@@ -6,13 +6,13 @@
     <Authors>Joel Christner</Authors>
     <Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
     <Copyright>(c)2019 Joel Christner</Copyright>
-    <PackageReleaseNotes>Add Retention object.</PackageReleaseNotes>
+    <PackageReleaseNotes>Update dependencies</PackageReleaseNotes>
     <PackageTags>aws s3 storage rest interface server</PackageTags>
     <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/jchristn/S3ServerInterface</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jchristn/S3ServerInterface</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
-    <Version>2.0.1.5</Version>
+    <Version>2.0.1.7</Version>
     <PackageIconUrl>https://raw.githubusercontent.com/jchristn/S3ServerInterface/master/assets/logo.ico</PackageIconUrl>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
   </PropertyGroup>
@@ -22,9 +22,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.S3" Version="3.3.104.24" />
+    <PackageReference Include="AWSSDK.S3" Version="3.3.105" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
-    <PackageReference Include="Watson" Version="3.0.1" />
+    <PackageReference Include="Watson" Version="3.0.4" />
   </ItemGroup>
 
   <ItemGroup>
