@@ -9,39 +9,21 @@
             Callback methods for bucket operations.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.BucketCallbacks.ReadLocation">
+        <member name="F:S3ServerInterface.BucketCallbacks.Delete">
             <summary>
-            Retrieve location (region) constraint from the server for this bucket.
-            Success: return an S3Response object with status 200 and LocationConstraint in the body.
+            Delete a bucket.  
+            Success: return an S3Response object with status 204. 
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.DeleteTags">
+            <summary>
+            Delete a bucket's tags. 
+            Success: return an S3Response object with status 204. 
             </summary>
         </member>
         <member name="F:S3ServerInterface.BucketCallbacks.Exists">
             <summary>
             Check for the existence of a bucket.
-            Success: return an S3Response object with status 200.
-            </summary>
-        </member>
-        <member name="F:S3ServerInterface.BucketCallbacks.Write">
-            <summary>
-            Write a bucket.  
-            Success: return an S3Response object with status 200.
-            </summary>
-        </member>
-        <member name="F:S3ServerInterface.BucketCallbacks.WriteAcl">
-            <summary>
-            Write an ACL to a bucket, deleting the previous ACL.
-            Success: return an S3Response object with status 200.
-            </summary>
-        </member>
-        <member name="F:S3ServerInterface.BucketCallbacks.WriteTags">
-            <summary>
-            Write tags to a bucket, deleting the previous tags.
-            Success: return an S3Response object with status 204.
-            </summary>
-        </member>
-        <member name="F:S3ServerInterface.BucketCallbacks.WriteVersioning">
-            <summary>
-            Set a bucket's versioning policy.  
             Success: return an S3Response object with status 200.
             </summary>
         </member>
@@ -55,6 +37,18 @@
             <summary>
             Read a bucket's access control policy.
             Success: return an S3Response object with status 200 and an AccessControlPolicy object as its data.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.ReadLogging">
+            <summary>
+            Retrieve logging configuration for this bucket.
+            Success: return an S3Response object with status 200 and BucketLoggingStatus in the body.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.ReadLocation">
+            <summary>
+            Retrieve location (region) constraint from the server for this bucket.
+            Success: return an S3Response object with status 200 and LocationConstraint in the body.
             </summary>
         </member>
         <member name="F:S3ServerInterface.BucketCallbacks.ReadTags">
@@ -75,16 +69,34 @@
             Success: return an S3Response object with status 200 and a VersioningConfiguration object as its data.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.BucketCallbacks.Delete">
+        <member name="F:S3ServerInterface.BucketCallbacks.Write">
             <summary>
-            Delete a bucket.  
-            Success: return an S3Response object with status 204. 
+            Write a bucket.  
+            Success: return an S3Response object with status 200.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.BucketCallbacks.DeleteTags">
+        <member name="F:S3ServerInterface.BucketCallbacks.WriteAcl">
             <summary>
-            Delete a bucket's tags. 
-            Success: return an S3Response object with status 204. 
+            Write an ACL to a bucket, deleting the previous ACL.
+            Success: return an S3Response object with status 200.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.WriteLogging">
+            <summary>
+            Write logging configuration to a bucket, deleting the previous configuration.
+            Success: return an S3Response object with status 200.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.WriteTags">
+            <summary>
+            Write tags to a bucket, deleting the previous tags.
+            Success: return an S3Response object with status 204.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.WriteVersioning">
+            <summary>
+            Set a bucket's versioning policy.  
+            Success: return an S3Response object with status 200.
             </summary>
         </member>
         <member name="M:S3ServerInterface.BucketCallbacks.#ctor">
@@ -276,6 +288,21 @@
         <member name="P:S3ServerInterface.S3Objects.Bucket.CreationDate">
             <summary>
             The timestamp from bucket creation.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.BucketLoggingStatus">
+            <summary>
+            Logging status for a bucket.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.BucketLoggingStatus.LoggingEnabled">
+            <summary>
+            Logging configuration for a bucket.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.BucketLoggingStatus.Xmlns">
+            <summary>
+            XML namespace.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3Objects.Buckets">
@@ -909,6 +936,16 @@
             For a group, the URI of the group.
             </summary>
         </member>
+        <member name="P:S3ServerInterface.S3Objects.Grantee.Type">
+            <summary>
+            Type of grantee.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Grantee.EmailAddress">
+            <summary>
+            Email address of the grantee.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.CanonicalUser">
             <summary>
             Instantiate the object.
@@ -1064,6 +1101,26 @@
             Text, i.e. the region.
             </summary>
         </member>
+        <member name="T:S3ServerInterface.S3Objects.LoggingEnabled">
+            <summary>
+            Logging status.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.LoggingEnabled.TargetBucket">
+            <summary>
+            The bucket where logs are stored.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.LoggingEnabled.TargetPrefix">
+            <summary>
+            The prefix for objects used to store logging data.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.LoggingEnabled.TargetGrants">
+            <summary>
+            The grants allowing others to access logging data.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.Object">
             <summary>
             Object.
@@ -1107,6 +1164,16 @@
         <member name="P:S3ServerInterface.S3Objects.Retention.RetainUntilDate">
             <summary>
             Date upon which the resource shall no longer be retained.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.TargetGrants">
+            <summary>
+            Recipients of the grants to access the resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.TargetGrants.Grant">
+            <summary>
+            Grant specifying to whom rights are provided to the resource.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3Objects.Version">
@@ -1415,6 +1482,11 @@
             Read a bucket's location, i.e. its region.
             </summary>
         </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketReadLogging">
+            <summary>
+            Read a bucket's logging configuration.
+            </summary>
+        </member>
         <member name="F:S3ServerInterface.S3RequestType.BucketReadTags">
             <summary>
             Read a bucket's tags.
@@ -1430,9 +1502,19 @@
             List object versions.
             </summary>
         </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketWrite">
+            <summary>
+            Create a bucket.
+            </summary>
+        </member>
         <member name="F:S3ServerInterface.S3RequestType.BucketWriteAcl">
             <summary>
             Write a bucket's access control list.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketWriteLogging">
+            <summary>
+            Write a bucket's logging configuration.
             </summary>
         </member>
         <member name="F:S3ServerInterface.S3RequestType.BucketWriteTags">
@@ -1443,11 +1525,6 @@
         <member name="F:S3ServerInterface.S3RequestType.BucketWriteVersioning">
             <summary>
             Write a bucket's versioning policy.
-            </summary>
-        </member>
-        <member name="F:S3ServerInterface.S3RequestType.BucketWrite">
-            <summary>
-            Create a bucket.
             </summary>
         </member>
         <member name="F:S3ServerInterface.S3RequestType.ObjectDelete">

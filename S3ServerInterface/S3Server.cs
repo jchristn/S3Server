@@ -264,6 +264,13 @@ namespace S3ServerInterface
                             return;
                         }
                         break;
+                    case S3RequestType.BucketReadLogging:
+                        if (Bucket.ReadLogging != null)
+                        {
+                            await Bucket.ReadLogging(s3req, s3resp);
+                            return;
+                        }
+                        break;
                     case S3RequestType.BucketReadTags:
                         if (Bucket.ReadTags != null)
                         {
@@ -296,6 +303,13 @@ namespace S3ServerInterface
                         if (Bucket.WriteAcl != null)
                         {
                             await Bucket.WriteAcl(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.BucketWriteLogging:
+                        if (Bucket.WriteLogging != null)
+                        {
+                            await Bucket.WriteLogging(s3req, s3resp);
                             return;
                         }
                         break;

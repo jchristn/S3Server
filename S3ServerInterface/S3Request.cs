@@ -349,6 +349,10 @@ namespace S3ServerInterface
                         {
                             RequestType = S3RequestType.BucketReadLocation;
                         }
+                        else if (ctx.Request.QuerystringEntries.ContainsKey("logging"))
+                        {
+                            RequestType = S3RequestType.BucketReadLogging;
+                        }
                         else if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
                         {
                             RequestType = S3RequestType.BucketReadTags;
@@ -370,7 +374,8 @@ namespace S3ServerInterface
                     {
                         if (ctx.Request.Headers.ContainsKey("Range"))
                         {
-                            RequestType = S3RequestType.ObjectReadRange;
+                            if (RangeEnd > 0) RequestType = S3RequestType.ObjectReadRange;
+                            else RequestType = S3RequestType.ObjectRead;
                         }
                         else if (ctx.Request.QuerystringEntries.ContainsKey("acl"))
                         {
@@ -406,6 +411,10 @@ namespace S3ServerInterface
                         if (ctx.Request.QuerystringEntries.ContainsKey("acl"))
                         {
                             RequestType = S3RequestType.BucketWriteAcl;
+                        }
+                        else if (ctx.Request.QuerystringEntries.ContainsKey("logging"))
+                        {
+                            RequestType = S3RequestType.BucketWriteLogging;
                         }
                         else if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
                         {

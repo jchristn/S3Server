@@ -42,6 +42,10 @@ namespace S3ServerInterface
         /// </summary>
         BucketReadLocation,
         /// <summary>
+        /// Read a bucket's logging configuration.
+        /// </summary>
+        BucketReadLogging,
+        /// <summary>
         /// Read a bucket's tags.
         /// </summary>
         BucketReadTags,
@@ -54,9 +58,17 @@ namespace S3ServerInterface
         /// </summary>
         BucketReadVersions,
         /// <summary>
+        /// Create a bucket.
+        /// </summary>
+        BucketWrite,
+        /// <summary>
         /// Write a bucket's access control list.
         /// </summary>
         BucketWriteAcl,
+        /// <summary>
+        /// Write a bucket's logging configuration.
+        /// </summary>
+        BucketWriteLogging,
         /// <summary>
         /// Write a bucket's tags.
         /// </summary>
@@ -65,10 +77,6 @@ namespace S3ServerInterface
         /// Write a bucket's versioning policy.
         /// </summary>
         BucketWriteVersioning,
-        /// <summary>
-        /// Create a bucket.
-        /// </summary>
-        BucketWrite,
         /// <summary>
         /// Delete an object.
         /// </summary>

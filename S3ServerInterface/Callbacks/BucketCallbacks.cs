@@ -14,10 +14,16 @@ namespace S3ServerInterface
         #region Public-Members
 
         /// <summary>
-        /// Retrieve location (region) constraint from the server for this bucket.
-        /// Success: return an S3Response object with status 200 and LocationConstraint in the body.
+        /// Delete a bucket.  
+        /// Success: return an S3Response object with status 204. 
         /// </summary>
-        public Func<S3Request, S3Response, Task> ReadLocation = null;
+        public Func<S3Request, S3Response, Task> Delete = null;
+
+        /// <summary>
+        /// Delete a bucket's tags. 
+        /// Success: return an S3Response object with status 204. 
+        /// </summary>
+        public Func<S3Request, S3Response, Task> DeleteTags = null;
 
         /// <summary>
         /// Check for the existence of a bucket.
@@ -25,30 +31,6 @@ namespace S3ServerInterface
         /// </summary>
         public Func<S3Request, S3Response, Task> Exists = null;
 
-        /// <summary>
-        /// Write a bucket.  
-        /// Success: return an S3Response object with status 200.
-        /// </summary>
-        public Func<S3Request, S3Response, Task> Write = null;
-
-        /// <summary>
-        /// Write an ACL to a bucket, deleting the previous ACL.
-        /// Success: return an S3Response object with status 200.
-        /// </summary>
-        public Func<S3Request, S3Response, Task> WriteAcl = null;
-
-        /// <summary>
-        /// Write tags to a bucket, deleting the previous tags.
-        /// Success: return an S3Response object with status 204.
-        /// </summary>
-        public Func<S3Request, S3Response, Task> WriteTags = null;
-
-        /// <summary>
-        /// Set a bucket's versioning policy.  
-        /// Success: return an S3Response object with status 200.
-        /// </summary>
-        public Func<S3Request, S3Response, Task> WriteVersioning = null;
-         
         /// <summary>
         /// Enumerate a bucket.  
         /// Success: return an S3Response object with status 200 and a ListBucketResult object as its data.
@@ -60,7 +42,19 @@ namespace S3ServerInterface
         /// Success: return an S3Response object with status 200 and an AccessControlPolicy object as its data.
         /// </summary>
         public Func<S3Request, S3Response, Task> ReadAcl = null;
-         
+
+        /// <summary>
+        /// Retrieve logging configuration for this bucket.
+        /// Success: return an S3Response object with status 200 and BucketLoggingStatus in the body.
+        /// </summary>
+        public Func<S3Request, S3Response, Task> ReadLogging = null;
+
+        /// <summary>
+        /// Retrieve location (region) constraint from the server for this bucket.
+        /// Success: return an S3Response object with status 200 and LocationConstraint in the body.
+        /// </summary>
+        public Func<S3Request, S3Response, Task> ReadLocation = null;
+
         /// <summary>
         /// Read a bucket's tags. 
         /// Success: return an S3Response object with status 200 and a Tagging object as its data. 
@@ -80,17 +74,35 @@ namespace S3ServerInterface
         public Func<S3Request, S3Response, Task> ReadVersioning = null;
 
         /// <summary>
-        /// Delete a bucket.  
-        /// Success: return an S3Response object with status 204. 
+        /// Write a bucket.  
+        /// Success: return an S3Response object with status 200.
         /// </summary>
-        public Func<S3Request, S3Response, Task> Delete = null;
+        public Func<S3Request, S3Response, Task> Write = null;
 
         /// <summary>
-        /// Delete a bucket's tags. 
-        /// Success: return an S3Response object with status 204. 
+        /// Write an ACL to a bucket, deleting the previous ACL.
+        /// Success: return an S3Response object with status 200.
         /// </summary>
-        public Func<S3Request, S3Response, Task> DeleteTags = null;
+        public Func<S3Request, S3Response, Task> WriteAcl = null;
 
+        /// <summary>
+        /// Write logging configuration to a bucket, deleting the previous configuration.
+        /// Success: return an S3Response object with status 200.
+        /// </summary>
+        public Func<S3Request, S3Response, Task> WriteLogging = null;
+
+        /// <summary>
+        /// Write tags to a bucket, deleting the previous tags.
+        /// Success: return an S3Response object with status 204.
+        /// </summary>
+        public Func<S3Request, S3Response, Task> WriteTags = null;
+
+        /// <summary>
+        /// Set a bucket's versioning policy.  
+        /// Success: return an S3Response object with status 200.
+        /// </summary>
+        public Func<S3Request, S3Response, Task> WriteVersioning = null;
+         
         #endregion
 
         #region Private-Members
