@@ -365,6 +365,10 @@ namespace S3ServerInterface
                         {
                             RequestType = S3RequestType.BucketReadVersioning;
                         }
+                        else if (ctx.Request.QuerystringEntries.ContainsKey("website"))
+                        {
+                            RequestType = S3RequestType.BucketReadWebsite;
+                        }
                         else
                         {
                             RequestType = S3RequestType.BucketRead;
@@ -424,6 +428,10 @@ namespace S3ServerInterface
                         {
                             RequestType = S3RequestType.BucketWriteVersioning;
                         }
+                        else if (ctx.Request.QuerystringEntries.ContainsKey("website"))
+                        {
+                            RequestType = S3RequestType.BucketWriteWebsite;
+                        }
                         else
                         {
                             RequestType = S3RequestType.BucketWrite;
@@ -480,6 +488,10 @@ namespace S3ServerInterface
                         if (ctx.Request.QuerystringEntries.ContainsKey("tagging"))
                         {
                             RequestType = S3RequestType.BucketDeleteTags;
+                        }
+                        else if (ctx.Request.QuerystringEntries.ContainsKey("website"))
+                        {
+                            RequestType = S3RequestType.BucketDeleteWebsite;
                         }
                         else
                         {

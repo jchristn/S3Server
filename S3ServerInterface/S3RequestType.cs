@@ -26,6 +26,10 @@ namespace S3ServerInterface
         /// </summary>
         BucketDeleteTags,
         /// <summary>
+        /// Delete a bucket's website configuration.
+        /// </summary>
+        BucketDeleteWebsite,
+        /// <summary>
         /// Check if a bucket exists.
         /// </summary>
         BucketExists,
@@ -58,6 +62,10 @@ namespace S3ServerInterface
         /// </summary>
         BucketReadVersions,
         /// <summary>
+        /// Read a bucket's website configuration.
+        /// </summary>
+        BucketReadWebsite,
+        /// <summary>
         /// Create a bucket.
         /// </summary>
         BucketWrite,
@@ -77,6 +85,10 @@ namespace S3ServerInterface
         /// Write a bucket's versioning policy.
         /// </summary>
         BucketWriteVersioning,
+        /// <summary>
+        /// Write a bucket's website configuration.
+        /// </summary>
+        BucketWriteWebsite,
         /// <summary>
         /// Delete an object.
         /// </summary>

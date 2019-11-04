@@ -236,6 +236,13 @@ namespace S3ServerInterface
                             return;
                         }
                         break;
+                    case S3RequestType.BucketDeleteWebsite:
+                        if (Bucket.DeleteWebsite != null)
+                        {
+                            await Bucket.DeleteWebsite(s3req, s3resp);
+                            return;
+                        }
+                        break;
                     case S3RequestType.BucketExists:
                         if (Bucket.Exists != null)
                         {
@@ -292,6 +299,13 @@ namespace S3ServerInterface
                             return;
                         }
                         break;
+                    case S3RequestType.BucketReadWebsite:
+                        if (Bucket.ReadWebsite != null)
+                        {
+                            await Bucket.ReadWebsite(s3req, s3resp);
+                            return;
+                        }
+                        break;
                     case S3RequestType.BucketWrite:
                         if (Bucket.Write != null)
                         {
@@ -324,6 +338,13 @@ namespace S3ServerInterface
                         if (Bucket.WriteVersioning != null)
                         {
                             await Bucket.WriteVersioning(s3req, s3resp);
+                            return;
+                        }
+                        break;
+                    case S3RequestType.BucketWriteWebsite:
+                        if (Bucket.WriteWebsite != null)
+                        {
+                            await Bucket.WriteWebsite(s3req, s3resp);
                             return;
                         }
                         break;

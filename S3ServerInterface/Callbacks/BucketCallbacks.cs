@@ -26,6 +26,12 @@ namespace S3ServerInterface
         public Func<S3Request, S3Response, Task> DeleteTags = null;
 
         /// <summary>
+        /// Delete a bucket's website configuration. 
+        /// Success: return an S3Response object with status 204. 
+        /// </summary>
+        public Func<S3Request, S3Response, Task> DeleteWebsite = null;
+
+        /// <summary>
         /// Check for the existence of a bucket.
         /// Success: return an S3Response object with status 200.
         /// </summary>
@@ -74,6 +80,12 @@ namespace S3ServerInterface
         public Func<S3Request, S3Response, Task> ReadVersioning = null;
 
         /// <summary>
+        /// Get a bucket's website configuration.  
+        /// Success: return an S3Response object with status 200 and a GetBucketWebsiteOutput object as its data.
+        /// </summary>
+        public Func<S3Request, S3Response, Task> ReadWebsite = null;
+
+        /// <summary>
         /// Write a bucket.  
         /// Success: return an S3Response object with status 200.
         /// </summary>
@@ -102,7 +114,13 @@ namespace S3ServerInterface
         /// Success: return an S3Response object with status 200.
         /// </summary>
         public Func<S3Request, S3Response, Task> WriteVersioning = null;
-         
+
+        /// <summary>
+        /// Set a bucket's website configuration.  
+        /// Success: return an S3Response object with status 200.
+        /// </summary>
+        public Func<S3Request, S3Response, Task> WriteWebsite = null;
+
         #endregion
 
         #region Private-Members

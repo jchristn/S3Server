@@ -2,11 +2,15 @@
 
 ## Current Version
 
+v2.0.1.11
+
+- Bucket website callbacks and objects
+
+## Previous Versions
+
 v2.0.1.9
 
 - Added callbacks and classes for bucket read logging and write logging
-
-## Previous Versions
 
 v2.0.1.8
 

@@ -35,24 +35,39 @@ namespace Test
 
             _Server.Bucket.Delete = BucketDelete;
             _Server.Bucket.DeleteTags = BucketDeleteTags;
+            _Server.Bucket.DeleteWebsite = BucketDeleteWebsite;
             _Server.Bucket.Exists = BucketExists;
             _Server.Bucket.ReadVersioning = BucketReadVersioning;
             _Server.Bucket.Read = BucketRead;
+            _Server.Bucket.ReadAcl = BucketReadAcl;
+            _Server.Bucket.ReadLocation = BucketReadLocation;
+            _Server.Bucket.ReadLogging = BucketReadLogging;
             _Server.Bucket.ReadTags = BucketReadTags;
+            _Server.Bucket.ReadVersioning = BucketReadVersioning;
+            _Server.Bucket.ReadVersions = BucketReadVersions;
+            _Server.Bucket.ReadWebsite = BucketReadWebsite;
             _Server.Bucket.WriteVersioning = BucketWriteVersioning;
             _Server.Bucket.Write = BucketWrite;
+            _Server.Bucket.WriteAcl = BucketWriteAcl;
+            _Server.Bucket.WriteLogging = BucketWriteLogging;
             _Server.Bucket.WriteTags = BucketWriteTags;
-
+            _Server.Bucket.WriteVersioning = BucketWriteVersioning;
+            _Server.Bucket.WriteWebsite = BucketWriteWebsite;
+             
             _Server.Object.Delete = ObjectDelete;
             _Server.Object.DeleteMultiple = ObjectDeleteMultiple;
             _Server.Object.DeleteTags = ObjectDeleteTags;
             _Server.Object.Exists = ObjectExists;
             _Server.Object.Read = ObjectRead;
             _Server.Object.ReadAcl = ObjectReadAcl;
+            _Server.Object.ReadLegalHold = ObjectReadLegalHold;
+            _Server.Object.ReadRetention = ObjectReadRetention;
             _Server.Object.ReadRange = ObjectReadRange;
             _Server.Object.ReadTags = ObjectReadTags;
             _Server.Object.Write = ObjectWrite;
             _Server.Object.WriteAcl = ObjectWriteAcl;
+            _Server.Object.WriteAcl = ObjectWriteLegalHold;
+            _Server.Object.WriteAcl = ObjectWriteRetention;
             _Server.Object.WriteTags = ObjectWriteTags; 
 
             while (_RunForever)
@@ -130,19 +145,19 @@ namespace Test
             await SendResponse(req, resp, "Bucket delete");
         }
 
-        static async Task BucketExists(S3Request req, S3Response resp)
-        {
-            await SendResponse(req, resp, "Bucket exists");
-        }
-
         static async Task BucketDeleteTags(S3Request req, S3Response resp)
         {
             await SendResponse(req, resp, "Bucket delete tags");
         }
 
-        static async Task BucketReadVersioning(S3Request req, S3Response resp)
+        static async Task BucketDeleteWebsite(S3Request req, S3Response resp)
         {
-            await SendResponse(req, resp, "Bucket read versioning");
+            await SendResponse(req, resp, "Bucket delete website");
+        }
+
+        static async Task BucketExists(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "Bucket exists");
         }
 
         static async Task BucketRead(S3Request req, S3Response resp)
@@ -150,9 +165,39 @@ namespace Test
             await SendResponse(req, resp, "Bucket read");
         }
 
+        static async Task BucketReadAcl(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "Bucket read ACL");
+        }
+
+        static async Task BucketReadLocation(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "Bucket read location");
+        }
+
+        static async Task BucketReadLogging(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "Bucket read logging");
+        }
+
         static async Task BucketReadTags(S3Request req, S3Response resp)
         {
             await SendResponse(req, resp, "Bucket read tags");
+        }
+
+        static async Task BucketReadVersioning(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "Bucket read versioning");
+        }
+
+        static async Task BucketReadVersions(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "Bucket read versions");
+        }
+
+        static async Task BucketReadWebsite(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "Bucket read website");
         }
 
         static async Task BucketWriteVersioning(S3Request req, S3Response resp)
@@ -163,6 +208,21 @@ namespace Test
         static async Task BucketWrite(S3Request req, S3Response resp)
         {
             await SendResponse(req, resp, "Bucket write");
+        }
+
+        static async Task BucketWriteAcl(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "Bucket write ACL");
+        }
+
+        static async Task BucketWriteLogging(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "Bucket write logging");
+        }
+
+        static async Task BucketWriteWebsite(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "Bucket write website");
         }
 
         static async Task BucketWriteTags(S3Request req, S3Response resp)
@@ -204,9 +264,19 @@ namespace Test
             await SendResponse(req, resp, "Object read acl");
         }
 
+        static async Task ObjectReadLegalHold(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "Object read legal hold");
+        }
+
         static async Task ObjectReadRange(S3Request req, S3Response resp)
         {
             await SendResponse(req, resp, "Object read range");
+        }
+
+        static async Task ObjectReadRetention(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "Object read retention");
         }
 
         static async Task ObjectReadTags(S3Request req, S3Response resp)
@@ -222,6 +292,16 @@ namespace Test
         static async Task ObjectWriteAcl(S3Request req, S3Response resp)
         {
             await SendResponse(req, resp, "Object write acl");
+        }
+
+        static async Task ObjectWriteLegalHold(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "Object write legal hold");
+        }
+
+        static async Task ObjectWriteRetention(S3Request req, S3Response resp)
+        {
+            await SendResponse(req, resp, "Object write retention");
         }
 
         static async Task ObjectWriteTags(S3Request req, S3Response resp)

@@ -21,6 +21,12 @@
             Success: return an S3Response object with status 204. 
             </summary>
         </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.DeleteWebsite">
+            <summary>
+            Delete a bucket's website configuration. 
+            Success: return an S3Response object with status 204. 
+            </summary>
+        </member>
         <member name="F:S3ServerInterface.BucketCallbacks.Exists">
             <summary>
             Check for the existence of a bucket.
@@ -69,6 +75,12 @@
             Success: return an S3Response object with status 200 and a VersioningConfiguration object as its data.
             </summary>
         </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.ReadWebsite">
+            <summary>
+            Get a bucket's website configuration.  
+            Success: return an S3Response object with status 200 and a GetBucketWebsiteOutput object as its data.
+            </summary>
+        </member>
         <member name="F:S3ServerInterface.BucketCallbacks.Write">
             <summary>
             Write a bucket.  
@@ -96,6 +108,12 @@
         <member name="F:S3ServerInterface.BucketCallbacks.WriteVersioning">
             <summary>
             Set a bucket's versioning policy.  
+            Success: return an S3Response object with status 200.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.BucketCallbacks.WriteWebsite">
+            <summary>
+            Set a bucket's website configuration.  
             Success: return an S3Response object with status 200.
             </summary>
         </member>
@@ -313,6 +331,21 @@
         <member name="P:S3ServerInterface.S3Objects.Buckets.Bucket">
             <summary>
             A list of individual buckets.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.Condition">
+            <summary>
+            Condition that must be met in order to match a routing rule for a bucket website configuration.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Condition.HttpErrorCodeReturnedEquals">
+            <summary>
+            Assume a match if the HTTP error code returned matches the specified value.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Condition.KeyPrefixEquals">
+            <summary>
+            Assume a match if the key prefix is equal to the specified value.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3Objects.Contents">
@@ -901,6 +934,41 @@
             The server side encryption configuration was not found.
             </summary>
         </member>
+        <member name="T:S3ServerInterface.S3Objects.ErrorDocument">
+            <summary>
+            Object that should serve as the document to return should an error be encountered.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ErrorDocument.Key">
+            <summary>
+            The key of the object that should serve as the error document.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.GetBucketWebsiteOutput">
+            <summary>
+            Result from a GetBucketWebsite request.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.GetBucketWebsiteOutput.RedirectAllRequestsTo">
+            <summary>
+            Host and protocol to which all requests should be redirected.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.GetBucketWebsiteOutput.IndexDocument">
+            <summary>
+            Parameters for the object that should serve as the index document for the bucket.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.GetBucketWebsiteOutput.ErrorDocument">
+            <summary>
+            Object that should serve as the document to return should an error be encountered.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.GetBucketWebsiteOutput.RoutingRules">
+            <summary>
+            Routing rules for a bucket's website configuration.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.Grant">
             <summary>
             A grant allowing a grantee permissiont to a resource.
@@ -954,6 +1022,16 @@
         <member name="T:S3ServerInterface.S3Objects.Group">
             <summary>
             Instantiate the object.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.IndexDocument">
+            <summary>
+            Parameters for the object that should serve as the index document for the bucket.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.IndexDocument.Suffix">
+            <summary>
+            The suffix to use for the index document.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3Objects.LegalHold">
@@ -1151,6 +1229,51 @@
             Display name of the owner.
             </summary>
         </member>
+        <member name="T:S3ServerInterface.S3Objects.Redirect">
+            <summary>
+            Redirect rule for a bucket's website configuration.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Redirect.HostName">
+            <summary>
+            The hostname to which the request should be redirected.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Redirect.HttpRedirectCode">
+            <summary>
+            The HTTP redirect code to use to perform the redirect.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Redirect.Protocol">
+            <summary>
+            The protocol that should be used with the redirect.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Redirect.ReplaceKeyPrefixWith">
+            <summary>
+            Replace the key prefix as specified when the redirect rule matches.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.Redirect.ReplaceKeyWith">
+            <summary>
+            Replace the entire key as specified when the redirect rule matches.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.RedirectAllRequestsTo">
+            <summary>
+            Host and protocol to which all requests should be redirected.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.RedirectAllRequestsTo.HostName">
+            <summary>
+            Redirect all requests to the specified hostname.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.RedirectAllRequestsTo.Protocol">
+            <summary>
+            Redirect all requests to the specified hostname using the specified protocol.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.Retention">
             <summary>
             Retention status of a resource.
@@ -1164,6 +1287,31 @@
         <member name="P:S3ServerInterface.S3Objects.Retention.RetainUntilDate">
             <summary>
             Date upon which the resource shall no longer be retained.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.RoutingRule">
+            <summary>
+            Routing rule for a bucket's website configuration.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.RoutingRule.Condition">
+            <summary>
+            Condition that must be met in order to match a routing rule for a bucket website configuration.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.RoutingRule.Redirect">
+            <summary>
+            Redirect rule for a bucket's website configuration.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.RoutingRules">
+            <summary>
+            Routing rules for a bucket's website configuration.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.RoutingRules.RoutingRule">
+            <summary>
+            List of routing rules.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3Objects.TargetGrants">
@@ -1462,6 +1610,11 @@
             Delete bucket tags.
             </summary>
         </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketDeleteWebsite">
+            <summary>
+            Delete a bucket's website configuration.
+            </summary>
+        </member>
         <member name="F:S3ServerInterface.S3RequestType.BucketExists">
             <summary>
             Check if a bucket exists.
@@ -1502,6 +1655,11 @@
             List object versions.
             </summary>
         </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketReadWebsite">
+            <summary>
+            Read a bucket's website configuration.
+            </summary>
+        </member>
         <member name="F:S3ServerInterface.S3RequestType.BucketWrite">
             <summary>
             Create a bucket.
@@ -1525,6 +1683,11 @@
         <member name="F:S3ServerInterface.S3RequestType.BucketWriteVersioning">
             <summary>
             Write a bucket's versioning policy.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3RequestType.BucketWriteWebsite">
+            <summary>
+            Write a bucket's website configuration.
             </summary>
         </member>
         <member name="F:S3ServerInterface.S3RequestType.ObjectDelete">
