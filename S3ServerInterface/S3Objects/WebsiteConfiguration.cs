@@ -8,8 +8,8 @@ namespace S3ServerInterface.S3Objects
     /// <summary>
     /// Result from a GetBucketWebsite request.
     /// </summary>
-    [XmlRoot(ElementName = "GetBucketWebsiteOutput", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
-    public class GetBucketWebsiteOutput
+    [XmlRoot(ElementName = "WebsiteConfiguration", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
+    public class WebsiteConfiguration
     {
         /// <summary>
         /// Host and protocol to which all requests should be redirected.

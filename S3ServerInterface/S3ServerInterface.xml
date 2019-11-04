@@ -78,7 +78,7 @@
         <member name="F:S3ServerInterface.BucketCallbacks.ReadWebsite">
             <summary>
             Get a bucket's website configuration.  
-            Success: return an S3Response object with status 200 and a GetBucketWebsiteOutput object as its data.
+            Success: return an S3Response object with status 200 and a WebsiteConfiguration object as its data.
             </summary>
         </member>
         <member name="F:S3ServerInterface.BucketCallbacks.Write">
@@ -944,31 +944,6 @@
             The key of the object that should serve as the error document.
             </summary>
         </member>
-        <member name="T:S3ServerInterface.S3Objects.GetBucketWebsiteOutput">
-            <summary>
-            Result from a GetBucketWebsite request.
-            </summary>
-        </member>
-        <member name="P:S3ServerInterface.S3Objects.GetBucketWebsiteOutput.RedirectAllRequestsTo">
-            <summary>
-            Host and protocol to which all requests should be redirected.
-            </summary>
-        </member>
-        <member name="P:S3ServerInterface.S3Objects.GetBucketWebsiteOutput.IndexDocument">
-            <summary>
-            Parameters for the object that should serve as the index document for the bucket.
-            </summary>
-        </member>
-        <member name="P:S3ServerInterface.S3Objects.GetBucketWebsiteOutput.ErrorDocument">
-            <summary>
-            Object that should serve as the document to return should an error be encountered.
-            </summary>
-        </member>
-        <member name="P:S3ServerInterface.S3Objects.GetBucketWebsiteOutput.RoutingRules">
-            <summary>
-            Routing rules for a bucket's website configuration.
-            </summary>
-        </member>
         <member name="T:S3ServerInterface.S3Objects.Grant">
             <summary>
             A grant allowing a grantee permissiont to a resource.
@@ -1387,6 +1362,31 @@
         <member name="M:S3ServerInterface.S3Objects.VersioningConfiguration.#ctor">
             <summary>
             Instantiate the object.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.WebsiteConfiguration">
+            <summary>
+            Result from a GetBucketWebsite request.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.WebsiteConfiguration.RedirectAllRequestsTo">
+            <summary>
+            Host and protocol to which all requests should be redirected.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.WebsiteConfiguration.IndexDocument">
+            <summary>
+            Parameters for the object that should serve as the index document for the bucket.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.WebsiteConfiguration.ErrorDocument">
+            <summary>
+            Object that should serve as the document to return should an error be encountered.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.WebsiteConfiguration.RoutingRules">
+            <summary>
+            Routing rules for a bucket's website configuration.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3Request">

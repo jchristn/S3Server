@@ -81,7 +81,7 @@ namespace S3ServerInterface
 
         /// <summary>
         /// Get a bucket's website configuration.  
-        /// Success: return an S3Response object with status 200 and a GetBucketWebsiteOutput object as its data.
+        /// Success: return an S3Response object with status 200 and a WebsiteConfiguration object as its data.
         /// </summary>
         public Func<S3Request, S3Response, Task> ReadWebsite = null;
 

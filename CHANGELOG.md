@@ -2,7 +2,7 @@
 
 ## Current Version
 
-v2.0.1.11
+v2.0.1.12
 
 - Bucket website callbacks and objects
 
