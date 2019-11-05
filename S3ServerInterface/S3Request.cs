@@ -323,7 +323,7 @@ namespace S3ServerInterface
                     {
                        RequestType = S3RequestType.BucketExists;
                     }
-                    else if (ctx.Request.RawUrlEntries.Count == 2)
+                    else if (ctx.Request.RawUrlEntries.Count >= 2)
                     {
                         RequestType = S3RequestType.ObjectExists;
                     }
@@ -767,15 +767,14 @@ namespace S3ServerInterface
                 {
                     if (rawUrl.StartsWith("/")) rawUrl = rawUrl.Substring(1);
 
-                    string[] valsInner = rawUrl.Split(new[] { '/' }, 2);
-
                     switch (style)
                     {
                         case S3RequestStyle.BucketInHostname:
-                            if (valsInner.Length > 0) objectKey = WebUtility.UrlDecode(valsInner[0]);
+                            objectKey = WebUtility.UrlDecode(rawUrl);
                             break;
 
                         case S3RequestStyle.BucketNotInHostname:
+                            string[] valsInner = rawUrl.Split(new[] { '/' }, 2); 
                             if (valsInner.Length > 0) bucketName = WebUtility.UrlDecode(valsInner[0]);
                             if (valsInner.Length > 1) objectKey = WebUtility.UrlDecode(valsInner[1]);
                             break;
