@@ -4,10 +4,12 @@ using System.Drawing;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
@@ -278,6 +280,35 @@ namespace S3ServerInterface
             }
         }
 
+        public static bool IsIpv4Address(string val)
+        {
+            if (String.IsNullOrEmpty(val)) throw new ArgumentNullException(nameof(val));
+
+            string ipv4Pattern = @"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$";
+            Match match = Regex.Match(val, ipv4Pattern);
+            if (match.Success) return true; // IPv4 regular expression match
+
+            IPAddress ip = null;
+            return IPAddress.TryParse(val, out ip);
+        }
+
+        public static bool IsIpv6Address(string val)
+        {
+            if (String.IsNullOrEmpty(val)) throw new ArgumentNullException(nameof(val));
+
+            string ipv6Pattern = @"(?:^|(?<=\s))(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))(?=\s|$)";
+            Match match = Regex.Match(val, ipv6Pattern);
+            if (match.Success) return true; // IPv6 regular expression match
+
+            IPAddress ip = null;
+            return IPAddress.TryParse(val, out ip);
+        }
+
+        public static bool IsIpAddress(string val)
+        {
+            return IsIpv4Address(val) || IsIpv6Address(val);
+        }
+
         public static bool ContainsUnsafeCharacters(string data)
         {
             /*
@@ -370,8 +401,19 @@ namespace S3ServerInterface
             return ret;
         }
 
+        public static string ReplaceLastOccurrence(string src, string find, string replace)
+        {
+            int place = src.LastIndexOf(find);
+
+            if (place == -1)
+                return src;
+
+            string result = src.Remove(place, find.Length).Insert(place, replace);
+            return result;
+        }
+
         #endregion
-         
+
         #region Serialization
 
         public static T CopyObject<T>(T source)

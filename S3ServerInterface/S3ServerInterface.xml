@@ -1479,6 +1479,11 @@
             Hostname.
             </summary>
         </member>
+        <member name="P:S3ServerInterface.S3Request.BaseDomain">
+            <summary>
+            Base domain against which the hostname is evaluated to identify the bucket name.
+            </summary>
+        </member>
         <member name="P:S3ServerInterface.S3Request.Bucket">
             <summary>
             Bucket.
@@ -1539,10 +1544,11 @@
             Instantiate the object.
             </summary>
         </member>
-        <member name="M:S3ServerInterface.S3Request.#ctor(WatsonWebserver.HttpContext,System.Boolean)">
+        <member name="M:S3ServerInterface.S3Request.#ctor(System.String,WatsonWebserver.HttpContext,System.Boolean)">
             <summary>
             Instantiates the object.
             </summary>
+            <param name="baseDomain">Base domain against which the hostname should be evaluated to identify the bucket.</param>
             <param name="ctx">HttpContext.</param> 
             <param name="debug">Enable or disable console logging of construction.</param> 
         </member>
@@ -1929,12 +1935,19 @@
             Specify whether or not exceptions should be included in status 500 Internal Server Error messages.
             </summary>
         </member>
+        <member name="F:S3ServerInterface.S3Server.BaseDomain">
+            <summary>
+            The base domain against which incoming requests should be compared to identify the bucket name.
+            For instance, if you wish to identify the bucket 'bucket' from a request to host 'bucket.mys3server.com', set this value to '.mys3server.com'.
+            If you leave this value to null, S3Server will always assume that the bucket name is in the URL.
+            </summary>
+        </member>
         <member name="M:S3ServerInterface.S3Server.#ctor(System.String,System.Int32,System.Boolean)">
             <summary>
             Instantiate the object.
             Using this constructor results in no pre-request handler (your own API handler), and no custom default request handler (when an S3 API cannot be matched).
             </summary>
-            <param name="hostname">The hostname on which to listen.</param>
+            <param name="hostname">The hostname on which to listen for HTTP requests.</param>
             <param name="port">The TCP port number.</param>
             <param name="ssl">Enable or disable SSL.</param> 
         </member>
@@ -1943,7 +1956,7 @@
             Instantiate the object.
             Using this constructor results in no pre-request handler (your own API handler), but (if not null) allows a custom default request handler (when an S3 API cannot be matched).
             </summary>
-            <param name="hostname">The hostname on which to listen.</param>
+            <param name="hostname">The hostname on which to listen for HTTP requests.</param>
             <param name="port">The TCP port number.</param>
             <param name="ssl">Enable or disable SSL.</param> 
             <param name="defaultRequestHandler">Default request handler used when no other callbacks can be found.</param>
@@ -1953,7 +1966,7 @@
             Instantiate the object.
             Using this constructor results in (if not null) a pre-request handler (your own API handler), and (if not null) a custom default request handler (when an S3 API cannot be matched).
             </summary>
-            <param name="hostname">The hostname on which to listen.</param>
+            <param name="hostname">The hostname on which to listen for HTTP requests.</param>
             <param name="port">The TCP port number.</param>
             <param name="ssl">Enable or disable SSL.</param>
             <param name="preRequestHandler">Request handler to call prior to evaluating for S3 requests, can be null.</param>

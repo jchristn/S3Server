@@ -55,14 +55,21 @@ namespace S3ServerInterface
         /// </summary>
         public bool SendExceptionsInResponses = true;
 
+        /// <summary>
+        /// The base domain against which incoming requests should be compared to identify the bucket name.
+        /// For instance, if you wish to identify the bucket 'bucket' from a request to host 'bucket.mys3server.com', set this value to '.mys3server.com'.
+        /// If you leave this value to null, S3Server will always assume that the bucket name is in the URL.
+        /// </summary>
+        public string BaseDomain = null;
+
         #endregion
 
         #region Private-Members
 
         private bool _Disposed = false;
 
-        private string _Hostname;
-        private int _Port;
+        private string _ListenerHostname;
+        private int _ListenerPort;
         private bool _Ssl;
         private Server _Server; 
 
@@ -74,7 +81,7 @@ namespace S3ServerInterface
         /// Instantiate the object.
         /// Using this constructor results in no pre-request handler (your own API handler), and no custom default request handler (when an S3 API cannot be matched).
         /// </summary>
-        /// <param name="hostname">The hostname on which to listen.</param>
+        /// <param name="hostname">The hostname on which to listen for HTTP requests.</param>
         /// <param name="port">The TCP port number.</param>
         /// <param name="ssl">Enable or disable SSL.</param> 
         public S3Server(
@@ -85,21 +92,21 @@ namespace S3ServerInterface
             if (String.IsNullOrEmpty(hostname)) throw new ArgumentNullException(nameof(hostname));
             if (port < 0 || port > 65535) throw new ArgumentException("Port must be between 0 and 65535.");
 
-            _Hostname = hostname;
-            _Port = port;
+            _ListenerHostname = hostname;
+            _ListenerPort = port;
             _Ssl = ssl;
 
             PreRequestHandler = null;
             DefaultRequestHandler = null;
 
-            _Server = new Server(_Hostname, _Port, _Ssl, RequestHandler); 
+            _Server = new Server(_ListenerHostname, _ListenerPort, _Ssl, RequestHandler); 
         }
 
         /// <summary>
         /// Instantiate the object.
         /// Using this constructor results in no pre-request handler (your own API handler), but (if not null) allows a custom default request handler (when an S3 API cannot be matched).
         /// </summary>
-        /// <param name="hostname">The hostname on which to listen.</param>
+        /// <param name="hostname">The hostname on which to listen for HTTP requests.</param>
         /// <param name="port">The TCP port number.</param>
         /// <param name="ssl">Enable or disable SSL.</param> 
         /// <param name="defaultRequestHandler">Default request handler used when no other callbacks can be found.</param>
@@ -112,20 +119,20 @@ namespace S3ServerInterface
             if (String.IsNullOrEmpty(hostname)) throw new ArgumentNullException(nameof(hostname));
             if (port < 0 || port > 65535) throw new ArgumentException("Port must be between 0 and 65535.");
 
-            _Hostname = hostname;
-            _Port = port;
+            _ListenerHostname = hostname;
+            _ListenerPort = port;
             _Ssl = ssl;
             PreRequestHandler = null;
             DefaultRequestHandler = defaultRequestHandler;
 
-            _Server = new Server(_Hostname, _Port, _Ssl, RequestHandler); 
+            _Server = new Server(_ListenerHostname, _ListenerPort, _Ssl, RequestHandler); 
         }
 
         /// <summary>
         /// Instantiate the object.
         /// Using this constructor results in (if not null) a pre-request handler (your own API handler), and (if not null) a custom default request handler (when an S3 API cannot be matched).
         /// </summary>
-        /// <param name="hostname">The hostname on which to listen.</param>
+        /// <param name="hostname">The hostname on which to listen for HTTP requests.</param>
         /// <param name="port">The TCP port number.</param>
         /// <param name="ssl">Enable or disable SSL.</param>
         /// <param name="preRequestHandler">Request handler to call prior to evaluating for S3 requests, can be null.</param>
@@ -140,13 +147,13 @@ namespace S3ServerInterface
             if (String.IsNullOrEmpty(hostname)) throw new ArgumentNullException(nameof(hostname));
             if (port < 0 || port > 65535) throw new ArgumentException("Port must be between 0 and 65535."); 
 
-            _Hostname = hostname;
-            _Port = port;
+            _ListenerHostname = hostname;
+            _ListenerPort = port;
             _Ssl = ssl;
             PreRequestHandler = preRequestHandler;
             DefaultRequestHandler = defaultRequestHandler;
 
-            _Server = new Server(_Hostname, _Port, _Ssl, RequestHandler); 
+            _Server = new Server(_ListenerHostname, _ListenerPort, _Ssl, RequestHandler); 
         }
 
         #endregion
@@ -188,9 +195,9 @@ namespace S3ServerInterface
         private async Task RequestHandler(HttpContext ctx)
         {
             if (ctx == null) throw new ArgumentNullException(nameof(ctx));
-            DateTime startTime = DateTime.Now.ToUniversalTime();
+            DateTime startTime = DateTime.Now;
 
-            S3Request s3req = new S3Request(ctx, ConsoleDebug.S3Requests);
+            S3Request s3req = new S3Request(BaseDomain, ctx, ConsoleDebug.S3Requests);
             S3Response s3resp = new S3Response(s3req);
             bool success = false;
 
@@ -479,8 +486,10 @@ namespace S3ServerInterface
                 if (ConsoleDebug.HttpRequests)
                 {
                     Console.WriteLine(
+                        "[" + 
                         ctx.Request.SourceIp + ":" +
-                        ctx.Request.SourcePort + " " +
+                        ctx.Request.SourcePort + 
+                        "] " +
                         ctx.Request.Method.ToString() + " " +
                         ctx.Request.RawUrlWithoutQuery + " " +
                         s3resp.StatusCode + 

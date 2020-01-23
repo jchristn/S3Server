@@ -10,21 +10,26 @@ Simple S3 server-side interface, produced using Amazon's public documentation.
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v2.0.1.13
+## New in v2.0.1.14
  
-- Bugfixes
+- Support for using IP addresses or hostnames in incoming requests
+- Support for *either* having the bucket name in the hostname or in the URL (see ```S3Server.BaseDomain``` and *Important* below)
 
 ## Examples
 
 Refer to ```S3ClientTest``` and ```S3ServerTest``` projects for full examples.
 
-## Notes
+## Important
 
 The following notes should be read prior to using S3ServerInterface:
 
-- IP addresses are not supported for the hostname.  You *must* use ```localhost``` or a DNS FQDN.
-- If you use ```*``` or ```+``` for the hostname, you *must* run under administrative privileges. 
-- Bucket names *must* appear in the URL and not in the hostname, i.e. ```ForcePathStyle```.
+- If you use ```*```, ```+```, ```0.0.0.0```, or any other wildcard for the hostname, you *must* run under administrative privileges. 
+
+- By default, S3Server expects bucket names to appear in the URL, i.e. ```http://hostname.com/bucket/key```
+- If you wish to change this so S3Server expects bucket names to appear in the hostname, i.e. ```http://bucket.hostname.com/key```:
+  - Set ```S3Server.BaseDomain``` to the base domain, i.e. ```.hostname.com```
+  - The ```S3Server.BaseDomain``` must start with a ```.``` (period)
+  - Any request where the base domain is NOT found in incoming hostname will be treated as if the bucket name is in the URL and not the hostname
 
 ## Server
 
@@ -109,6 +114,7 @@ public Dictionary<string, string> Querystring { get; set; }
 public Dictionary<string, string> Headers { get; set; }
 public string Region { get; set; }
 public string Hostname { get; set; }
+public string BaseDomain { get; set; }
 public RequestStyle Style { get; set; }
 public string Bucket { get; set; }
 public string Key { get; set; }

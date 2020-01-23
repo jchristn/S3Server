@@ -2,11 +2,22 @@
 
 ## Current Version
 
+v2.0.1.14
+ 
+- Support for using IP addresses or hostnames in incoming requests
+- Support for *either* having the bucket name in the hostname or in the URL (see ```S3Server.BaseDomain```)
+
+- By default, S3Server expects bucket names to appear in the URL, i.e. ```http://hostname.com/bucket/key```
+- If you wish to change this so S3Server expects bucket names to appear in the hostname, i.e. ```http://bucket.hostname.com/key```:
+  - Set ```S3Server.BaseDomain``` to the base domain, i.e. ```.hostname.com```
+  - The ```S3Server.BaseDomain``` must start with a ```.``` (period)
+  - Any request where the base domain is NOT found in incoming hostname will be treated as if the bucket name is in the URL and not the hostname
+
+## Previous Versions
+
 v2.0.1.13
 
 - Bugfixes
-
-## Previous Versions
 
 v2.0.1.12
 

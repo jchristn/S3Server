@@ -16,6 +16,16 @@ using S3ServerInterface;
 
 namespace Test
 {
+    /*
+     * 
+     * 
+     * Note: this must be run as administrator if the S3Server constructor uses '*', '+', or '0.0.0.0' as the listener hostname.
+     *       administrator not required if using 'localhost'.
+     * 
+     * 
+     * 
+     */
+
     class Program
     {
         static S3Server _Server;
@@ -23,10 +33,14 @@ namespace Test
 
         static void Main(string[] args)
         {
-            _Server = new S3Server("localhost", 8000, false, DefaultRequestHandler);
+            Console.Write("Base domain: ");
+            string baseDomain = Console.ReadLine();
+
+            _Server = new S3Server("*", 8000, false, DefaultRequestHandler);
             _Server.ConsoleDebug.Exceptions = true;
             _Server.ConsoleDebug.HttpRequests = true;
             _Server.ConsoleDebug.S3Requests = true;
+            _Server.BaseDomain = baseDomain;
 
             _Server.PreRequestHandler = PreRequestHandler; 
             _Server.DefaultRequestHandler = DefaultRequestHandler;

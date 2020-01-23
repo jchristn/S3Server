@@ -106,6 +106,11 @@ namespace S3ServerInterface
         public string Hostname { get; set; }
 
         /// <summary>
+        /// Base domain against which the hostname is evaluated to identify the bucket name.
+        /// </summary>
+        public string BaseDomain { get; set; }
+
+        /// <summary>
         /// Bucket.
         /// </summary>
         public string Bucket { get; set; }
@@ -182,9 +187,10 @@ namespace S3ServerInterface
         /// <summary>
         /// Instantiates the object.
         /// </summary>
+        /// <param name="baseDomain">Base domain against which the hostname should be evaluated to identify the bucket.</param>
         /// <param name="ctx">HttpContext.</param> 
         /// <param name="debug">Enable or disable console logging of construction.</param> 
-        public S3Request(HttpContext ctx, bool debug)
+        public S3Request(string baseDomain, HttpContext ctx, bool debug)
         {
             if (ctx == null) throw new ArgumentNullException(nameof(ctx));
             if (ctx.Request == null) throw new ArgumentNullException(nameof(ctx.Request));
@@ -209,6 +215,7 @@ namespace S3ServerInterface
             Querystring = Http.Request.QuerystringEntries;
             Headers = Http.Request.Headers;
             Region = null;
+            BaseDomain = baseDomain;
             Hostname = Http.Request.DestHostname;
             RequestType = S3RequestType.Unknown;
             RequestStyle = S3RequestStyle.Unknown;
@@ -247,19 +254,23 @@ namespace S3ServerInterface
 
             if (!String.IsNullOrEmpty(Hostname) && !String.IsNullOrEmpty(RawUrl))
             {
+                string hostname = null;
                 string bucketName = null;
                 string region = null;
                 S3RequestStyle style = S3RequestStyle.Unknown;
                 string objectKey = null;
 
                 ParseHostnameAndUrl(
+                    baseDomain,
                     FullUrl,
                     RawUrl,
+                    out hostname,
                     out bucketName,
                     out region,
                     out style,
                     out objectKey);
 
+                if (!String.IsNullOrEmpty(hostname)) Hostname = hostname;
                 if (!String.IsNullOrEmpty(bucketName)) Bucket = bucketName;
                 if (!String.IsNullOrEmpty(region)) Region = region;
                 if (style != S3RequestStyle.Unknown) RequestStyle = style;
@@ -715,13 +726,16 @@ namespace S3ServerInterface
         }
 
         private void ParseHostnameAndUrl(
+            string baseHostname,
             string fullUrl,
             string rawUrl,
+            out string hostname,
             out string bucketName,
             out string region,
             out S3RequestStyle style,
             out string objectKey)
         {
+            hostname = null;
             bucketName = null;
             region = null;
             style = S3RequestStyle.Unknown;
@@ -730,57 +744,60 @@ namespace S3ServerInterface
             if (String.IsNullOrEmpty(rawUrl)) return;
 
             Uri uri = new Uri(fullUrl);
+            hostname = uri.Host;
 
-            if (_Debug) Console.WriteLine("Parsing full URL " + fullUrl + " raw URL " + rawUrl);
-
-            string[] hostnameVals = uri.Host.Split('.'); 
-
-            if (hostnameVals.Length == 4)
+            if (_Debug)
             {
-                // bucket.s3.amazonaws.com
-                // bucket.s3-<region>.amazonaws.com
-                bucketName = hostnameVals[0];
-                if (hostnameVals[1].Length > 3) region = hostnameVals[1].Substring(3);
-                style = S3RequestStyle.BucketInHostname;
-
-                if (_Debug) Console.WriteLine("- Bucket name [" + bucketName + "] style [" + style.ToString() + "]");
-
-                return;
+                Console.WriteLine("Parsing URL");
+                Console.WriteLine("- Full URL      : " + fullUrl);
+                Console.WriteLine("- Raw URL       : " + rawUrl);
+                Console.WriteLine("- Hostname      : " + hostname);
+                if (!String.IsNullOrEmpty(baseHostname)) Console.WriteLine("- Base Hostname : " + baseHostname);
             }
-            else if (hostnameVals.Length == 3)
+
+            if (Common.IsIpAddress(hostname))
             {
-                // s3-region.amazonaws.com
-                // do not return, URL processing required for bucketname
-                if (hostnameVals[0].Length > 3) region = hostnameVals[1].Substring(3);
                 style = S3RequestStyle.BucketNotInHostname;
 
-                if (_Debug) Console.WriteLine("- Region [" + region + "] style [" + style.ToString() + "]"); 
+                if (_Debug) Console.WriteLine("- Hostname is an IP address [" + hostname + "]");
             }
             else
             {
-                style = S3RequestStyle.BucketNotInHostname;
-            }
-
-            if (String.IsNullOrEmpty(bucketName))
-            {
-                if (!String.IsNullOrEmpty(rawUrl))
+                if (String.IsNullOrEmpty(baseHostname))
                 {
-                    if (rawUrl.StartsWith("/")) rawUrl = rawUrl.Substring(1);
-
-                    switch (style)
+                    style = S3RequestStyle.BucketNotInHostname;
+                    if (_Debug) Console.WriteLine("- Base hostname not supplied, request assumed to have bucket name in URL");
+                }
+                else
+                {
+                    if (!hostname.Contains(baseHostname))
                     {
-                        case S3RequestStyle.BucketInHostname:
-                            objectKey = WebUtility.UrlDecode(rawUrl);
-                            break;
-
-                        case S3RequestStyle.BucketNotInHostname:
-                            string[] valsInner = rawUrl.Split(new[] { '/' }, 2); 
-                            if (valsInner.Length > 0) bucketName = WebUtility.UrlDecode(valsInner[0]);
-                            if (valsInner.Length > 1) objectKey = WebUtility.UrlDecode(valsInner[1]);
-                            break;
+                        style = S3RequestStyle.BucketNotInHostname;
+                        if (_Debug) Console.WriteLine("- Base hostname not found in hostname [" + hostname + "], assuming bucket name in URL");
+                    }
+                    else
+                    {
+                        style = S3RequestStyle.BucketInHostname;
+                        bucketName = Common.ReplaceLastOccurrence(hostname, baseHostname, "");
+                        if (_Debug) Console.WriteLine("- Bucket name [" + bucketName + "] found in hostname [" + hostname + "]");
                     }
                 }
             }
+
+            while (rawUrl.StartsWith("/")) rawUrl = rawUrl.Substring(1);
+
+            switch (style)
+            {
+                case S3RequestStyle.BucketInHostname:
+                    objectKey = WebUtility.UrlDecode(rawUrl);
+                    break;
+
+                case S3RequestStyle.BucketNotInHostname:
+                    string[] valsInner = rawUrl.Split(new[] { '/' }, 2);
+                    if (valsInner.Length > 0) bucketName = WebUtility.UrlDecode(valsInner[0]);
+                    if (valsInner.Length > 1) objectKey = WebUtility.UrlDecode(valsInner[1]);
+                    break;
+            } 
 
             if (_Debug)
             {
