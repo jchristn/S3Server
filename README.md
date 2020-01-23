@@ -10,10 +10,9 @@ Simple S3 server-side interface, produced using Amazon's public documentation.
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v2.0.1.14
+## New in v2.0.1.15
  
-- Support for using IP addresses or hostnames in incoming requests
-- Support for *either* having the bucket name in the hostname or in the URL (see ```S3Server.BaseDomain``` and *Important* below)
+- Dependency update
 
 ## Examples
 

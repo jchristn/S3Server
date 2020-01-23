@@ -2,6 +2,12 @@
 
 ## Current Version
 
+v2.0.1.15
+
+- Dependency update
+
+## Previous Versions
+
 v2.0.1.14
  
 - Support for using IP addresses or hostnames in incoming requests
@@ -12,8 +18,6 @@ v2.0.1.14
   - Set ```S3Server.BaseDomain``` to the base domain, i.e. ```.hostname.com```
   - The ```S3Server.BaseDomain``` must start with a ```.``` (period)
   - Any request where the base domain is NOT found in incoming hostname will be treated as if the bucket name is in the URL and not the hostname
-
-## Previous Versions
 
 v2.0.1.13
 
