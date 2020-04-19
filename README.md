@@ -2,9 +2,9 @@
 
 # S3ServerInterface
 
-Simple S3 server-side interface, produced using Amazon's public documentation.  
+Simple S3 server-side interface, produced using Amazon's public documentation.  Want a simple S3 storage server built using S3ServerInterface?  Check out [Less3](https://github.com/jchristn/less3).
 
-[![nuget](https://badge.fury.io/nu/Object.svg)](https://www.nuget.org/packages/S3ServerInterface/) 
+[![NuGet Version](https://img.shields.io/nuget/v/S3ServerInterface.svg?style=flat)](https://www.nuget.org/packages/S3ServerInterface/) [![NuGet](https://img.shields.io/nuget/dt/S3ServerInterface.svg)](https://www.nuget.org/packages/S3ServerInterface) 
 
 ## Feedback and Enhancements
 
