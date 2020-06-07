@@ -246,6 +246,73 @@ namespace S3ServerInterface
         }
 
         /// <summary>
+        /// Lists the permission typically required for this type of request.
+        /// See https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html for details.
+        /// </summary>
+        public S3PermissionType PermissionsRequired
+        {
+            get
+            {
+                switch (RequestType)
+                { 
+                    case S3RequestType.BucketDelete: 
+                    case S3RequestType.BucketDeleteTags: 
+                    case S3RequestType.BucketDeleteWebsite:
+                    case S3RequestType.BucketWrite:
+                    case S3RequestType.BucketWriteLogging:
+                    case S3RequestType.BucketWriteTags:
+                    case S3RequestType.BucketWriteVersioning:
+                    case S3RequestType.BucketWriteWebsite:
+                        return S3PermissionType.BucketWrite;
+
+                    case S3RequestType.BucketExists: 
+                    case S3RequestType.BucketRead:
+                    case S3RequestType.BucketReadLocation:
+                    case S3RequestType.BucketReadLogging:
+                    case S3RequestType.BucketReadTags:
+                    case S3RequestType.BucketReadVersioning:
+                    case S3RequestType.BucketReadVersions:
+                    case S3RequestType.BucketReadWebsite:
+                        return S3PermissionType.BucketRead;
+
+                    case S3RequestType.BucketReadAcl:
+                        return S3PermissionType.BucketReadAcp;
+
+                    case S3RequestType.BucketWriteAcl:
+                        return S3PermissionType.BucketWriteAcp;
+                         
+                    case S3RequestType.ObjectExists:
+                    case S3RequestType.ObjectRead:
+                    case S3RequestType.ObjectReadLegalHold:
+                    case S3RequestType.ObjectReadRange:
+                    case S3RequestType.ObjectReadRetention:
+                    case S3RequestType.ObjectReadTags:
+                        return S3PermissionType.ObjectRead;
+
+                    case S3RequestType.ObjectDelete:
+                    case S3RequestType.ObjectDeleteMultiple:
+                    case S3RequestType.ObjectDeleteTags:
+                    case S3RequestType.ObjectWrite:
+                    case S3RequestType.ObjectWriteLegalHold:
+                    case S3RequestType.ObjectWriteRetention:
+                    case S3RequestType.ObjectWriteTags:
+                        return S3PermissionType.BucketWrite;
+
+                    case S3RequestType.ObjectReadAcl:
+                        return S3PermissionType.ObjectReadAcp;
+
+                    case S3RequestType.ObjectWriteAcl:
+                        return S3PermissionType.ObjectWriteAcp;
+                
+                    case S3RequestType.ListBuckets:
+                    case S3RequestType.Unknown:
+                    default:
+                        return S3PermissionType.NotApplicable;
+                }
+            }
+        }
+
+        /// <summary>
         /// Stream containing the request body.
         /// </summary>
         [JsonIgnore]

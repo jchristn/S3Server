@@ -1389,6 +1389,63 @@
             Routing rules for a bucket's website configuration.
             </summary>
         </member>
+        <member name="T:S3ServerInterface.S3PermissionType">
+            <summary>
+            Permission types used by S3. 
+            See https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html for details.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3PermissionType.BucketRead">
+            <summary>
+            Bucket read operations.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3PermissionType.BucketWrite">
+            <summary>
+            Bucket write operations.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3PermissionType.BucketReadAcp">
+            <summary>
+            Bucket read access control policy permissions.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3PermissionType.BucketWriteAcp">
+            <summary>
+            Bucket write access control policy permissions.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3PermissionType.FullControl">
+            <summary>
+            Full control.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3PermissionType.ObjectRead">
+            <summary>
+            Bucket read operations.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3PermissionType.ObjectWrite">
+            <summary>
+            Object write operations.
+            This permission should not be used; refer to https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3PermissionType.ObjectReadAcp">
+            <summary>
+            Object read access control policy permissions.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3PermissionType.ObjectWriteAcp">
+            <summary>
+            Object write access control policy permissions.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3PermissionType.NotApplicable">
+            <summary>
+            No permission required or permission unknown.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Request">
             <summary>
             S3 request object.
@@ -1547,6 +1604,12 @@
         <member name="P:S3ServerInterface.S3Request.IsObjectRequest">
             <summary>
             Indicates if the request is an object request.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.PermissionsRequired">
+            <summary>
+            Lists the permission typically required for this type of request.
+            See https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html for details.
             </summary>
         </member>
         <member name="P:S3ServerInterface.S3Request.Data">

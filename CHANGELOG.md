@@ -2,11 +2,17 @@
 
 ## Current Version
 
+v2.0.1.17
+
+- New S3Request property ```PermissionsRequired``` and new enum ```S3PermissionType```
+- StringEnumConverter on all enums
+- Dependency update
+
+## Previous Versions
+
 v2.0.1.16
  
 - Added new properties to S3Request (IsServiceRequest, IsBucketRequest, IsObjectRequest)
-
-## Previous Versions
 
 v2.0.1.15
 
