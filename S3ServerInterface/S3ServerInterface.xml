@@ -1534,6 +1534,21 @@
             End value from the Range header.
             </summary>
         </member>
+        <member name="P:S3ServerInterface.S3Request.IsServiceRequest">
+            <summary>
+            Indicates if the request is a service request.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.IsBucketRequest">
+            <summary>
+            Indicates if the request is a bucket request.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.IsObjectRequest">
+            <summary>
+            Indicates if the request is an object request.
+            </summary>
+        </member>
         <member name="P:S3ServerInterface.S3Request.Data">
             <summary>
             Stream containing the request body.

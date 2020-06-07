@@ -161,6 +161,91 @@ namespace S3ServerInterface
         public long? RangeEnd = null;
 
         /// <summary>
+        /// Indicates if the request is a service request.
+        /// </summary>
+        public bool IsServiceRequest
+        {
+            get
+            {
+                if (RequestType == S3RequestType.ListBuckets)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Indicates if the request is a bucket request.
+        /// </summary>
+        public bool IsBucketRequest
+        {
+            get
+            {
+                if (RequestType == S3RequestType.BucketDelete
+                    || RequestType == S3RequestType.BucketDeleteTags
+                    || RequestType == S3RequestType.BucketDeleteWebsite
+                    || RequestType == S3RequestType.BucketExists
+                    || RequestType == S3RequestType.BucketRead
+                    || RequestType == S3RequestType.BucketReadAcl
+                    || RequestType == S3RequestType.BucketReadLocation
+                    || RequestType == S3RequestType.BucketReadLogging
+                    || RequestType == S3RequestType.BucketReadTags
+                    || RequestType == S3RequestType.BucketReadVersioning
+                    || RequestType == S3RequestType.BucketReadVersions
+                    || RequestType == S3RequestType.BucketReadWebsite
+                    || RequestType == S3RequestType.BucketWrite
+                    || RequestType == S3RequestType.BucketWriteAcl
+                    || RequestType == S3RequestType.BucketWriteLogging
+                    || RequestType == S3RequestType.BucketWriteTags
+                    || RequestType == S3RequestType.BucketWriteVersioning
+                    || RequestType == S3RequestType.BucketWriteWebsite)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Indicates if the request is an object request.
+        /// </summary>
+        public bool IsObjectRequest
+        {
+            get
+            {
+                if (RequestType == S3RequestType.ObjectDelete
+                    || RequestType == S3RequestType.ObjectDeleteMultiple
+                    || RequestType == S3RequestType.ObjectDeleteTags
+                    || RequestType == S3RequestType.ObjectExists
+                    || RequestType == S3RequestType.ObjectRead
+                    || RequestType == S3RequestType.ObjectReadAcl
+                    || RequestType == S3RequestType.ObjectReadLegalHold
+                    || RequestType == S3RequestType.ObjectReadRange
+                    || RequestType == S3RequestType.ObjectReadRetention
+                    || RequestType == S3RequestType.ObjectReadTags
+                    || RequestType == S3RequestType.ObjectWrite
+                    || RequestType == S3RequestType.ObjectWriteAcl
+                    || RequestType == S3RequestType.ObjectWriteLegalHold
+                    || RequestType == S3RequestType.ObjectWriteRetention
+                    || RequestType == S3RequestType.ObjectWriteTags)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
+        /// <summary>
         /// Stream containing the request body.
         /// </summary>
         [JsonIgnore]

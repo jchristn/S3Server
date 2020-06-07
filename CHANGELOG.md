@@ -2,11 +2,15 @@
 
 ## Current Version
 
+v2.0.1.16
+ 
+- Added new properties to S3Request (IsServiceRequest, IsBucketRequest, IsObjectRequest)
+
+## Previous Versions
+
 v2.0.1.15
 
 - Dependency update
-
-## Previous Versions
 
 v2.0.1.14
  
