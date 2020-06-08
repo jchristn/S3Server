@@ -1612,6 +1612,11 @@
             See https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html for details.
             </summary>
         </member>
+        <member name="P:S3ServerInterface.S3Request.UserMetadata">
+            <summary>
+            User-defined metadata.
+            </summary>
+        </member>
         <member name="P:S3ServerInterface.S3Request.Data">
             <summary>
             Stream containing the request body.

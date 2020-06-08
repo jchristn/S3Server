@@ -2,13 +2,17 @@
 
 ## Current Version
 
+v2.0.1.18
+
+- New S3Request property ```UserMetadata (Dictionary<object, object>)``` 
+
+## Previous Versions
+
 v2.0.1.17
 
 - New S3Request property ```PermissionsRequired``` and new enum ```S3PermissionType```
 - StringEnumConverter on all enums
 - Dependency update
-
-## Previous Versions
 
 v2.0.1.16
  

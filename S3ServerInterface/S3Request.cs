@@ -313,6 +313,28 @@ namespace S3ServerInterface
         }
 
         /// <summary>
+        /// User-defined metadata.
+        /// </summary>
+        public Dictionary<object, object> UserMetadata
+        {
+            get
+            {
+                return _UserMetadata;
+            }
+            set
+            {
+                if (value == null)
+                {
+                    _UserMetadata = new Dictionary<object, object>();
+                }
+                else
+                {
+                    _UserMetadata = value;
+                }
+            }
+        }
+
+        /// <summary>
         /// Stream containing the request body.
         /// </summary>
         [JsonIgnore]
@@ -322,8 +344,9 @@ namespace S3ServerInterface
 
         #region Private-Members
 
-        private bool _Debug = false;  
-        
+        private bool _Debug = false;
+        private Dictionary<object, object> _UserMetadata = new Dictionary<object, object>();
+
         #endregion
 
         #region Constructors-and-Factories
