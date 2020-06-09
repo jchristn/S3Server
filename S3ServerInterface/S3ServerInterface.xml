@@ -1591,6 +1591,11 @@
             End value from the Range header.
             </summary>
         </member>
+        <member name="P:S3ServerInterface.S3Request.ContinuationToken">
+            <summary>
+            Continuation token.
+            </summary>
+        </member>
         <member name="P:S3ServerInterface.S3Request.IsServiceRequest">
             <summary>
             Indicates if the request is a service request.

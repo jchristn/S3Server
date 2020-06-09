@@ -2,11 +2,15 @@
 
 ## Current Version
 
+v2.0.1.19
+
+- New S3Request property ```ContinuationToken```
+
+## Previous Versions
+
 v2.0.1.18
 
 - New S3Request property ```UserMetadata (Dictionary<object, object>)``` 
-
-## Previous Versions
 
 v2.0.1.17
 

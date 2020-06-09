@@ -10,9 +10,9 @@ Simple S3 server-side interface, produced using Amazon's public documentation.  
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v2.0.1.18
+## New in v2.0.1.19
 
-- New S3Request property ```UserMetadata (Dictionary<object, object>)``` 
+- New S3Request property ```ContinuationToken```
 
 ## Examples
 

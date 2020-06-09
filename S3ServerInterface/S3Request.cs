@@ -161,6 +161,11 @@ namespace S3ServerInterface
         public long? RangeEnd = null;
 
         /// <summary>
+        /// Continuation token.
+        /// </summary>
+        public string ContinuationToken { get; set; }
+
+        /// <summary>
         /// Indicates if the request is a service request.
         /// </summary>
         public bool IsServiceRequest
@@ -456,27 +461,35 @@ namespace S3ServerInterface
 
             #region Set-Parameters-from-Querystring
 
-            if (Http.Request.QuerystringEntries != null && Http.Request.QuerystringEntries.ContainsKey("versionId"))
+            if (Http.Request.QuerystringEntries != null)
             {
-                VersionId = Http.Request.QuerystringEntries["versionId"];
-            }
-
-            if (Http.Request.QuerystringEntries != null && Http.Request.QuerystringEntries.ContainsKey("prefix"))
-            {
-                Prefix = Http.Request.QuerystringEntries["prefix"];
-            }
-
-            if (Http.Request.QuerystringEntries != null && Http.Request.QuerystringEntries.ContainsKey("max-keys"))
-            {
-                long maxKeys = 0;
-                if (!Int64.TryParse(Http.Request.QuerystringEntries["max-keys"], out maxKeys))
+                if (Http.Request.QuerystringEntries.ContainsKey("versionId"))
                 {
-                    MaxKeys = 0;
+                    VersionId = Http.Request.QuerystringEntries["versionId"];
                 }
-                else
+
+                if (Http.Request.QuerystringEntries.ContainsKey("prefix"))
                 {
-                    MaxKeys = maxKeys;
+                    Prefix = Http.Request.QuerystringEntries["prefix"];
                 }
+
+                if (Http.Request.QuerystringEntries.ContainsKey("max-keys"))
+                {
+                    long maxKeys = 0;
+                    if (!Int64.TryParse(Http.Request.QuerystringEntries["max-keys"], out maxKeys))
+                    {
+                        MaxKeys = 0;
+                    }
+                    else
+                    {
+                        MaxKeys = maxKeys;
+                    }
+                }
+
+                if (Http.Request.QuerystringEntries.ContainsKey("continuation-token"))
+                {
+                    ContinuationToken = Http.Request.QuerystringEntries["continuation-token"];
+                } 
             }
 
             #endregion
