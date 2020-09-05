@@ -462,23 +462,8 @@ namespace S3ServerInterface
 
         public static T DeserializeJson<T>(string json)
         {
-            if (String.IsNullOrEmpty(json)) throw new ArgumentNullException(nameof(json));
-
-            try
-            {
-                return JsonConvert.DeserializeObject<T>(json);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("");
-                Console.WriteLine("Exception while deserializing:");
-                Console.WriteLine(json);
-                Console.WriteLine("");
-                Console.WriteLine("Exception:");
-                Console.WriteLine(SerializeJson(e, true));
-                Console.WriteLine("");
-                throw e;
-            }
+            if (String.IsNullOrEmpty(json)) throw new ArgumentNullException(nameof(json)); 
+            return JsonConvert.DeserializeObject<T>(json); 
         }
 
         public static T DeserializeJson<T>(byte[] data)
@@ -535,34 +520,54 @@ namespace S3ServerInterface
 
         #region Crypto
 
-        public static string Md5(byte[] data)
+        public static byte[] Md5(byte[] data)
         {
             if (data == null) return null;
-
-            MD5 md5 = MD5.Create();
-            byte[] hash = md5.ComputeHash(data);
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < hash.Length; i++) sb.Append(hash[i].ToString("X2"));
-            string ret = sb.ToString();
-            return ret;
+            return MD5.Create().ComputeHash(data);
         }
 
-        public static string Md5(string data)
+        public static byte[] Md5(string data)
         {
             if (String.IsNullOrEmpty(data)) return null;
-
-            MD5 md5 = MD5.Create();
-            byte[] dataBytes = System.Text.Encoding.ASCII.GetBytes(data);
-            byte[] hash = md5.ComputeHash(dataBytes);
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < hash.Length; i++) sb.Append(hash[i].ToString("X2"));
-            string ret = sb.ToString();
-            return ret;
+            return Md5(Encoding.UTF8.GetBytes(data));
         }
 
+        public static byte[] HmacSha1(byte[] input, byte[] key)
+        {
+            if (input == null) return null;
+            if (key == null || key.Length < 1) return null;
+            return new HMACSHA1(key).ComputeHash(input);
+        }
+
+        public static byte[] HmacSha256(byte[] input, byte[] key)
+        {
+            if (input == null) return null;
+            if (key == null || key.Length < 1) return null;
+            return new HMACSHA256(key).ComputeHash(input);
+        }
+
+        public static byte[] Sha1(byte[] input)
+        {
+            if (input == null) return null;
+            return new SHA1Managed().ComputeHash(input);
+        }
+
+        public static byte[] Sha256(byte[] data)
+        {
+            if (data == null) return null;
+            return new SHA256Managed().ComputeHash(data);
+        }
+         
         #endregion
 
         #region Encoding
+
+        public static bool IsBase64String(string s)
+        {
+            if (String.IsNullOrEmpty(s)) throw new ArgumentNullException(nameof(s));
+            s = s.Trim();
+            return (s.Length % 4 == 0) && Regex.IsMatch(s, @"^[a-zA-Z0-9\+/]*={0,3}$", RegexOptions.None); 
+        }
 
         public static byte[] Base64ToBytes(string data)
         {
@@ -581,6 +586,14 @@ namespace S3ServerInterface
             if (data == null) return null;
             if (data.Length < 1) return null;
             return System.Convert.ToBase64String(data);
+        }
+
+        public static string BytesToHex(byte[] data)
+        {
+            if (data == null || data.Length < 1) return null;
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < data.Length; i++) sb.Append(data[i].ToString("X2"));
+            return sb.ToString();
         }
 
         public static string StringToBase64(string data)
@@ -637,6 +650,26 @@ namespace S3ServerInterface
             }
 
             return ret;
+        }
+
+        public static byte[] HexStringToBytes(string hexStr)
+        {
+            if (String.IsNullOrEmpty(hexStr)) return null;
+
+            var ret = new byte[hexStr.Length / 2];
+            for (var i = 0; i < ret.Length; i++)
+            {
+                ret[i] = Convert.ToByte(hexStr.Substring(i * 2, 2), 16);
+            }
+
+            return ret;
+        }
+
+        public static string HexStringToBase64(string hexStr)
+        {
+            if (String.IsNullOrEmpty(hexStr)) return null;
+
+            return Convert.ToBase64String(HexStringToBytes(hexStr));
         }
 
         #endregion

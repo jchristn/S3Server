@@ -310,7 +310,8 @@ namespace S3ClientTest
                 RegionEndpoint = RegionEndpoint.USWest1, 
                 ServiceURL = _Endpoint,  
                 ForcePathStyle = true,
-                UseHttp = _Ssl
+                UseHttp = _Ssl,
+                SignatureVersion = "2"
             };
 
             _S3Client = new AmazonS3Client(_S3Credentials, _S3Config);

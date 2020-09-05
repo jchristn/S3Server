@@ -5,24 +5,24 @@ using System.Text;
 namespace S3ServerInterface
 {
     /// <summary>
-    /// Enable or disable console debugging for various items.
+    /// Enable or disable logging for various items.
     /// </summary>
-    public class ConsoleDebugging
+    public class LoggingSettings
     {
         #region Public-Members
 
         /// <summary>
-        /// Enable or disable console debugging for HTTP requests.
+        /// Enable or disable debugging for HTTP requests.
         /// </summary>
         public bool HttpRequests = false;
 
         /// <summary>
-        /// Enable or disable console debugging for S3 request construction.
+        /// Enable or disable debugging for S3 request construction.
         /// </summary>
         public bool S3Requests = false;
 
         /// <summary>
-        /// Enable or disable console debugging for exceptions.
+        /// Enable or disable debugging for exceptions.
         /// </summary>
         public bool Exceptions = false;
 
@@ -37,7 +37,7 @@ namespace S3ServerInterface
         /// <summary>
         /// Instantiates the object.
         /// </summary>
-        public ConsoleDebugging()
+        public LoggingSettings()
         {
 
         }

@@ -19,8 +19,9 @@ namespace Test
     /*
      * 
      * 
-     * Note: this must be run as administrator if the S3Server constructor uses '*', '+', or '0.0.0.0' as the listener hostname.
-     *       administrator not required if using 'localhost'.
+     * Note: This must be run as administrator if the S3Server constructor uses '*', '+', or '0.0.0.0' as the listener hostname.
+     *       Administrator not required if using 'localhost'.
+     *       S3 clients will report failed operation if interacting with this node; it returns a simple 200 to each request.
      * 
      * 
      * 
@@ -36,13 +37,18 @@ namespace Test
             Console.Write("Base domain: ");
             string baseDomain = Console.ReadLine();
 
-            _Server = new S3Server("*", 8000, false, DefaultRequestHandler);
-            _Server.ConsoleDebug.Exceptions = true;
-            _Server.ConsoleDebug.HttpRequests = true;
-            _Server.ConsoleDebug.S3Requests = true;
+            Console.WriteLine("Listening on http://localhost:8000/");
+
+            _Server = new S3Server("localhost", 8000, false, DefaultRequestHandler);
+            _Server.Logging.Exceptions = true;
+            _Server.Logging.HttpRequests = true;
+            _Server.Logging.S3Requests = true;
+            _Server.Logger = Logger;
             _Server.BaseDomain = baseDomain;
 
-            _Server.PreRequestHandler = PreRequestHandler; 
+            _Server.AuthenticateSignatures = true;
+            _Server.GetSecretKey = GetSecretKey;
+            _Server.PreRequestHandler = PreRequestHandler;
             _Server.DefaultRequestHandler = DefaultRequestHandler;
 
             _Server.Service.ListBuckets = ListBuckets;
@@ -67,7 +73,7 @@ namespace Test
             _Server.Bucket.WriteTags = BucketWriteTags;
             _Server.Bucket.WriteVersioning = BucketWriteVersioning;
             _Server.Bucket.WriteWebsite = BucketWriteWebsite;
-             
+
             _Server.Object.Delete = ObjectDelete;
             _Server.Object.DeleteMultiple = ObjectDeleteMultiple;
             _Server.Object.DeleteTags = ObjectDeleteTags;
@@ -82,7 +88,7 @@ namespace Test
             _Server.Object.WriteAcl = ObjectWriteAcl;
             _Server.Object.WriteAcl = ObjectWriteLegalHold;
             _Server.Object.WriteAcl = ObjectWriteRetention;
-            _Server.Object.WriteTags = ObjectWriteTags; 
+            _Server.Object.WriteTags = ObjectWriteTags;
 
             while (_RunForever)
             {
@@ -99,7 +105,7 @@ namespace Test
 
                     case "q":
                         _RunForever = false;
-                        break;  
+                        break;
                 }
             }
         }
@@ -109,7 +115,7 @@ namespace Test
             Console.WriteLine("--- Available Commands ---");
             Console.WriteLine("  ?         Help, this menu");
             Console.WriteLine("  q         Quit the program");
-            Console.WriteLine("  cls       Clear the screen"); 
+            Console.WriteLine("  cls       Clear the screen");
         }
 
         #region S3-API-Handlers
@@ -131,13 +137,18 @@ namespace Test
             return;
         }
 
+        static byte[] GetSecretKey(string accessKey)
+        {
+            return Encoding.UTF8.GetBytes("default");
+        }
+
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<bool> PreRequestHandler(S3Request req, S3Response resp)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             return false;
         }
-         
+
         static async Task DefaultRequestHandler(S3Request req, S3Response resp)
         {
             await SendResponse(req, resp, "Default request handler");
@@ -493,6 +504,15 @@ namespace Test
             }
 
             return json;
+        }
+
+        #endregion
+
+        #region Misc
+
+        private static void Logger(string msg)
+        {
+            Console.WriteLine(msg);
         }
 
         #endregion

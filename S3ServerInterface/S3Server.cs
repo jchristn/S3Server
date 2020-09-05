@@ -1,11 +1,6 @@
 ﻿using System;
-using System.IO;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
- 
+using System.Threading.Tasks; 
 using WatsonWebserver;
-
 using S3ServerInterface.Callbacks;
 
 namespace S3ServerInterface
@@ -19,9 +14,14 @@ namespace S3ServerInterface
         #region Public-Members
 
         /// <summary>
-        /// Enable or disable console debugging for various items.
+        /// Method to invoke when sending a log message.
         /// </summary>
-        public ConsoleDebugging ConsoleDebug = new ConsoleDebugging();
+        public Action<string> Logger = null;
+
+        /// <summary>
+        /// Enable or disable logging for various items.
+        /// </summary>
+        public LoggingSettings Logging = new LoggingSettings();
 
         /// <summary>
         /// Callback methods for requests received for service operations.
@@ -43,12 +43,27 @@ namespace S3ServerInterface
         /// Return true if you wish to terminate the request, otherwise, return false, which will further route the request.
         /// </summary>
         public Func<S3Request, S3Response, Task<bool>> PreRequestHandler = null;
-         
+
         /// <summary>
         /// Callback method to call when no matching AWS S3 API callback could be found.
         /// This callback should return an S3Response at all times.
         /// </summary>
         public Func<S3Request, S3Response, Task> DefaultRequestHandler = null;
+
+        /// <summary>
+        /// Callback method to retrieve the secret key for the supplied access key from your application.  
+        /// This method is only used when AuthenticateSignatures is set to true.
+        /// </summary>
+        public Func<string, byte[]> GetSecretKey = null;
+
+        /// <summary>
+        /// Enable or disable authentication of signatures.  This does not validate signatures for transferred chunks, only authentication of the user.
+        /// Signatures will only be authenticated if the GetSecretKey callback is set.
+        /// Refer to the following links for how AWS signatures are derived.
+        /// Version 2: https://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html
+        /// Version 4: https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
+        /// </summary>
+        public bool AuthenticateSignatures = false;
 
         /// <summary>
         /// Specify whether or not exceptions should be included in status 500 Internal Server Error messages.
@@ -66,6 +81,7 @@ namespace S3ServerInterface
 
         #region Private-Members
 
+        private string _Header = "[S3Server] ";
         private bool _Disposed = false;
 
         private string _ListenerHostname;
@@ -150,6 +166,7 @@ namespace S3ServerInterface
             _ListenerHostname = hostname;
             _ListenerPort = port;
             _Ssl = ssl;
+
             PreRequestHandler = preRequestHandler;
             DefaultRequestHandler = defaultRequestHandler;
 
@@ -168,7 +185,7 @@ namespace S3ServerInterface
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-
+         
         #endregion
 
         #region Private-Methods
@@ -186,6 +203,8 @@ namespace S3ServerInterface
 
             if (disposing)
             {
+                Logger?.Invoke(_Header + "Dispose requested");
+
                 if (_Server != null) _Server.Dispose();
             }
 
@@ -197,16 +216,16 @@ namespace S3ServerInterface
             if (ctx == null) throw new ArgumentNullException(nameof(ctx));
             DateTime startTime = DateTime.Now;
 
-            S3Request s3req = new S3Request(BaseDomain, ctx, ConsoleDebug.S3Requests);
+            S3Request s3req = new S3Request(BaseDomain, ctx, (Logging.S3Requests ? Logger : null));
             S3Response s3resp = new S3Response(s3req);
             bool success = false;
 
             try
             {
 
-                if (ConsoleDebug.HttpRequests)
+                if (Logging.HttpRequests)
                 {
-                    Console.WriteLine(Common.SerializeJson(s3req, true)); 
+                    Logger?.Invoke(_Header + "HTTP request: " + Environment.NewLine + Common.SerializeJson(s3req, true));
                 }
 
                 if (PreRequestHandler != null)
@@ -217,6 +236,25 @@ namespace S3ServerInterface
                         await s3resp.Send();
                         return;
                     } 
+                }
+
+                if (AuthenticateSignatures && GetSecretKey != null)
+                {
+                    if (!String.IsNullOrEmpty(s3req.AccessKey))
+                    {
+                        byte[] secretKey = GetSecretKey(s3req.AccessKey);
+                        if (secretKey == null || secretKey.Length < 1)
+                        {
+                            await s3resp.Send(S3Objects.ErrorCode.InvalidRequest);
+                            return;
+                        }
+
+                        if (!s3req.IsValidSignature(secretKey))
+                        {
+                            await s3resp.Send(S3Objects.ErrorCode.SignatureDoesNotMatch);
+                            return;
+                        }
+                    }
                 }
 
                 switch (s3req.RequestType)
@@ -473,9 +511,9 @@ namespace S3ServerInterface
             }
             catch (Exception e)
             {
-                if (ConsoleDebug.Exceptions)
+                if (Logging.Exceptions)
                 {
-                    Console.WriteLine(Common.SerializeJson(e, true));
+                    Logger?.Invoke(_Header + "Exception:" + Environment.NewLine + Common.SerializeJson(e, true));
                 }
 
                 await s3resp.Send(S3Objects.ErrorCode.InternalError);
@@ -483,9 +521,10 @@ namespace S3ServerInterface
             }
             finally
             { 
-                if (ConsoleDebug.HttpRequests)
+                if (Logging.HttpRequests)
                 {
-                    Console.WriteLine(
+                    Logger?.Invoke(
+                        _Header + 
                         "[" + 
                         ctx.Request.SourceIp + ":" +
                         ctx.Request.SourcePort + 

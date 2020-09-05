@@ -1,18 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net462</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;net462</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>Joel Christner</Authors>
     <Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
     <Copyright>(c)2020 Joel Christner</Copyright>
-    <PackageReleaseNotes>- New S3Request property ```ContinuationToken```</PackageReleaseNotes>
+    <PackageReleaseNotes>Breaking changes, support for verifying client signatures, logger, code refactor</PackageReleaseNotes>
     <PackageTags>aws s3 storage rest interface server</PackageTags>
     <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/jchristn/S3ServerInterface</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jchristn/S3ServerInterface</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
-    <Version>2.0.1.19</Version>
+    <Version>2.1.0</Version>
     <PackageIconUrl>https://raw.githubusercontent.com/jchristn/S3ServerInterface/master/assets/logo.ico</PackageIconUrl>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
   </PropertyGroup>
@@ -22,9 +22,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.S3" Version="3.3.111.9" />
+    <PackageReference Include="AWSSDK.S3" Version="3.5.0.5" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="Watson" Version="3.0.11" />
+    <PackageReference Include="Watson" Version="3.1.0.2" />
   </ItemGroup>
 
   <ItemGroup>

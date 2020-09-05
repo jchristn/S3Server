@@ -2,11 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-
-using WatsonWebserver;
-
 using S3ServerInterface.S3Objects;
 
 namespace S3ServerInterface

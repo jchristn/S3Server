@@ -10,9 +10,12 @@ Simple S3 server-side interface, produced using Amazon's public documentation.  
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v2.0.1.19
+## New in v2.1.0
 
-- New S3Request property ```ContinuationToken```
+- Breaking changes
+- Support for authenticating request signatures (not chunk signatures)
+- Centralized logger support
+- Minor refactor
 
 ## Examples
 
@@ -95,44 +98,6 @@ S3ServerInterface expects the code you implement in your callbacks to directly s
 - Whether chunk transfer-encoding is enabled or disabled, through the use of ```Send(ErrorCode)``` API
 
 S3ServerInterface provides a series of classes that you can use to deserialize request bodies or to serialize your responses.  These are in the namespace ```S3ServerInterface.S3Objects```.
-
-### S3Request
-```
-public DateTime TimestampUtc { get; set; }
-public HttpContext Http { get; set; } 
-public string SourceIp { get; set; }
-public int SourcePort { get; set; }
-public HttpMethod Method { get; set; }
-public string FullUrl { get; set; }
-public string RawUrl { get; set; }
-public List<string> RawUrlEntries { get; set; }
-public long ContentLength { get; set; }
-public string ContentType { get; set; }
-public bool Chunked { get; set; }
-public Dictionary<string, string> Querystring { get; set; }
-public Dictionary<string, string> Headers { get; set; }
-public string Region { get; set; }
-public string Hostname { get; set; }
-public string BaseDomain { get; set; }
-public RequestStyle Style { get; set; }
-public string Bucket { get; set; }
-public string Key { get; set; }
-public string VersionId { get; set; }
-public string Authorization { get; set; }
-public string Signature { get; set; }
-public string AccessKey { get; set; }
-public Stream Data { get; set; }
-```
-
-### S3Response
-```
-public int StatusCode { get; set; }
-public Dictionary<string, string> { get; set; }
-public string ContentType { get; set; }
-public long ContentLength { get; set; }
-public Stream Data { get; set; }
-public bool Chunked { get; set; }
-```
 
 ### Reading Request Body Data
 
@@ -241,6 +206,10 @@ The following object operations are not exposed through callbacks:
 - Parts
 - Restore 
 - Torrent
+
+The following general capabilities are not yet supported by S3ServerInterface
+
+- Validation of chunk signatures
 
 These items may be addressed in a future release.
 

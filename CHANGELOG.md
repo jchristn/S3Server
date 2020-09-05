@@ -2,11 +2,18 @@
 
 ## Current Version
 
+v2.1.0
+
+- Breaking changes
+- Support for authenticating request signatures (not chunk signatures)
+- Centralized logger support
+- Minor refactor
+
+## Previous Versions
+
 v2.0.1.19
 
 - New S3Request property ```ContinuationToken```
-
-## Previous Versions
 
 v2.0.1.18
 
