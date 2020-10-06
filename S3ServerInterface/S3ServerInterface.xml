@@ -243,27 +243,27 @@
             Common static methods.
             </summary>
         </member>
-        <member name="T:S3ServerInterface.ConsoleDebugging">
+        <member name="T:S3ServerInterface.LoggingSettings">
             <summary>
-            Enable or disable console debugging for various items.
+            Enable or disable logging for various items.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.ConsoleDebugging.HttpRequests">
+        <member name="F:S3ServerInterface.LoggingSettings.HttpRequests">
             <summary>
-            Enable or disable console debugging for HTTP requests.
+            Enable or disable debugging for HTTP requests.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.ConsoleDebugging.S3Requests">
+        <member name="F:S3ServerInterface.LoggingSettings.S3Requests">
             <summary>
-            Enable or disable console debugging for S3 request construction.
+            Enable or disable debugging for S3 request construction.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.ConsoleDebugging.Exceptions">
+        <member name="F:S3ServerInterface.LoggingSettings.Exceptions">
             <summary>
-            Enable or disable console debugging for exceptions.
+            Enable or disable debugging for exceptions.
             </summary>
         </member>
-        <member name="M:S3ServerInterface.ConsoleDebugging.#ctor">
+        <member name="M:S3ServerInterface.LoggingSettings.#ctor">
             <summary>
             Instantiates the object.
             </summary>
@@ -276,6 +276,11 @@
         <member name="P:S3ServerInterface.S3Objects.AccessControlList.Grant">
             <summary>
             Grant specifying to whom rights are provided to the resource.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.AccessControlList.#ctor">
+            <summary>
+            Instantiate the object.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3Objects.AccessControlPolicy">
@@ -293,6 +298,11 @@
             Access control list for the resource.
             </summary>
         </member>
+        <member name="M:S3ServerInterface.S3Objects.AccessControlPolicy.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.Bucket">
             <summary>
             Amazon S3 bucket.
@@ -306,6 +316,11 @@
         <member name="P:S3ServerInterface.S3Objects.Bucket.CreationDate">
             <summary>
             The timestamp from bucket creation.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.Bucket.#ctor">
+            <summary>
+            Instantiate the object.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3Objects.BucketLoggingStatus">
@@ -323,6 +338,11 @@
             XML namespace.
             </summary>
         </member>
+        <member name="M:S3ServerInterface.S3Objects.BucketLoggingStatus.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.Buckets">
             <summary>
             A collection of buckets.
@@ -331,6 +351,26 @@
         <member name="P:S3ServerInterface.S3Objects.Buckets.Bucket">
             <summary>
             A list of individual buckets.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.Buckets.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3Objects.CommonPrefixes">
+            <summary>
+            Common prefixes.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.CommonPrefixes.Prefix">
+            <summary>
+            Prefix.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.CommonPrefixes.#ctor">
+            <summary>
+            Instantiate the object.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3Objects.Condition">
@@ -346,6 +386,11 @@
         <member name="P:S3ServerInterface.S3Objects.Condition.KeyPrefixEquals">
             <summary>
             Assume a match if the key prefix is equal to the specified value.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.Condition.#ctor">
+            <summary>
+            Instantiate the object.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3Objects.Contents">
@@ -378,6 +423,11 @@
             The class of storage where the resource resides.
             </summary>
         </member>
+        <member name="M:S3ServerInterface.S3Objects.Contents.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.Deleted">
             <summary>
             Metadata about a deleted resource.
@@ -401,6 +451,11 @@
         <member name="P:S3ServerInterface.S3Objects.Deleted.DeleteMarkerVersionId">
             <summary>
             The version ID associated with the delete marker.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.Deleted.#ctor">
+            <summary>
+            Instantiate the object.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3Objects.DeleteMarker">
@@ -433,6 +488,11 @@
             Information about the resource owner.
             </summary>
         </member>
+        <member name="M:S3ServerInterface.S3Objects.DeleteMarker.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.DeleteMultiple">
             <summary>
             Request to delete multiple resources.
@@ -446,6 +506,11 @@
         <member name="P:S3ServerInterface.S3Objects.DeleteMultiple.Object">
             <summary>
             List of objects to delete.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.DeleteMultiple.#ctor">
+            <summary>
+            Instantiate the object.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3Objects.DeleteResult">
@@ -944,6 +1009,11 @@
             The key of the object that should serve as the error document.
             </summary>
         </member>
+        <member name="M:S3ServerInterface.S3Objects.ErrorDocument.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.Grant">
             <summary>
             A grant allowing a grantee permissiont to a resource.
@@ -957,6 +1027,11 @@
         <member name="P:S3ServerInterface.S3Objects.Grant.Permission">
             <summary>
             The permission given to the recipient.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.Grant.#ctor">
+            <summary>
+            Instantiate the object.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3Objects.Grantee">
@@ -989,6 +1064,11 @@
             Email address of the grantee.
             </summary>
         </member>
+        <member name="M:S3ServerInterface.S3Objects.Grantee.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.CanonicalUser">
             <summary>
             Instantiate the object.
@@ -1009,6 +1089,11 @@
             The suffix to use for the index document.
             </summary>
         </member>
+        <member name="M:S3ServerInterface.S3Objects.IndexDocument.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.LegalHold">
             <summary>
             Legal hold status of a resource.
@@ -1017,6 +1102,11 @@
         <member name="P:S3ServerInterface.S3Objects.LegalHold.Status">
             <summary>
             Legal hold status.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.LegalHold.#ctor">
+            <summary>
+            Instantiate the object.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3Objects.ListAllMyBucketsResult">
@@ -1039,6 +1129,11 @@
             XML namespace.
             </summary>
         </member>
+        <member name="M:S3ServerInterface.S3Objects.ListAllMyBucketsResult.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.ListBucketResult">
             <summary>
             Result from a ListBucket operation.
@@ -1054,6 +1149,11 @@
             Prefix specified in the request.
             </summary>
         </member>
+        <member name="P:S3ServerInterface.S3Objects.ListBucketResult.Marker">
+            <summary>
+            Marker.
+            </summary>
+        </member>
         <member name="P:S3ServerInterface.S3Objects.ListBucketResult.KeyCount">
             <summary>
             Number of keys.
@@ -1062,6 +1162,11 @@
         <member name="P:S3ServerInterface.S3Objects.ListBucketResult.MaxKeys">
             <summary>
             Maximum number of keys.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Objects.ListBucketResult.Delimiter">
+            <summary>
+            Delimiter.
             </summary>
         </member>
         <member name="P:S3ServerInterface.S3Objects.ListBucketResult.IsTruncated">
@@ -1079,9 +1184,19 @@
             Bucket contents.
             </summary>
         </member>
+        <member name="P:S3ServerInterface.S3Objects.ListBucketResult.CommonPrefixes">
+            <summary>
+            Common prefixes.
+            </summary>
+        </member>
         <member name="P:S3ServerInterface.S3Objects.ListBucketResult.Xmlns">
             <summary>
             XML namespace.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.ListBucketResult.#ctor">
+            <summary>
+            Instantiate the object.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3Objects.ListVersionsResult">
@@ -1154,6 +1269,11 @@
             Text, i.e. the region.
             </summary>
         </member>
+        <member name="M:S3ServerInterface.S3Objects.LocationConstraint.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.LoggingEnabled">
             <summary>
             Logging status.
@@ -1174,6 +1294,11 @@
             The grants allowing others to access logging data.
             </summary>
         </member>
+        <member name="M:S3ServerInterface.S3Objects.LoggingEnabled.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.Object">
             <summary>
             Object.
@@ -1189,6 +1314,11 @@
             Version ID for the object.
             </summary>
         </member>
+        <member name="M:S3ServerInterface.S3Objects.Object.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.Owner">
             <summary>
             Resource owner.
@@ -1202,6 +1332,11 @@
         <member name="P:S3ServerInterface.S3Objects.Owner.DisplayName">
             <summary>
             Display name of the owner.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.Owner.#ctor">
+            <summary>
+            Instantiate the object.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3Objects.Redirect">
@@ -1234,6 +1369,11 @@
             Replace the entire key as specified when the redirect rule matches.
             </summary>
         </member>
+        <member name="M:S3ServerInterface.S3Objects.Redirect.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.RedirectAllRequestsTo">
             <summary>
             Host and protocol to which all requests should be redirected.
@@ -1247,6 +1387,11 @@
         <member name="P:S3ServerInterface.S3Objects.RedirectAllRequestsTo.Protocol">
             <summary>
             Redirect all requests to the specified hostname using the specified protocol.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.RedirectAllRequestsTo.#ctor">
+            <summary>
+            Instantiate the object.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3Objects.Retention">
@@ -1264,6 +1409,11 @@
             Date upon which the resource shall no longer be retained.
             </summary>
         </member>
+        <member name="M:S3ServerInterface.S3Objects.Retention.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.RoutingRule">
             <summary>
             Routing rule for a bucket's website configuration.
@@ -1279,6 +1429,11 @@
             Redirect rule for a bucket's website configuration.
             </summary>
         </member>
+        <member name="M:S3ServerInterface.S3Objects.RoutingRule.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.RoutingRules">
             <summary>
             Routing rules for a bucket's website configuration.
@@ -1289,6 +1444,11 @@
             List of routing rules.
             </summary>
         </member>
+        <member name="M:S3ServerInterface.S3Objects.RoutingRules.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.TargetGrants">
             <summary>
             Recipients of the grants to access the resource.
@@ -1297,6 +1457,11 @@
         <member name="P:S3ServerInterface.S3Objects.TargetGrants.Grant">
             <summary>
             Grant specifying to whom rights are provided to the resource.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.TargetGrants.#ctor">
+            <summary>
+            Instantiate the object.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3Objects.Version">
@@ -1344,6 +1509,11 @@
             Object owner.
             </summary>
         </member>
+        <member name="M:S3ServerInterface.S3Objects.Version.#ctor">
+            <summary>
+            Instantiate the object.
+            </summary>
+        </member>
         <member name="T:S3ServerInterface.S3Objects.VersioningConfiguration">
             <summary>
             Bucket versioning configuration.
@@ -1387,6 +1557,11 @@
         <member name="P:S3ServerInterface.S3Objects.WebsiteConfiguration.RoutingRules">
             <summary>
             Routing rules for a bucket's website configuration.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Objects.WebsiteConfiguration.#ctor">
+            <summary>
+            Instantiate the object.
             </summary>
         </member>
         <member name="T:S3ServerInterface.S3PermissionType">
@@ -1451,12 +1626,12 @@
             S3 request object.
             </summary>
         </member>
-        <member name="P:S3ServerInterface.S3Request.RequestStyle">
+        <member name="F:S3ServerInterface.S3Request.RequestStyle">
             <summary>
             Indicates if the request includes the bucket name in the hostname or not.
             </summary>
         </member>
-        <member name="P:S3ServerInterface.S3Request.RequestType">
+        <member name="F:S3ServerInterface.S3Request.RequestType">
             <summary>
             Indicates the type of S3 request.
             </summary>
@@ -1464,11 +1639,6 @@
         <member name="F:S3ServerInterface.S3Request.TimestampUtc">
             <summary>
             Time of creation in UTC.
-            </summary>
-        </member>
-        <member name="P:S3ServerInterface.S3Request.Http">
-            <summary>
-            HTTP context from which this response was created.
             </summary>
         </member>
         <member name="P:S3ServerInterface.S3Request.SourceIp">
@@ -1496,11 +1666,6 @@
             The raw URL without querystring.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.S3Request.RawUrlEntries">
-            <summary>
-            The individual elements in the raw URL.
-            </summary>
-        </member>
         <member name="P:S3ServerInterface.S3Request.ContentLength">
             <summary>
             The length of the payload.
@@ -1516,16 +1681,6 @@
             Indicates if chunked transfer-encoding is in use.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.S3Request.Querystring">
-            <summary>
-            URL querystring.
-            </summary>
-        </member>
-        <member name="F:S3ServerInterface.S3Request.Headers">
-            <summary>
-            Full set of HTTP headers.
-            </summary>
-        </member>
         <member name="P:S3ServerInterface.S3Request.Region">
             <summary>
             AWS region.
@@ -1534,6 +1689,11 @@
         <member name="P:S3ServerInterface.S3Request.Hostname">
             <summary>
             Hostname.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Host">
+            <summary>
+            Host header value.
             </summary>
         </member>
         <member name="P:S3ServerInterface.S3Request.BaseDomain">
@@ -1556,6 +1716,16 @@
             Object key prefix.
             </summary>
         </member>
+        <member name="P:S3ServerInterface.S3Request.Delimiter">
+            <summary>
+            Delimiter.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Marker">
+            <summary>
+            Marker.
+            </summary>
+        </member>
         <member name="F:S3ServerInterface.S3Request.MaxKeys">
             <summary>
             Maximum number of keys to retrieve in an enumeration.
@@ -1571,9 +1741,34 @@
             Authorization header string, in full.
             </summary>
         </member>
+        <member name="F:S3ServerInterface.S3Request.SignatureVersion">
+            <summary>
+            Signature version from authorization header.
+            </summary>
+        </member>
         <member name="P:S3ServerInterface.S3Request.Signature">
             <summary>
             Signature from authorization header.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.ContentMd5">
+            <summary>
+            Content MD-5 from request headers.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.ContentSha256">
+            <summary>
+            Content SHA-256 from request headers.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Date">
+            <summary>
+            Date parameter.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Expires">
+            <summary>
+            Expiration parameter from authorization header.
             </summary>
         </member>
         <member name="P:S3ServerInterface.S3Request.AccessKey">
@@ -1617,9 +1812,34 @@
             See https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html for details.
             </summary>
         </member>
+        <member name="F:S3ServerInterface.S3Request.SignedHeaders">
+            <summary>
+            List of signed headers.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Request.Querystring">
+            <summary>
+            URL querystring.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Request.Headers">
+            <summary>
+            Full set of HTTP headers.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Request.RawUrlEntries">
+            <summary>
+            The individual elements in the raw URL.
+            </summary>
+        </member>
         <member name="P:S3ServerInterface.S3Request.UserMetadata">
             <summary>
             User-defined metadata.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.Http">
+            <summary>
+            HTTP context from which this response was created.
             </summary>
         </member>
         <member name="P:S3ServerInterface.S3Request.Data">
@@ -1632,13 +1852,20 @@
             Instantiate the object.
             </summary>
         </member>
-        <member name="M:S3ServerInterface.S3Request.#ctor(System.String,WatsonWebserver.HttpContext,System.Boolean)">
+        <member name="M:S3ServerInterface.S3Request.#ctor(System.String,WatsonWebserver.HttpContext)">
+            <summary>
+            Instantiate the object.
+            </summary>
+            <param name="baseDomain">Base domain against which the hostname should be evaluated to identify the bucket.  For instance, to resolve buckets for *.localhost, specify '.localhost'.</param>
+            <param name="ctx">HttpContext.</param> 
+        </member>
+        <member name="M:S3ServerInterface.S3Request.#ctor(System.String,WatsonWebserver.HttpContext,System.Action{System.String})">
             <summary>
             Instantiates the object.
             </summary>
-            <param name="baseDomain">Base domain against which the hostname should be evaluated to identify the bucket.</param>
+            <param name="baseDomain">Base domain against which the hostname should be evaluated to identify the bucket.  For instance, to resolve buckets for *.localhost, specify '.localhost'.</param>
             <param name="ctx">HttpContext.</param> 
-            <param name="debug">Enable or disable console logging of construction.</param> 
+            <param name="logger">Method to invoke to send log messages.</param> 
         </member>
         <member name="M:S3ServerInterface.S3Request.ToString">
             <summary>
@@ -1646,9 +1873,39 @@
             </summary>
             <returns>String.</returns>
         </member>
+        <member name="M:S3ServerInterface.S3Request.ParseHttpContext(System.String,WatsonWebserver.HttpContext)">
+            <summary>
+            Populate members using an HttpContext.
+            </summary>
+            <param name="baseDomain">Base domain against which the hostname should be evaluated to identify the bucket.</param>
+            <param name="ctx">HttpContext.</param>
+        </member>
+        <member name="M:S3ServerInterface.S3Request.HeaderExists(System.String,System.Boolean)">
+            <summary>
+            Determine if a header exists.
+            </summary>
+            <param name="key">Header key.</param>
+            <param name="caseSensitive">Specify whether a case sensitive search should be used.</param>
+            <returns>True if exists.</returns>
+        </member>
+        <member name="M:S3ServerInterface.S3Request.QuerystringExists(System.String,System.Boolean)">
+            <summary>
+            Determine if a querystring entry exists.
+            </summary>
+            <param name="key">Querystring key.</param>
+            <param name="caseSensitive">Specify whether a case sensitive search should be used.</param>
+            <returns>True if exists.</returns>
+        </member>
         <member name="M:S3ServerInterface.S3Request.RetrieveHeaderValue(System.String)">
             <summary>
             Retrieve a header (or querystring) value.
+            </summary>
+            <param name="key">Key.</param>
+            <returns>Value.</returns>
+        </member>
+        <member name="M:S3ServerInterface.S3Request.RetrieveQueryValue(System.String)">
+            <summary>
+            Retrieve a querystring value.
             </summary>
             <param name="key">Key.</param>
             <returns>Value.</returns>
@@ -1658,6 +1915,20 @@
             Read a chunk from the request body.
             </summary>
             <returns>Chunk.</returns>
+        </member>
+        <member name="M:S3ServerInterface.S3Request.IsValidSignature(System.String)">
+            <summary>
+            Determine if the signature was signed by the supplied secret key.
+            </summary>
+            <param name="secretKey">Base64 encoded secret key.</param>
+            <returns>True if the signature was generated using the supplied secret key.</returns>
+        </member>
+        <member name="M:S3ServerInterface.S3Request.IsValidSignature(System.Byte[])">
+            <summary>
+            Determine if the signature was signed by the supplied secret key.
+            </summary>
+            <param name="secretKey">Secret key.</param>
+            <returns>True if the signature was generated using the supplied secret key.</returns>
         </member>
         <member name="T:S3ServerInterface.S3RequestStyle">
             <summary>
@@ -1986,9 +2257,14 @@
             Bucket names must not be in the hostname; they must be in the URL path. 
             </summary>
         </member>
-        <member name="F:S3ServerInterface.S3Server.ConsoleDebug">
+        <member name="F:S3ServerInterface.S3Server.Logger">
             <summary>
-            Enable or disable console debugging for various items.
+            Method to invoke when sending a log message.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Server.Logging">
+            <summary>
+            Enable or disable logging for various items.
             </summary>
         </member>
         <member name="F:S3ServerInterface.S3Server.Service">
@@ -2018,6 +2294,21 @@
             This callback should return an S3Response at all times.
             </summary>
         </member>
+        <member name="F:S3ServerInterface.S3Server.GetSecretKey">
+            <summary>
+            Callback method to retrieve the secret key for the supplied access key from your application.  
+            This method is only used when AuthenticateSignatures is set to true.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Server.AuthenticateSignatures">
+            <summary>
+            Enable or disable authentication of signatures.  This does not validate signatures for transferred chunks, only authentication of the user.
+            Signatures will only be authenticated if the GetSecretKey callback is set.
+            Refer to the following links for how AWS signatures are derived.
+            Version 2: https://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html
+            Version 4: https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
+            </summary>
+        </member>
         <member name="F:S3ServerInterface.S3Server.SendExceptionsInResponses">
             <summary>
             Specify whether or not exceptions should be included in status 500 Internal Server Error messages.
@@ -2035,7 +2326,7 @@
             Instantiate the object.
             Using this constructor results in no pre-request handler (your own API handler), and no custom default request handler (when an S3 API cannot be matched).
             </summary>
-            <param name="hostname">The hostname on which to listen for HTTP requests.</param>
+            <param name="hostname">The hostname on which to listen for HTTP requests.  If you listen on a wildcard such as '*', '+', or '0.0.0.0', you must run with elevated/administrative privileges.</param>
             <param name="port">The TCP port number.</param>
             <param name="ssl">Enable or disable SSL.</param> 
         </member>
@@ -2044,7 +2335,7 @@
             Instantiate the object.
             Using this constructor results in no pre-request handler (your own API handler), but (if not null) allows a custom default request handler (when an S3 API cannot be matched).
             </summary>
-            <param name="hostname">The hostname on which to listen for HTTP requests.</param>
+            <param name="hostname">The hostname on which to listen for HTTP requests.  If you listen on a wildcard such as '*', '+', or '0.0.0.0', you must run with elevated/administrative privileges.</param>
             <param name="port">The TCP port number.</param>
             <param name="ssl">Enable or disable SSL.</param> 
             <param name="defaultRequestHandler">Default request handler used when no other callbacks can be found.</param>
@@ -2054,7 +2345,7 @@
             Instantiate the object.
             Using this constructor results in (if not null) a pre-request handler (your own API handler), and (if not null) a custom default request handler (when an S3 API cannot be matched).
             </summary>
-            <param name="hostname">The hostname on which to listen for HTTP requests.</param>
+            <param name="hostname">The hostname on which to listen for HTTP requests.  If you listen on a wildcard such as '*', '+', or '0.0.0.0', you must run with elevated/administrative privileges.</param>
             <param name="port">The TCP port number.</param>
             <param name="ssl">Enable or disable SSL.</param>
             <param name="preRequestHandler">Request handler to call prior to evaluating for S3 requests, can be null.</param>
@@ -2070,6 +2361,31 @@
             Dispose of the server.
             </summary>
             <param name="disposing">Disposing.</param>
+        </member>
+        <member name="T:S3ServerInterface.S3Signatures">
+            <summary>
+            Internal class for validating S3 signatures.
+            </summary>
+        </member>
+        <member name="T:S3ServerInterface.S3SignatureVersion">
+            <summary>
+            S3 signature version.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3SignatureVersion.Unknown">
+            <summary>
+            Unknown.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3SignatureVersion.Version2">
+            <summary>
+            Version2.
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3SignatureVersion.Version4">
+            <summary>
+            Version4.
+            </summary>
         </member>
     </members>
 </doc>

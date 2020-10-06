@@ -16,5 +16,13 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "Key")]
         public string Key { get; set; }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        public ErrorDocument()
+        {
+            Key = null;
+        }
     }
 }

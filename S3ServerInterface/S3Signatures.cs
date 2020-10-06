@@ -143,7 +143,8 @@ namespace S3ServerInterface
                 else ret += _Request.Date + "\n";
 
                 ret += _V2CanonicalHeaders;
-                ret += _V2CanonicalResource;
+                ret += _V2CanonicalUri; 
+                ret += _V2CanonicalQuerystring;
 
                 return ret;
             }
@@ -218,31 +219,40 @@ namespace S3ServerInterface
             "response-content-disposition",
             "response-content-encoding"
         };
-        private static string _V2CanonicalResource
+        private static string _V2CanonicalUri
         {
             get
             {
                 string ret = "/";
 
-                if (!String.IsNullOrEmpty(_Request.Bucket))
+                if (_Request.RequestStyle == S3RequestStyle.BucketNotInHostname)
                 {
-                    ret += WebUtility.UrlEncode(_Request.Bucket);
-
-                    if (!String.IsNullOrEmpty(_Request.Key))
+                    if (!String.IsNullOrEmpty(_Request.Bucket))
                     {
-                        ret += WebUtility.UrlEncode(_Request.Key);
+                        ret += WebUtility.UrlEncode(_Request.Bucket);
+
+                        if (!String.IsNullOrEmpty(_Request.Key))
+                        {
+                            ret += "/" + _Request.Key;
+                        }
+                        else
+                        {
+                            ret += "/";
+                        }
                     }
                     else
                     {
-                        ret += "/";
+                        // do nothing
                     }
                 }
                 else
                 {
-                    // do nothing
+                    if (!String.IsNullOrEmpty(_Request.Key))
+                    {
+                        ret += _Request.Key;
+                    }
                 }
 
-                ret += _V2CanonicalQuerystring;
                 return ret;
             }
         }
@@ -306,6 +316,19 @@ namespace S3ServerInterface
 
         #region Signature-V4-Members
 
+        private static string _V4StringToSign
+        {
+            get
+            {
+                string ret = "";
+
+                ret += "AWS4-HMAC-SHA256" + "\n";
+                ret += _Request.TimestampUtc.ToString(_AmazonTimestampFormat) + "\n";
+                ret += _Request.TimestampUtc.ToString(_AmazonDateFormat) + "/" + _Request.Region + "/s3/aws4_request" + "\n";
+                ret += Common.BytesToHex(Common.Sha256(Encoding.UTF8.GetBytes(_V4CanonicalRequest))).ToLower();
+                return ret;
+            }
+        }
         private static string _V4CanonicalRequest
         {
             get
@@ -332,17 +355,27 @@ namespace S3ServerInterface
             {
                 string ret = "/";
 
-                if (!String.IsNullOrEmpty(_Request.Bucket))
+                if (_Request.RequestStyle == S3RequestStyle.BucketNotInHostname)
                 {
-                    ret += WebUtility.UrlEncode(_Request.Bucket);
+                    if (!String.IsNullOrEmpty(_Request.Bucket))
+                    {
+                        ret += WebUtility.UrlEncode(_Request.Bucket);
 
+                        if (!String.IsNullOrEmpty(_Request.Key))
+                        {
+                            ret += "/" + _Request.Key;
+                        }
+                        else
+                        {
+                            ret += "/";
+                        }
+                    }
+                }
+                else if (_Request.RequestStyle == S3RequestStyle.BucketInHostname)
+                {
                     if (!String.IsNullOrEmpty(_Request.Key))
                     {
-                        ret += WebUtility.UrlEncode(_Request.Key);
-                    }
-                    else
-                    {
-                        ret += "/";
+                        ret += _Request.Key;
                     }
                 }
 
@@ -355,11 +388,12 @@ namespace S3ServerInterface
             {
                 string ret = "";
 
-                foreach (string key in _V4CanonicalQuerystringItems)
+                foreach (KeyValuePair<string, string> query in _Request.Querystring)
                 {
-                    if (_Request.QuerystringExists(key, false)) ret = V4AppendCanonicalizedResource(ret, key);
-                    else if (_Request.HeaderExists(key, false)) ret = V4AppendCanonicalizedResource(ret, key);
-                }
+                    if (String.IsNullOrEmpty(query.Key)) continue;
+                    if (!String.IsNullOrEmpty(ret)) ret += "&";
+                    ret += WebUtility.UrlEncode(query.Key) + "=" + (!String.IsNullOrEmpty(query.Value) ? WebUtility.UrlEncode(query.Value) : "");
+                } 
 
                 return ret;
             }
@@ -408,19 +442,6 @@ namespace S3ServerInterface
             "response-content-disposition",
             "response-content-encoding"
         };
-        private static string _V4StringToSign
-        {
-            get
-            {
-                string ret = "";
-
-                ret += "AWS4-HMAC-SHA256" + "\n";
-                ret += _Request.TimestampUtc.ToString(_AmazonTimestampFormat) + "\n";
-                ret += _Request.TimestampUtc.ToString(_AmazonDateFormat) + "/" + _Request.Region + "/s3/aws4_request" + "\n";
-                ret += Common.BytesToHex(Common.Sha256(Encoding.UTF8.GetBytes(_V4CanonicalRequest))).ToLower();
-                return ret;
-            }
-        }
 
         #endregion
 
@@ -439,44 +460,7 @@ namespace S3ServerInterface
 
             return ret;
         }
-
-        private static string V4AppendCanonicalizedResource(string original, string appendKey)
-        {
-            if (String.IsNullOrEmpty(appendKey)) return original;
-
-            string val = _Request.RetrieveHeaderValue(appendKey);
-            if (!String.IsNullOrEmpty(val))
-            {
-                val = WebUtility.UrlDecode(val);
-                val = WebUtility.UrlEncode(val);
-            }
-
-            appendKey = WebUtility.UrlEncode(appendKey);
-
-            if (String.IsNullOrEmpty(original))
-            {
-                if (String.IsNullOrEmpty(val))
-                {
-                    return appendKey;
-                }
-                else
-                {
-                    return "&" + appendKey + "=" + val;
-                }
-            }
-            else
-            {
-                if (String.IsNullOrEmpty(val))
-                {
-                    return "&" + appendKey;
-                }
-                else
-                {
-                    return "&" + appendKey + "=" + val;
-                }
-            }
-        }
-
+         
         private static byte[] V4GenerateSigningKey(byte[] secretKey)
         {
             byte[] dateKey = Common.HmacSha256(

@@ -16,10 +16,20 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "HttpErrorCodeReturnedEquals")]
         public string HttpErrorCodeReturnedEquals { get; set; }
+
         /// <summary>
         /// Assume a match if the key prefix is equal to the specified value.
         /// </summary>
         [XmlElement(ElementName = "KeyPrefixEquals")]
         public string KeyPrefixEquals { get; set; }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        public Condition()
+        {
+            HttpErrorCodeReturnedEquals = null;
+            KeyPrefixEquals = null;
+        }
     }
 }

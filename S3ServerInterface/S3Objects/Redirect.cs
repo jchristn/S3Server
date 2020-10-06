@@ -16,25 +16,41 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "HostName")]
         public string HostName { get; set; }
+
         /// <summary>
         /// The HTTP redirect code to use to perform the redirect.
         /// </summary>
         [XmlElement(ElementName = "HttpRedirectCode")]
         public string HttpRedirectCode { get; set; }
+
         /// <summary>
         /// The protocol that should be used with the redirect.
         /// </summary>
         [XmlElement(ElementName = "Protocol")]
         public string Protocol { get; set; }
+
         /// <summary>
         /// Replace the key prefix as specified when the redirect rule matches.
         /// </summary>
         [XmlElement(ElementName = "ReplaceKeyPrefixWith")]
         public string ReplaceKeyPrefixWith { get; set; }
+
         /// <summary>
         /// Replace the entire key as specified when the redirect rule matches.
         /// </summary>
         [XmlElement(ElementName = "ReplaceKeyWith")]
         public string ReplaceKeyWith { get; set; }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        public Redirect()
+        {
+            HostName = null;
+            HttpRedirectCode = null;
+            Protocol = null;
+            ReplaceKeyPrefixWith = null;
+            ReplaceKeyWith = null;
+        }
     }
 }

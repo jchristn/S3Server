@@ -16,15 +16,27 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "TargetBucket", Namespace = "http://doc.s3.amazonaws.com/2006-03-01")]
         public string TargetBucket { get; set; }
+
         /// <summary>
         /// The prefix for objects used to store logging data.
         /// </summary>
         [XmlElement(ElementName = "TargetPrefix", Namespace = "http://doc.s3.amazonaws.com/2006-03-01")]
         public string TargetPrefix { get; set; }
+
         /// <summary>
         /// The grants allowing others to access logging data.
         /// </summary>
         [XmlElement(ElementName = "TargetGrants", Namespace = "http://doc.s3.amazonaws.com/2006-03-01")]
         public TargetGrants TargetGrants { get; set; }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        public LoggingEnabled()
+        {
+            TargetBucket = null;
+            TargetPrefix = null;
+            TargetGrants = new TargetGrants();
+        }
     }
 }

@@ -16,10 +16,20 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "Quiet", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
         public bool Quiet { get; set; }
+
         /// <summary>
         /// List of objects to delete.
         /// </summary>
         [XmlElement(ElementName = "Object", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
         public List<Object> Object { get; set; }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        public DeleteMultiple()
+        {
+            Quiet = false;
+            Object = new List<Object>();
+        }
     }
 }

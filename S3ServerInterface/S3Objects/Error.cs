@@ -16,31 +16,37 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "Key", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
         public string Key { get; set; }
+
         /// <summary>
         /// The version identifier for the resource.
         /// </summary>
         [XmlElement(ElementName = "VersionId", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
         public string VersionId { get; set; }
+
         /// <summary>
         /// Unique identifier for the request.
         /// </summary>
         [XmlElement(ElementName = "RequestId", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
         public string RequestId { get; set; }
+
         /// <summary>
         /// The resource incident to the request.
         /// </summary>
         [XmlElement(ElementName = "Resource", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
         public string Resource { get; set; }
+
         /// <summary>
         /// Error code.
         /// </summary>
         [XmlElement(ElementName = "Code", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
         public ErrorCode Code { get; set; }
+
         /// <summary>
         /// Message associated with the error.
         /// </summary>
         [XmlElement(ElementName = "Message", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
         public string Message { get; set; }
+
         /// <summary>
         /// HTTP status code.
         /// </summary>
@@ -52,7 +58,13 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         public Error()
         {
-
+            Key = null;
+            VersionId = null;
+            RequestId = null;
+            Resource = null;
+            Code = ErrorCode.InternalError;
+            Message = null;
+            HttpStatusCode = 0;
         }
 
         /// <summary>

@@ -22,7 +22,7 @@ namespace S3ServerInterface
     public class S3Request
     {
         #region Public-Members
-
+         
         /// <summary>
         /// Indicates if the request includes the bucket name in the hostname or not.
         /// </summary>
@@ -37,11 +37,6 @@ namespace S3ServerInterface
         /// Time of creation in UTC.
         /// </summary>
         public DateTime TimestampUtc = DateTime.Now.ToUniversalTime();
-
-        /// <summary>
-        /// HTTP context from which this response was created.
-        /// </summary>
-        public HttpContext Http { get; set; } 
 
         /// <summary>
         /// IP address of the client.
@@ -69,11 +64,6 @@ namespace S3ServerInterface
         public string RawUrl { get; set; }
 
         /// <summary>
-        /// The individual elements in the raw URL.
-        /// </summary>
-        public List<string> RawUrlEntries = new List<string>();
-
-        /// <summary>
         /// The length of the payload.
         /// </summary>
         public long ContentLength { get; set; }
@@ -87,16 +77,6 @@ namespace S3ServerInterface
         /// Indicates if chunked transfer-encoding is in use.
         /// </summary>
         public bool Chunked { get; set; }
-
-        /// <summary>
-        /// URL querystring.
-        /// </summary>
-        public Dictionary<string, string> Querystring = new Dictionary<string, string>();
-
-        /// <summary>
-        /// Full set of HTTP headers.
-        /// </summary>
-        public Dictionary<string, string> Headers = new Dictionary<string, string>();
 
         /// <summary>
         /// AWS region.
@@ -134,6 +114,16 @@ namespace S3ServerInterface
         public string Prefix { get; set; }
 
         /// <summary>
+        /// Delimiter.
+        /// </summary>
+        public string Delimiter { get; set; }
+
+        /// <summary>
+        /// Marker.
+        /// </summary>
+        public string Marker { get; set; }
+
+        /// <summary>
         /// Maximum number of keys to retrieve in an enumeration.
         /// </summary>
         public long MaxKeys = 0;
@@ -167,11 +157,6 @@ namespace S3ServerInterface
         /// Content SHA-256 from request headers.
         /// </summary>
         public string ContentSha256 { get; set; }
-
-        /// <summary>
-        /// List of signed headers.
-        /// </summary>
-        public List<string> SignedHeaders = new List<string>();
 
         /// <summary>
         /// Date parameter.
@@ -356,8 +341,33 @@ namespace S3ServerInterface
         }
 
         /// <summary>
+        /// List of signed headers.
+        /// </summary>
+        [JsonProperty(Order = 990)]
+        public List<string> SignedHeaders = new List<string>();
+
+        /// <summary>
+        /// URL querystring.
+        /// </summary>
+        [JsonProperty(Order = 991)]
+        public Dictionary<string, string> Querystring = new Dictionary<string, string>();
+
+        /// <summary>
+        /// Full set of HTTP headers.
+        /// </summary>
+        [JsonProperty(Order = 992)]
+        public Dictionary<string, string> Headers = new Dictionary<string, string>();
+
+        /// <summary>
+        /// The individual elements in the raw URL.
+        /// </summary>
+        [JsonProperty(Order = 993)]
+        public List<string> RawUrlEntries = new List<string>();
+
+        /// <summary>
         /// User-defined metadata.
         /// </summary>
+        [JsonProperty(Order = 998)]
         public Dictionary<object, object> UserMetadata
         {
             get
@@ -376,6 +386,12 @@ namespace S3ServerInterface
                 }
             }
         }
+
+        /// <summary>
+        /// HTTP context from which this response was created.
+        /// </summary>
+        [JsonProperty(Order = 999)]
+        public HttpContext Http { get; set; }
 
         /// <summary>
         /// Stream containing the request body.
@@ -408,7 +424,7 @@ namespace S3ServerInterface
         /// <summary>
         /// Instantiate the object.
         /// </summary>
-        /// <param name="baseDomain">Base domain against which the hostname should be evaluated to identify the bucket.</param>
+        /// <param name="baseDomain">Base domain against which the hostname should be evaluated to identify the bucket.  For instance, to resolve buckets for *.localhost, specify '.localhost'.</param>
         /// <param name="ctx">HttpContext.</param> 
         public S3Request(string baseDomain, HttpContext ctx)
         {
@@ -421,7 +437,7 @@ namespace S3ServerInterface
         /// <summary>
         /// Instantiates the object.
         /// </summary>
-        /// <param name="baseDomain">Base domain against which the hostname should be evaluated to identify the bucket.</param>
+        /// <param name="baseDomain">Base domain against which the hostname should be evaluated to identify the bucket.  For instance, to resolve buckets for *.localhost, specify '.localhost'.</param>
         /// <param name="ctx">HttpContext.</param> 
         /// <param name="logger">Method to invoke to send log messages.</param> 
         public S3Request(string baseDomain, HttpContext ctx, Action<string> logger)
@@ -508,6 +524,7 @@ namespace S3ServerInterface
         /// <summary>
         /// Populate members using an HttpContext.
         /// </summary>
+        /// <param name="baseDomain">Base domain against which the hostname should be evaluated to identify the bucket.</param>
         /// <param name="ctx">HttpContext.</param>
         public void ParseHttpContext(string baseDomain, HttpContext ctx)
         {
@@ -555,6 +572,8 @@ namespace S3ServerInterface
 
                 VersionId = RetrieveQueryValue("versionid");
                 Prefix = RetrieveQueryValue("prefix");
+                Delimiter = RetrieveQueryValue("delimiter");
+                Marker = RetrieveQueryValue("marker");
                 ContinuationToken = RetrieveQueryValue("continuation-token");
                 Expires = RetrieveQueryValue("expires");
 
@@ -1065,7 +1084,7 @@ namespace S3ServerInterface
 
                     if (!String.IsNullOrEmpty(Bucket) && String.IsNullOrEmpty(Key))
                         RequestType = RequestType = S3RequestType.BucketExists;
-                    else if (!String.IsNullOrEmpty(Bucket) && String.IsNullOrEmpty(Key))
+                    else if (!String.IsNullOrEmpty(Bucket) && !String.IsNullOrEmpty(Key))
                         RequestType = S3RequestType.ObjectExists;
                     break;
 

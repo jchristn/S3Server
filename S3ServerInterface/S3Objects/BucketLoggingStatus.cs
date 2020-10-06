@@ -16,10 +16,19 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "LoggingEnabled", Namespace = "http://doc.s3.amazonaws.com/2006-03-01")]
         public LoggingEnabled LoggingEnabled { get; set; }
+
         /// <summary>
         /// XML namespace.
         /// </summary>
         [XmlAttribute(AttributeName = "xmlns")]
         public string Xmlns { get; set; }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        public BucketLoggingStatus()
+        {
+            LoggingEnabled = new LoggingEnabled();
+        }
     }
 }

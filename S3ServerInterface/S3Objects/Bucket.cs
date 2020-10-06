@@ -16,10 +16,20 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "Name", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
         public string Name { get; set; }
+
         /// <summary>
         /// The timestamp from bucket creation.
         /// </summary>
         [XmlElement(ElementName = "CreationDate", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
         public DateTime CreationDate { get; set; }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        public Bucket()
+        {
+            Name = null;
+            CreationDate = DateTime.Now.ToUniversalTime();
+        }
     }
 }

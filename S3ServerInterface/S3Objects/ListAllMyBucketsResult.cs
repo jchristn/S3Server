@@ -16,15 +16,26 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "Owner", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
         public Owner Owner { get; set; }
+
         /// <summary>
         /// Buckets owned by the user.
         /// </summary>
         [XmlElement(ElementName = "Buckets", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
         public Buckets Buckets { get; set; }
+
         /// <summary>
         /// XML namespace.
         /// </summary>
         [XmlAttribute(AttributeName = "xmlns")]
         public string Xmlns { get; set; }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        public ListAllMyBucketsResult()
+        {
+            Owner = new Owner();
+            Buckets = new Buckets();
+        }
     }
 }

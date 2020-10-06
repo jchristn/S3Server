@@ -16,10 +16,20 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "Owner")]
         public Owner Owner { get; set; }
+
         /// <summary>
         /// Access control list for the resource.
         /// </summary>
         [XmlElement(ElementName = "AccessControlList")]
         public AccessControlList AccessControlList { get; set; }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        public AccessControlPolicy()
+        {
+            Owner = new Owner();
+            AccessControlList = new AccessControlList();
+        }
     }
 }

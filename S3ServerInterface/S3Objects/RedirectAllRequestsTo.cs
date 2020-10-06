@@ -16,10 +16,20 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "HostName")]
         public string HostName { get; set; }
+
         /// <summary>
         /// Redirect all requests to the specified hostname using the specified protocol.
         /// </summary>
         [XmlElement(ElementName = "Protocol")]
         public string Protocol { get; set; }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        public RedirectAllRequestsTo()
+        {
+            HostName = null;
+            Protocol = null;
+        }
     }
 }

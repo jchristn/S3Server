@@ -16,10 +16,20 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "Condition")]
         public Condition Condition { get; set; }
+
         /// <summary>
         /// Redirect rule for a bucket's website configuration.
         /// </summary>
         [XmlElement(ElementName = "Redirect")]
         public Redirect Redirect { get; set; }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        public RoutingRule()
+        {
+            Condition = new Condition();
+            Redirect = new Redirect();
+        }
     }
 }

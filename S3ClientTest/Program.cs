@@ -17,6 +17,7 @@ namespace S3ClientTest
         static string _Endpoint = null;
         static string _AccessKey = null;
         static string _SecretKey = null;
+        static bool _ForcePathStyle = false;
         static AmazonS3Config _S3Config = null;
         static IAmazonS3 _S3Client = null;
         static BasicAWSCredentials _S3Credentials = null;
@@ -309,9 +310,9 @@ namespace S3ClientTest
             {
                 RegionEndpoint = RegionEndpoint.USWest1, 
                 ServiceURL = _Endpoint,  
-                ForcePathStyle = true,
+                ForcePathStyle = _ForcePathStyle,
                 UseHttp = _Ssl,
-                SignatureVersion = "2"
+                // SignatureVersion = "2"
             };
 
             _S3Client = new AmazonS3Client(_S3Credentials, _S3Config);
@@ -610,11 +611,13 @@ namespace S3ClientTest
         static void WriteObject()
         {
             string id = Common.InputString("Key:", null, false);
-            byte[] data = Encoding.UTF8.GetBytes(Common.InputString("Data:", null, false));
+            string data = Common.InputString("Data:", null, true);
+            byte[] bytes = new byte[0];
+            if (!String.IsNullOrEmpty(data)) bytes = Encoding.UTF8.GetBytes(data);
 
             try
             {
-                Stream s = new MemoryStream(data);
+                Stream s = new MemoryStream(bytes);
 
                 PutObjectRequest request = new PutObjectRequest
                 {

@@ -16,5 +16,13 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "Bucket", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
         public List<Bucket> Bucket { get; set; }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        public Buckets()
+        {
+            Bucket = new List<Bucket>();
+        }
     }
 }

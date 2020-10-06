@@ -16,5 +16,13 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "RoutingRule")]
         public List<RoutingRule> RoutingRule { get; set; }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        public RoutingRules()
+        {
+            RoutingRule = new List<RoutingRule>();
+        }
     }
 }

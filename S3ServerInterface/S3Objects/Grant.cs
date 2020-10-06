@@ -16,10 +16,20 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "Grantee")]
         public Grantee Grantee { get; set; }
+
         /// <summary>
         /// The permission given to the recipient.
         /// </summary>
         [XmlElement(ElementName = "Permission")]
         public string Permission { get; set; }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        public Grant()
+        {
+            Grantee = new Grantee();
+            Permission = null;
+        }
     }
 }

@@ -34,12 +34,12 @@ namespace Test
 
         static void Main(string[] args)
         {
-            Console.Write("Base domain: ");
+            Console.Write("Base domain (.localhost): ");
             string baseDomain = Console.ReadLine();
 
-            Console.WriteLine("Listening on http://localhost:8000/");
+            Console.WriteLine("Listening on http://*:8000/");
 
-            _Server = new S3Server("localhost", 8000, false, DefaultRequestHandler);
+            _Server = new S3Server("*", 8000, false, DefaultRequestHandler);
             _Server.Logging.Exceptions = true;
             _Server.Logging.HttpRequests = true;
             _Server.Logging.S3Requests = true;
@@ -134,6 +134,20 @@ namespace Test
             resp.Data.Seek(0, SeekOrigin.Begin);
 
             await resp.Send();
+            return;
+        }
+
+        static async Task SendChunkResponse(S3Request req, S3Response resp, string text)
+        {
+            Console.WriteLine("[" + req.SourceIp + ":" + req.SourcePort + "] " + text);
+
+            byte[] data = Encoding.UTF8.GetBytes(text);
+
+            resp.StatusCode = 200;
+            resp.ContentType = "text/plain";
+            resp.ContentLength = data.Length;
+
+            await resp.SendFinalChunk(data);
             return;
         }
 
@@ -311,7 +325,14 @@ namespace Test
 
         static async Task ObjectWrite(S3Request req, S3Response resp)
         {
-            await SendResponse(req, resp, "Object write");
+            if (req.Chunked)
+            {
+                await SendChunkResponse(req, resp, "Object write chunked");
+            }
+            else
+            {
+                await SendResponse(req, resp, "Object write");
+            }
         }
 
         static async Task ObjectWriteAcl(S3Request req, S3Response resp)

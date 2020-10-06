@@ -16,5 +16,13 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "Suffix")]
         public string Suffix { get; set; }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        public IndexDocument()
+        {
+            Suffix = null;
+        }
     }
 }

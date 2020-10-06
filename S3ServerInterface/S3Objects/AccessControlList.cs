@@ -16,5 +16,13 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "Grant")]
         public List<Grant> Grant { get; set; }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        public AccessControlList()
+        {
+            Grant = new List<Grant>();
+        }
     }
 }

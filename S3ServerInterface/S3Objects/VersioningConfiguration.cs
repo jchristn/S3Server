@@ -16,6 +16,7 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "Status", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
         public string Status { get; set; }
+
         /// <summary>
         /// Indicates if multi-factor authentication is enabled for delete operations.
         /// </summary>
@@ -27,7 +28,8 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         public VersioningConfiguration()
         {
-
+            Status = null;
+            MfaDelete = null;
         }
     }
 }

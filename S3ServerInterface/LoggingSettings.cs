@@ -20,7 +20,7 @@ namespace S3ServerInterface
         /// Enable or disable debugging for S3 request construction.
         /// </summary>
         public bool S3Requests = false;
-
+         
         /// <summary>
         /// Enable or disable debugging for exceptions.
         /// </summary>

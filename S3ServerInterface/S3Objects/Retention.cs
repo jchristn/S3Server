@@ -16,10 +16,20 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "Mode", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
         public string Mode { get; set; }
+
         /// <summary>
         /// Date upon which the resource shall no longer be retained.
         /// </summary>
         [XmlElement(ElementName = "RetainUntilDate", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
         public DateTime? RetainUntilDate { get; set; }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        public Retention()
+        {
+            Mode = null;
+            RetainUntilDate = null;
+        }
     }
 }

@@ -97,7 +97,7 @@ namespace S3ServerInterface
         /// Instantiate the object.
         /// Using this constructor results in no pre-request handler (your own API handler), and no custom default request handler (when an S3 API cannot be matched).
         /// </summary>
-        /// <param name="hostname">The hostname on which to listen for HTTP requests.</param>
+        /// <param name="hostname">The hostname on which to listen for HTTP requests.  If you listen on a wildcard such as '*', '+', or '0.0.0.0', you must run with elevated/administrative privileges.</param>
         /// <param name="port">The TCP port number.</param>
         /// <param name="ssl">Enable or disable SSL.</param> 
         public S3Server(
@@ -122,7 +122,7 @@ namespace S3ServerInterface
         /// Instantiate the object.
         /// Using this constructor results in no pre-request handler (your own API handler), but (if not null) allows a custom default request handler (when an S3 API cannot be matched).
         /// </summary>
-        /// <param name="hostname">The hostname on which to listen for HTTP requests.</param>
+        /// <param name="hostname">The hostname on which to listen for HTTP requests.  If you listen on a wildcard such as '*', '+', or '0.0.0.0', you must run with elevated/administrative privileges.</param>
         /// <param name="port">The TCP port number.</param>
         /// <param name="ssl">Enable or disable SSL.</param> 
         /// <param name="defaultRequestHandler">Default request handler used when no other callbacks can be found.</param>
@@ -148,7 +148,7 @@ namespace S3ServerInterface
         /// Instantiate the object.
         /// Using this constructor results in (if not null) a pre-request handler (your own API handler), and (if not null) a custom default request handler (when an S3 API cannot be matched).
         /// </summary>
-        /// <param name="hostname">The hostname on which to listen for HTTP requests.</param>
+        /// <param name="hostname">The hostname on which to listen for HTTP requests.  If you listen on a wildcard such as '*', '+', or '0.0.0.0', you must run with elevated/administrative privileges.</param>
         /// <param name="port">The TCP port number.</param>
         /// <param name="ssl">Enable or disable SSL.</param>
         /// <param name="preRequestHandler">Request handler to call prior to evaluating for S3 requests, can be null.</param>

@@ -18,26 +18,42 @@ namespace S3ServerInterface.S3Objects
         /// </summary>
         [XmlElement(ElementName = "ID")]
         public string ID { get; set; }
+
         /// <summary>
         /// Display name.
         /// </summary>
         [XmlElement(ElementName = "DisplayName")]
         public string DisplayName { get; set; }
+
         /// <summary>
         /// For a group, the URI of the group.
         /// </summary>
         [XmlElement(ElementName = "URI")]
         public string URI { get; set; }
+
         /// <summary>
         /// Type of grantee.
         /// </summary>
         [XmlElement(ElementName = "Type")]
         public string Type { get; set; }
+
         /// <summary>
         /// Email address of the grantee.
         /// </summary>
         [XmlElement(ElementName = "EmailAddress")]
         public string EmailAddress { get; set; }
+
+        /// <summary>
+        /// Instantiate the object.
+        /// </summary>
+        public Grantee()
+        {
+            ID = null;
+            DisplayName = null;
+            URI = null;
+            Type = null;
+            EmailAddress = null;
+        }
     }
 
     /// <summary>
