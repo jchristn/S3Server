@@ -51,6 +51,9 @@ _Server.Object.Write = ObjectWrite;
 _Server.Object.Delete = ObjectDelete;
 // etc
 
+// Start the server
+_Server.Start();
+
 // Example callback definition
 static async Task DefaultRequestHandler(S3Request req, S3Response resp)
 {
