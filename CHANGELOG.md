@@ -2,14 +2,21 @@
 
 ## Current Version
 
+v2.1.1
+
+- Breaking changes
+- ```Start()``` and ```Stop()``` API; ```Start()``` API must be called to start the server
+- ```PostRequestHandler``` callback
+- ```IsListening``` property
+
+## Previous Versions
+
 v2.1.0
 
 - Breaking changes
 - Support for authenticating request signatures (not chunk signatures)
 - Centralized logger support
 - Minor refactor
-
-## Previous Versions
 
 v2.0.1.19
 

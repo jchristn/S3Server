@@ -29,7 +29,7 @@ namespace Test
 
     class Program
     {
-        static S3Server _Server;
+        static S3Server _Server = null;
         static bool _RunForever = true;
 
         static void Main(string[] args)
@@ -50,6 +50,7 @@ namespace Test
             _Server.GetSecretKey = GetSecretKey;
             _Server.PreRequestHandler = PreRequestHandler;
             _Server.DefaultRequestHandler = DefaultRequestHandler;
+            _Server.PostRequestHandler = PostRequestHandler;
 
             _Server.Service.ListBuckets = ListBuckets;
 
@@ -89,6 +90,8 @@ namespace Test
             _Server.Object.WriteAcl = ObjectWriteLegalHold;
             _Server.Object.WriteAcl = ObjectWriteRetention;
             _Server.Object.WriteTags = ObjectWriteTags;
+
+            _Server.Start();
 
             while (_RunForever)
             {
@@ -166,6 +169,13 @@ namespace Test
         static async Task DefaultRequestHandler(S3Request req, S3Response resp)
         {
             await SendResponse(req, resp, "Default request handler");
+        }
+
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        static async Task PostRequestHandler(S3Request req, S3Response resp)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        {
+            Logger("Request complete: " + req.Method.ToString() + " " + req.RawUrl + ": " + resp.StatusCode);
         }
 
         #region Service-APIs

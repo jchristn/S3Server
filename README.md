@@ -10,12 +10,12 @@ Simple S3 server-side interface, produced using Amazon's public documentation.  
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v2.1.0
+## New in v2.1.1
 
 - Breaking changes
-- Support for authenticating request signatures (not chunk signatures)
-- Centralized logger support
-- Minor refactor
+- ```Start()``` and ```Stop()``` API; ```Start()``` API must be called to start the server
+- ```PostRequestHandler``` callback
+- ```IsListening``` property
 
 ## Examples
 

@@ -2257,6 +2257,11 @@
             Bucket names must not be in the hostname; they must be in the URL path. 
             </summary>
         </member>
+        <member name="P:S3ServerInterface.S3Server.IsListening">
+            <summary>
+            Determine if the server is listening.
+            </summary>
+        </member>
         <member name="F:S3ServerInterface.S3Server.Logger">
             <summary>
             Method to invoke when sending a log message.
@@ -2290,8 +2295,12 @@
         </member>
         <member name="F:S3ServerInterface.S3Server.DefaultRequestHandler">
             <summary>
-            Callback method to call when no matching AWS S3 API callback could be found.
-            This callback should return an S3Response at all times.
+            Callback method to call when no matching AWS S3 API callback could be found. 
+            </summary>
+        </member>
+        <member name="F:S3ServerInterface.S3Server.PostRequestHandler">
+            <summary>
+            Callback method to call after a response has been sent.
             </summary>
         </member>
         <member name="F:S3ServerInterface.S3Server.GetSecretKey">
@@ -2354,6 +2363,16 @@
         <member name="M:S3ServerInterface.S3Server.Dispose">
             <summary>
             Tear down the client and dispose of background workers.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Server.Start">
+            <summary>
+            Start accepting new connections.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.S3Server.Stop">
+            <summary>
+            Stop accepting new connections.
             </summary>
         </member>
         <member name="M:S3ServerInterface.S3Server.Dispose(System.Boolean)">

@@ -14,6 +14,17 @@ namespace S3ServerInterface
         #region Public-Members
 
         /// <summary>
+        /// Determine if the server is listening.
+        /// </summary>
+        public bool IsListening
+        {
+            get
+            {
+                return _Server.IsListening;
+            }
+        }
+
+        /// <summary>
         /// Method to invoke when sending a log message.
         /// </summary>
         public Action<string> Logger = null;
@@ -45,10 +56,14 @@ namespace S3ServerInterface
         public Func<S3Request, S3Response, Task<bool>> PreRequestHandler = null;
 
         /// <summary>
-        /// Callback method to call when no matching AWS S3 API callback could be found.
-        /// This callback should return an S3Response at all times.
+        /// Callback method to call when no matching AWS S3 API callback could be found. 
         /// </summary>
         public Func<S3Request, S3Response, Task> DefaultRequestHandler = null;
+
+        /// <summary>
+        /// Callback method to call after a response has been sent.
+        /// </summary>
+        public Func<S3Request, S3Response, Task> PostRequestHandler = null;
 
         /// <summary>
         /// Callback method to retrieve the secret key for the supplied access key from your application.  
@@ -84,10 +99,10 @@ namespace S3ServerInterface
         private string _Header = "[S3Server] ";
         private bool _Disposed = false;
 
-        private string _ListenerHostname;
-        private int _ListenerPort;
-        private bool _Ssl;
-        private Server _Server; 
+        private string _ListenerHostname = null;
+        private int _ListenerPort = 0;
+        private bool _Ssl = false;
+        private Server _Server = null;
 
         #endregion
 
@@ -186,6 +201,22 @@ namespace S3ServerInterface
             GC.SuppressFinalize(this);
         }
          
+        /// <summary>
+        /// Start accepting new connections.
+        /// </summary>
+        public void Start()
+        {
+            _Server.Start();
+        }
+
+        /// <summary>
+        /// Stop accepting new connections.
+        /// </summary>
+        public void Stop()
+        {
+            _Server.Stop();
+        }
+
         #endregion
 
         #region Private-Methods
@@ -221,8 +252,7 @@ namespace S3ServerInterface
             bool success = false;
 
             try
-            {
-
+            { 
                 if (Logging.HttpRequests)
                 {
                     Logger?.Invoke(_Header + "HTTP request: " + Environment.NewLine + Common.SerializeJson(s3req, true));
@@ -534,6 +564,8 @@ namespace S3ServerInterface
                         s3resp.StatusCode + 
                         " [" + Common.TotalMsFrom(startTime) + "ms]");
                 }
+
+                if (PostRequestHandler != null) await PostRequestHandler(s3req, s3resp);
             }
         }
          
