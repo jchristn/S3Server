@@ -35,7 +35,7 @@ The following notes should be read prior to using S3ServerInterface:
 
 ## Server
 
-```
+```csharp
 using S3ServerInterface;
 
 // Initialize the server
@@ -73,7 +73,7 @@ static S3Response BucketExists(S3Request req)
 ## Client
 
 Use the following example with the AWSSDK.S3 NuGet package to point your S3 client toward S3ServerInterface.
-``` 
+``` csharp
 using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
@@ -84,7 +84,7 @@ AmazonS3Config config = new AmazonS3Config
 {
   RegionEndpoint = RegionEndpoint.USWest1, 
   ServiceURL = "http://localhost:8000/",  
-  ForcePathStyle = true,
+  ForcePathStyle = true, // required if not using virtual hosting style
   UseHttp = true
 };
 IAmazonS3 client = new AmazonS3Client(cred, config);
@@ -108,7 +108,7 @@ All request body metadata is included in the ```S3Request``` object and all payl
 
 If ```S3Request.Chunked``` is **TRUE**, then request body data should be read from the ```S3Request``` object using ```S3Request.ReadChunk()```.  This method returns a ```Chunk``` object which is of the form:
 
-```        
+```csharp
 public int Length;
 public byte[] Data;
 public string Metadata;
@@ -117,7 +117,7 @@ public bool IsFinalChunk;
 
 If ```S3Request.Chunked``` is **FALSE**, then the request body can be read directly from ```S3Request.Data``` using the content length specified in ```S3Request.ContentLength```.
 
-```
+```csharp
 byte[] buffer = new byte[65536];
 long bytesRemaining = req.ContentLength;
 while (bytesRemaining > 0)
