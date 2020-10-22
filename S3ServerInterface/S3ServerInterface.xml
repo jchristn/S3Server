@@ -423,6 +423,11 @@
             The class of storage where the resource resides.
             </summary>
         </member>
+        <member name="P:S3ServerInterface.S3Objects.Contents.Owner">
+            <summary>
+            Object owner.
+            </summary>
+        </member>
         <member name="M:S3ServerInterface.S3Objects.Contents.#ctor">
             <summary>
             Instantiate the object.

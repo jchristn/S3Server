@@ -42,6 +42,12 @@ namespace S3ServerInterface.S3Objects
         public string StorageClass { get; set; }
 
         /// <summary>
+        /// Object owner.
+        /// </summary>
+        [XmlElement(ElementName = "Owner", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
+        public Owner Owner { get; set; }
+
+        /// <summary>
         /// Instantiate the object.
         /// </summary>
         public Contents()
@@ -51,6 +57,7 @@ namespace S3ServerInterface.S3Objects
             ETag = null;
             Size = 0;
             StorageClass = null;
+            Owner = new Owner();
         }
     }
 }
