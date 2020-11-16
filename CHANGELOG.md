@@ -2,14 +2,18 @@
 
 ## Current Version
 
+v2.1.3
+
+- .NET 5 support
+
+## Previous Versions
+
 v2.1.1
 
 - Breaking changes
 - ```Start()``` and ```Stop()``` API; ```Start()``` API must be called to start the server
 - ```PostRequestHandler``` callback
 - ```IsListening``` property
-
-## Previous Versions
 
 v2.1.0
 

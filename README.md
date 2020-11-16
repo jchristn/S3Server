@@ -10,12 +10,9 @@ Simple S3 server-side interface, produced using Amazon's public documentation.  
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v2.1.1
+## New in v2.1.3
 
-- Breaking changes
-- ```Start()``` and ```Stop()``` API; ```Start()``` API must be called to start the server
-- ```PostRequestHandler``` callback
-- ```IsListening``` property
+- .NET 5 support
 
 ## Examples
 
