@@ -26,167 +26,167 @@ namespace S3ServerInterface
         /// <summary>
         /// Indicates if the request includes the bucket name in the hostname or not.
         /// </summary>
-        public S3RequestStyle RequestStyle = S3RequestStyle.Unknown;
+        public S3RequestStyle RequestStyle { get; private set; } = S3RequestStyle.Unknown;
 
         /// <summary>
         /// Indicates the type of S3 request.
         /// </summary>
-        public S3RequestType RequestType = S3RequestType.Unknown;
+        public S3RequestType RequestType { get; private set; } = S3RequestType.Unknown;
 
         /// <summary>
         /// Time of creation in UTC.
         /// </summary>
-        public DateTime TimestampUtc = DateTime.Now.ToUniversalTime();
+        public DateTime TimestampUtc { get; private set; } = DateTime.Now.ToUniversalTime();
 
         /// <summary>
         /// IP address of the client.
         /// </summary>
-        public string SourceIp { get; set; }
+        public string SourceIp { get; private set; } = null;
 
         /// <summary>
         /// TCP port of the client.
         /// </summary>
-        public int SourcePort { get; set; }
+        public int SourcePort { get; private set; } = 0;
 
         /// <summary>
         /// HTTP method (GET, PUT, POST, DELETE, etc).
         /// </summary>
-        public HttpMethod Method { get; set; }
+        public HttpMethod Method { get; private set; } = HttpMethod.GET;
 
         /// <summary>
         /// Full URL.
         /// </summary>
-        public string FullUrl { get; set; }
+        public string FullUrl { get; private set; } = null;
 
         /// <summary>
         /// The raw URL without querystring.
         /// </summary>
-        public string RawUrl { get; set; }
+        public string RawUrl { get; private set; } = null;
 
         /// <summary>
         /// The length of the payload.
         /// </summary>
-        public long ContentLength { get; set; }
+        public long ContentLength { get; private set; } = 0;
 
         /// <summary>
         /// The content type of the payload.
         /// </summary>
-        public string ContentType { get; set; }
+        public string ContentType { get; private set; } = null;
 
         /// <summary>
         /// Indicates if chunked transfer-encoding is in use.
         /// </summary>
-        public bool Chunked { get; set; }
+        public bool Chunked { get; private set; } = false;
 
         /// <summary>
         /// AWS region.
         /// </summary>
-        public string Region { get; set; }
+        public string Region { get; private set; } = null;
 
         /// <summary>
         /// Hostname.
         /// </summary>
-        public string Hostname { get; set; }
+        public string Hostname { get; private set; } = null;
 
         /// <summary>
         /// Host header value.
         /// </summary>
-        public string Host { get; set; }
+        public string Host { get; private set; } = null;
 
         /// <summary>
         /// Base domain against which the hostname is evaluated to identify the bucket name.
         /// </summary>
-        public string BaseDomain { get; set; }
+        public string BaseDomain { get; private set; } = null;
 
         /// <summary>
         /// Bucket.
         /// </summary>
-        public string Bucket { get; set; }
+        public string Bucket { get; private set; } = null;
 
         /// <summary>
         /// Object key.
         /// </summary>
-        public string Key { get; set; }
+        public string Key { get; private set; } = null;
 
         /// <summary>
         /// Object key prefix.
         /// </summary>
-        public string Prefix { get; set; }
+        public string Prefix { get; private set; } = null;
 
         /// <summary>
         /// Delimiter.
         /// </summary>
-        public string Delimiter { get; set; }
+        public string Delimiter { get; private set; } = null;
 
         /// <summary>
         /// Marker.
         /// </summary>
-        public string Marker { get; set; }
+        public string Marker { get; private set; } = null;
 
         /// <summary>
         /// Maximum number of keys to retrieve in an enumeration.
         /// </summary>
-        public long MaxKeys = 0;
+        public long MaxKeys { get; private set; } = 0;
 
         /// <summary>
         /// Object version ID.
         /// </summary>
-        public string VersionId { get; set; }
+        public string VersionId { get; private set; } = null;
 
         /// <summary>
         /// Authorization header string, in full.
         /// </summary>
-        public string Authorization { get; set; }
+        public string Authorization { get; private set; } = null;
 
         /// <summary>
         /// Signature version from authorization header.
         /// </summary>
-        public S3SignatureVersion SignatureVersion = S3SignatureVersion.Unknown;
+        public S3SignatureVersion SignatureVersion { get; private set; } = S3SignatureVersion.Unknown;
 
         /// <summary>
         /// Signature from authorization header.
         /// </summary>
-        public string Signature { get; set; }
+        public string Signature { get; private set; } = null;
 
         /// <summary>
         /// Content MD-5 from request headers.
         /// </summary>
-        public string ContentMd5 { get; set; }
+        public string ContentMd5 { get; private set; } = null;
 
         /// <summary>
         /// Content SHA-256 from request headers.
         /// </summary>
-        public string ContentSha256 { get; set; }
+        public string ContentSha256 { get; private set; } = null;
 
         /// <summary>
         /// Date parameter.
         /// </summary>
-        public string Date { get; set; }
+        public string Date { get; private set; } = null;
 
         /// <summary>
         /// Expiration parameter from authorization header.
         /// </summary>
-        public string Expires { get; set; }
+        public string Expires { get; private set; } = null;
 
         /// <summary>
         /// Access key, parsed from authorization header.
         /// </summary>
-        public string AccessKey { get; set; }
+        public string AccessKey { get; private set; } = null;
 
         /// <summary>
         /// Start value from the Range header.
         /// </summary>
-        public long? RangeStart = null;
+        public long? RangeStart { get; private set; } = null;
 
         /// <summary>
         /// End value from the Range header.
         /// </summary>
-        public long? RangeEnd = null;
+        public long? RangeEnd { get; private set; } = null;
 
         /// <summary>
         /// Continuation token.
         /// </summary>
-        public string ContinuationToken { get; set; }
+        public string ContinuationToken { get; private set; } = null;
 
         /// <summary>
         /// Indicates if the request is a service request.
@@ -344,25 +344,25 @@ namespace S3ServerInterface
         /// List of signed headers.
         /// </summary>
         [JsonProperty(Order = 990)]
-        public List<string> SignedHeaders = new List<string>();
+        public List<string> SignedHeaders { get; private set; } = new List<string>();
 
         /// <summary>
         /// URL querystring.
         /// </summary>
         [JsonProperty(Order = 991)]
-        public Dictionary<string, string> Querystring = new Dictionary<string, string>();
+        public Dictionary<string, string> Querystring { get; private set; } = new Dictionary<string, string>();
 
         /// <summary>
         /// Full set of HTTP headers.
         /// </summary>
         [JsonProperty(Order = 992)]
-        public Dictionary<string, string> Headers = new Dictionary<string, string>();
+        public Dictionary<string, string> Headers { get; private set; } = new Dictionary<string, string>();
 
         /// <summary>
         /// The individual elements in the raw URL.
         /// </summary>
         [JsonProperty(Order = 993)]
-        public List<string> RawUrlEntries = new List<string>();
+        public string[] RawUrlEntries { get; private set; } = null;
 
         /// <summary>
         /// User-defined metadata.
@@ -391,13 +391,13 @@ namespace S3ServerInterface
         /// HTTP context from which this response was created.
         /// </summary>
         [JsonProperty(Order = 999)]
-        public HttpContext Http { get; set; }
+        public HttpContext Http { get; private set; } = null;
 
         /// <summary>
         /// Stream containing the request body.
         /// </summary>
         [JsonIgnore]
-        public Stream Data { get; set; }
+        public Stream Data { get; private set; } = null;
 
         #endregion
 
@@ -455,70 +455,13 @@ namespace S3ServerInterface
         #region Public-Methods
 
         /// <summary>
-        /// Returns a human-readable string with the object details.
+        /// Create a JSON representation of the object.
         /// </summary>
-        /// <returns>String.</returns>
-        public override string ToString()
+        /// <param name="pretty">Pretty print.</param>
+        /// <returns>JSON string.</returns>
+        public string ToJson(bool pretty)
         {
-            string ret = Environment.NewLine + "---" + Environment.NewLine;
-            ret += "  Source IP:Port : " + SourceIp + ":" + SourcePort + Environment.NewLine;
-            ret += "  Method         : " + Method.ToString() + Environment.NewLine;
-            ret += "  Hostname       : " + Hostname + Environment.NewLine;
-            ret += "  FullUrl        : " + FullUrl + Environment.NewLine;
-            ret += "  RawUrl         : " + RawUrl + Environment.NewLine;
-            ret += "  Content Length : " + ContentLength + " bytes " + Environment.NewLine;
-            ret += "  Content Type   : " + ContentType + Environment.NewLine;
-
-            ret += "  Querystring   : ";
-            if (Querystring != null && Querystring.Count > 0)
-            {
-                ret += Environment.NewLine;
-                foreach (KeyValuePair<string, string> curr in Querystring)
-                {
-                    if (String.IsNullOrEmpty(curr.Key)) continue;
-                    ret += "    " + curr.Key + "=" + curr.Value + Environment.NewLine;
-                }
-            }
-            else
-            {
-                ret += "(none)" + Environment.NewLine;
-            }
-
-            ret += "  Headers        : ";
-            if (Headers != null && Headers.Count > 0)
-            {
-                ret += Environment.NewLine;
-                foreach (KeyValuePair<string, string> curr in Headers)
-                {
-                    if (String.IsNullOrEmpty(curr.Key)) continue;
-                    ret += "    " + curr.Key + "=" + curr.Value + Environment.NewLine;
-                }
-            }
-            else
-            {
-                ret += "(none)" + Environment.NewLine;
-            }
-
-            ret += "  Region         : " + Region + Environment.NewLine;
-            ret += "  Type           : " + RequestType.ToString() + Environment.NewLine;
-            ret += "  Style          : " + RequestStyle.ToString() + Environment.NewLine;
-            ret += "  Bucket         : " + Bucket + Environment.NewLine;
-            ret += "  Key            : " + Key + Environment.NewLine;
-            ret += "  Authorization  : " + Authorization + Environment.NewLine;
-            ret += "  Signature      : " + Signature + Environment.NewLine;
-            ret += "  AccessKey      : " + AccessKey + Environment.NewLine;
-
-            ret += "  Data           : "; 
-            if (Data != null)
-            {
-                ret += "(stream, " + ContentLength + " bytes)" + Environment.NewLine;
-            }
-            else
-            {
-                ret += "(none)" + Environment.NewLine;
-            } 
-
-            return ret;
+            return Common.SerializeJson(this, pretty);
         }
 
         /// <summary>
@@ -537,22 +480,22 @@ namespace S3ServerInterface
 
             TimestampUtc = DateTime.Now.ToUniversalTime();
             Http = ctx;
-            SourceIp = Http.Request.SourceIp;
-            SourcePort = Http.Request.SourcePort;
+            SourceIp = Http.Request.Source.IpAddress;
+            SourcePort = Http.Request.Source.Port;
             Method = Http.Request.Method;
-            FullUrl = Http.Request.FullUrl;
-            RawUrl = Http.Request.RawUrlWithoutQuery;
+            FullUrl = Http.Request.Url.Full;
+            RawUrl = Http.Request.Url.RawWithoutQuery;
             while (RawUrl.Contains("\\\\")) RawUrl.Replace("\\\\", "\\");
 
-            RawUrlEntries = Http.Request.RawUrlEntries;
+            RawUrlEntries = Http.Request.Url.Elements;
             ContentLength = Http.Request.ContentLength;
             ContentType = Http.Request.ContentType;
             Chunked = Http.Request.ChunkedTransfer;
-            Querystring = Http.Request.QuerystringEntries;
+            Querystring = Http.Request.Query.Elements;
             Headers = Http.Request.Headers;
             Region = null;
             BaseDomain = baseDomain;
-            Hostname = Http.Request.DestHostname;
+            Hostname = Http.Request.Destination.Hostname;
             RequestType = S3RequestType.Unknown;
             RequestStyle = S3RequestStyle.Unknown;
             Bucket = null;
@@ -807,7 +750,7 @@ namespace S3ServerInterface
         /// <returns>Chunk.</returns>
         public async Task<Chunk> ReadChunk()
         {
-            return await Http.Request.ReadChunk();
+            return await Http.Request.ReadChunk().ConfigureAwait(false);
         }
 
         /// <summary>

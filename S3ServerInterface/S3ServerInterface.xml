@@ -1631,17 +1631,17 @@
             S3 request object.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.S3Request.RequestStyle">
+        <member name="P:S3ServerInterface.S3Request.RequestStyle">
             <summary>
             Indicates if the request includes the bucket name in the hostname or not.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.S3Request.RequestType">
+        <member name="P:S3ServerInterface.S3Request.RequestType">
             <summary>
             Indicates the type of S3 request.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.S3Request.TimestampUtc">
+        <member name="P:S3ServerInterface.S3Request.TimestampUtc">
             <summary>
             Time of creation in UTC.
             </summary>
@@ -1731,7 +1731,7 @@
             Marker.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.S3Request.MaxKeys">
+        <member name="P:S3ServerInterface.S3Request.MaxKeys">
             <summary>
             Maximum number of keys to retrieve in an enumeration.
             </summary>
@@ -1746,7 +1746,7 @@
             Authorization header string, in full.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.S3Request.SignatureVersion">
+        <member name="P:S3ServerInterface.S3Request.SignatureVersion">
             <summary>
             Signature version from authorization header.
             </summary>
@@ -1781,12 +1781,12 @@
             Access key, parsed from authorization header.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.S3Request.RangeStart">
+        <member name="P:S3ServerInterface.S3Request.RangeStart">
             <summary>
             Start value from the Range header.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.S3Request.RangeEnd">
+        <member name="P:S3ServerInterface.S3Request.RangeEnd">
             <summary>
             End value from the Range header.
             </summary>
@@ -1817,22 +1817,22 @@
             See https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html for details.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.S3Request.SignedHeaders">
+        <member name="P:S3ServerInterface.S3Request.SignedHeaders">
             <summary>
             List of signed headers.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.S3Request.Querystring">
+        <member name="P:S3ServerInterface.S3Request.Querystring">
             <summary>
             URL querystring.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.S3Request.Headers">
+        <member name="P:S3ServerInterface.S3Request.Headers">
             <summary>
             Full set of HTTP headers.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.S3Request.RawUrlEntries">
+        <member name="P:S3ServerInterface.S3Request.RawUrlEntries">
             <summary>
             The individual elements in the raw URL.
             </summary>
@@ -1872,11 +1872,12 @@
             <param name="ctx">HttpContext.</param> 
             <param name="logger">Method to invoke to send log messages.</param> 
         </member>
-        <member name="M:S3ServerInterface.S3Request.ToString">
+        <member name="M:S3ServerInterface.S3Request.ToJson(System.Boolean)">
             <summary>
-            Returns a human-readable string with the object details.
+            Create a JSON representation of the object.
             </summary>
-            <returns>String.</returns>
+            <param name="pretty">Pretty print.</param>
+            <returns>JSON string.</returns>
         </member>
         <member name="M:S3ServerInterface.S3Request.ParseHttpContext(System.String,WatsonWebserver.HttpContext)">
             <summary>
@@ -2145,7 +2146,7 @@
             The HTTP status code to return to the requestor (client).
             </summary>
         </member>
-        <member name="F:S3ServerInterface.S3Response.Headers">
+        <member name="P:S3ServerInterface.S3Response.Headers">
             <summary>
             User-supplied headers to include in the response.
             </summary>
@@ -2250,11 +2251,12 @@
             <param name="data">Final chunk of data.</param>
             <returns>True if successful.</returns>
         </member>
-        <member name="M:S3ServerInterface.S3Response.ToString">
+        <member name="M:S3ServerInterface.S3Response.ToJson(System.Boolean)">
             <summary>
-            Returns a human-readable string with the object details.
+            Create a JSON representation of the object.
             </summary>
-            <returns>String.</returns>
+            <param name="pretty">Pretty print.</param>
+            <returns>JSON string.</returns>
         </member>
         <member name="T:S3ServerInterface.S3Server">
             <summary>
@@ -2368,6 +2370,7 @@
         <member name="M:S3ServerInterface.S3Server.Dispose">
             <summary>
             Tear down the client and dispose of background workers.
+            Do not use the object after disposal.
             </summary>
         </member>
         <member name="M:S3ServerInterface.S3Server.Start">

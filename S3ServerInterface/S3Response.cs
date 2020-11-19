@@ -13,31 +13,42 @@ namespace S3ServerInterface
     public class S3Response
     {
         #region Public-Members
-         
+
         /// <summary>
         /// The HTTP status code to return to the requestor (client).
         /// </summary>
-        public int StatusCode { get; set; }
+        public int StatusCode { get; set; } = 200;
 
         /// <summary>
         /// User-supplied headers to include in the response.
         /// </summary>
-        public Dictionary<string, string> Headers = new Dictionary<string, string>();
+        public Dictionary<string, string> Headers 
+        { 
+            get
+            {
+                return _Headers;
+            }
+            set
+            {
+                if (value == null) _Headers = new Dictionary<string, string>();
+                else _Headers = value;
+            }
+        }
 
         /// <summary>
         /// User-supplied content-type to include in the response.
         /// </summary>
-        public string ContentType { get; set; }
+        public string ContentType { get; set; } = null;
 
         /// <summary>
         /// The length of the data in the response stream.  This value must be set before assigning the stream.
         /// </summary>
-        public long ContentLength { get; set; }
-         
+        public long ContentLength { get; set; } = 0;
+
         /// <summary>
         /// The data to return to the requestor.  Set ContentLength before assigning the stream.
         /// </summary>
-        public Stream Data { get; set; }
+        public Stream Data { get; set; } = null;
 
         /// <summary>
         /// Enable or disable chunked transfer-encoding.
@@ -46,13 +57,14 @@ namespace S3ServerInterface
         /// If Chunked is true, use SendChunk() or SendFinalChunk() APIs.
         /// The Send(ErrorCode) API is valid for both conditions.
         /// </summary>
-        public bool Chunked { get; set; }
+        public bool Chunked { get; set; } = false;
 
         #endregion
 
         #region Private-Members
          
         private S3Request _S3Request = null;
+        private Dictionary<string, string> _Headers = new Dictionary<string, string>();
 
         #endregion
 
@@ -140,11 +152,11 @@ namespace S3ServerInterface
 
             if (Data != null && ContentLength > 0)
             {
-                return await _S3Request.Http.Response.Send(ContentLength, Data);
+                return await _S3Request.Http.Response.Send(ContentLength, Data).ConfigureAwait(false);
             }
             else
             {
-                return await _S3Request.Http.Response.Send();
+                return await _S3Request.Http.Response.Send().ConfigureAwait(false);
             } 
         }
 
@@ -159,7 +171,7 @@ namespace S3ServerInterface
             _S3Request.Http.Response.ChunkedTransfer = false; 
             byte[] bytes = null;
             if (!String.IsNullOrEmpty(data)) bytes = Encoding.UTF8.GetBytes(data); 
-            return await Send(bytes); 
+            return await Send(bytes).ConfigureAwait(false); 
         }
 
         /// <summary>
@@ -188,7 +200,7 @@ namespace S3ServerInterface
             }
 
             ms.Seek(0, SeekOrigin.Begin); 
-            return await Send(contentLength, ms);
+            return await Send(contentLength, ms).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -203,7 +215,7 @@ namespace S3ServerInterface
             _S3Request.Http.Response.ChunkedTransfer = false; 
             ContentLength = contentLength;
             Data = stream;
-            return await Send();
+            return await Send().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -227,7 +239,7 @@ namespace S3ServerInterface
             ContentType = "application/xml";
             Headers = new Dictionary<string, string>();
 
-            return await Send();
+            return await Send().ConfigureAwait(false);
         }
            
         /// <summary>
@@ -242,7 +254,7 @@ namespace S3ServerInterface
             _S3Request.Http.Response.ChunkedTransfer = true;
 
             SetResponseHeaders(); 
-            return await _S3Request.Http.Response.SendChunk(data);
+            return await _S3Request.Http.Response.SendChunk(data).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -257,45 +269,17 @@ namespace S3ServerInterface
             _S3Request.Http.Response.ChunkedTransfer = true;
 
             SetResponseHeaders();
-            return await _S3Request.Http.Response.SendFinalChunk(data); 
+            return await _S3Request.Http.Response.SendFinalChunk(data).ConfigureAwait(false); 
         }
-         
+
         /// <summary>
-        /// Returns a human-readable string with the object details.
+        /// Create a JSON representation of the object.
         /// </summary>
-        /// <returns>String.</returns>
-        public override string ToString()
+        /// <param name="pretty">Pretty print.</param>
+        /// <returns>JSON string.</returns>
+        public string ToJson(bool pretty)
         {
-            string ret = Environment.NewLine + "---" + Environment.NewLine;
-            ret += "  Status Code    : " + StatusCode + Environment.NewLine;
-            ret += "  Content Type   : " + ContentType + Environment.NewLine;
-            ret += "  Content Length : " + ContentLength + Environment.NewLine;
-            ret += "  Headers        : ";
-            if (Headers != null && Headers.Count > 0)
-            {
-                ret += Environment.NewLine;
-                foreach (KeyValuePair<string, string> curr in Headers)
-                {
-                    if (String.IsNullOrEmpty(curr.Key)) continue;
-                    ret += "    " + curr.Key + "=" + curr.Value + Environment.NewLine;
-                }
-            }
-            else
-            {
-                ret += "(none)" + Environment.NewLine;
-            }
-
-            ret += "  Data           : "; 
-            if (Data != null)
-            {
-                ret += "(stream, " + ContentLength + " bytes)" + Environment.NewLine;
-            }
-            else
-            {
-                ret += "(none)" + Environment.NewLine;
-            } 
-
-            return ret;
+            return Common.SerializeJson(this, pretty);
         }
 
         #endregion
