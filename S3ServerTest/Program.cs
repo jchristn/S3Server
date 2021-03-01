@@ -125,7 +125,7 @@ namespace Test
 
         static async Task SendResponse(S3Request req, S3Response resp, string text)
         {
-            Console.WriteLine("[" + req.SourceIp + ":" + req.SourcePort + "] " + text);
+            Console.WriteLine("[" + req.Http.Request.Source.IpAddress + ":" + req.Http.Request.Source.Port + "] " + text);
 
             byte[] data = Encoding.UTF8.GetBytes(text);
 
@@ -142,7 +142,7 @@ namespace Test
 
         static async Task SendChunkResponse(S3Request req, S3Response resp, string text)
         {
-            Console.WriteLine("[" + req.SourceIp + ":" + req.SourcePort + "] " + text);
+            Console.WriteLine("[" + req.Http.Request.Source.IpAddress + ":" + req.Http.Request.Source.Port + "] " + text);
 
             byte[] data = Encoding.UTF8.GetBytes(text);
 
@@ -154,7 +154,7 @@ namespace Test
             return;
         }
 
-        static byte[] GetSecretKey(string accessKey)
+        static byte[] GetSecretKey(S3Request req)
         {
             return Encoding.UTF8.GetBytes("default");
         }
@@ -175,7 +175,7 @@ namespace Test
         static async Task PostRequestHandler(S3Request req, S3Response resp)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            Logger("Request complete: " + req.Method.ToString() + " " + req.RawUrl + ": " + resp.StatusCode);
+            Logger("Request complete: " + req.Http.Request.Method.ToString() + " " + req.Http.Request.Url.RawWithoutQuery + ": " + resp.StatusCode);
         }
 
         #region Service-APIs

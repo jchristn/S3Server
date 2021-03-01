@@ -1631,6 +1631,11 @@
             S3 request object.
             </summary>
         </member>
+        <member name="P:S3ServerInterface.S3Request.TimestampUtc">
+            <summary>
+            Time of creation in UTC.
+            </summary>
+        </member>
         <member name="P:S3ServerInterface.S3Request.RequestStyle">
             <summary>
             Indicates if the request includes the bucket name in the hostname or not.
@@ -1641,44 +1646,9 @@
             Indicates the type of S3 request.
             </summary>
         </member>
-        <member name="P:S3ServerInterface.S3Request.TimestampUtc">
+        <member name="P:S3ServerInterface.S3Request.Request">
             <summary>
-            Time of creation in UTC.
-            </summary>
-        </member>
-        <member name="P:S3ServerInterface.S3Request.SourceIp">
-            <summary>
-            IP address of the client.
-            </summary>
-        </member>
-        <member name="P:S3ServerInterface.S3Request.SourcePort">
-            <summary>
-            TCP port of the client.
-            </summary>
-        </member>
-        <member name="P:S3ServerInterface.S3Request.Method">
-            <summary>
-            HTTP method (GET, PUT, POST, DELETE, etc).
-            </summary>
-        </member>
-        <member name="P:S3ServerInterface.S3Request.FullUrl">
-            <summary>
-            Full URL.
-            </summary>
-        </member>
-        <member name="P:S3ServerInterface.S3Request.RawUrl">
-            <summary>
-            The raw URL without querystring.
-            </summary>
-        </member>
-        <member name="P:S3ServerInterface.S3Request.ContentLength">
-            <summary>
-            The length of the payload.
-            </summary>
-        </member>
-        <member name="P:S3ServerInterface.S3Request.ContentType">
-            <summary>
-            The content type of the payload.
+            HTTP request.
             </summary>
         </member>
         <member name="P:S3ServerInterface.S3Request.Chunked">
@@ -1822,21 +1792,6 @@
             List of signed headers.
             </summary>
         </member>
-        <member name="P:S3ServerInterface.S3Request.Querystring">
-            <summary>
-            URL querystring.
-            </summary>
-        </member>
-        <member name="P:S3ServerInterface.S3Request.Headers">
-            <summary>
-            Full set of HTTP headers.
-            </summary>
-        </member>
-        <member name="P:S3ServerInterface.S3Request.RawUrlEntries">
-            <summary>
-            The individual elements in the raw URL.
-            </summary>
-        </member>
         <member name="P:S3ServerInterface.S3Request.UserMetadata">
             <summary>
             User-defined metadata.
@@ -1871,13 +1826,6 @@
             <param name="baseDomain">Base domain against which the hostname should be evaluated to identify the bucket.  For instance, to resolve buckets for *.localhost, specify '.localhost'.</param>
             <param name="ctx">HttpContext.</param> 
             <param name="logger">Method to invoke to send log messages.</param> 
-        </member>
-        <member name="M:S3ServerInterface.S3Request.ToJson(System.Boolean)">
-            <summary>
-            Create a JSON representation of the object.
-            </summary>
-            <param name="pretty">Pretty print.</param>
-            <returns>JSON string.</returns>
         </member>
         <member name="M:S3ServerInterface.S3Request.ParseHttpContext(System.String,WatsonWebserver.HttpContext)">
             <summary>

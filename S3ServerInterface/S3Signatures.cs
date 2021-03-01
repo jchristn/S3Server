@@ -16,7 +16,7 @@ namespace S3ServerInterface
             if (req == null) throw new ArgumentNullException(nameof(req));
             if (secretKey == null || secretKey.Length < 1) throw new ArgumentNullException(nameof(secretKey));
 
-            _Request = req;
+            _S3Request = req;
             _SecretKey = secretKey;
             _Logger = logger;
 
@@ -25,7 +25,7 @@ namespace S3ServerInterface
             string hmacSha256Signature = null;
             string logMessage = null;
 
-            if (_Request.SignatureVersion == S3SignatureVersion.Version2)
+            if (_S3Request.SignatureVersion == S3SignatureVersion.Version2)
             {
                 #region V2
 
@@ -43,13 +43,13 @@ namespace S3ServerInterface
                     "  --------------" + Environment.NewLine +
                     _V2StringToSign + Environment.NewLine +
                     Environment.NewLine +
-                    "  Client-supplied signature : " + _Request.Signature + Environment.NewLine +
+                    "  Client-supplied signature : " + _S3Request.Signature + Environment.NewLine +
                     "  Generated HMAC-SHA1       : " + hmacSha1Signature + Environment.NewLine +
                     "  Generated HMAC-SHA256     : " + hmacSha256Signature + Environment.NewLine +
                     "  Success                   : ";
 
-                if (hmacSha256Signature.Equals(_Request.Signature) 
-                    || hmacSha1Signature.Equals(_Request.Signature))
+                if (hmacSha256Signature.Equals(_S3Request.Signature) 
+                    || hmacSha1Signature.Equals(_S3Request.Signature))
                 {
                     _Logger?.Invoke(logMessage + "true");
                     return true;
@@ -62,7 +62,7 @@ namespace S3ServerInterface
 
                 #endregion
             }
-            else if (_Request.SignatureVersion == S3SignatureVersion.Version4)
+            else if (_S3Request.SignatureVersion == S3SignatureVersion.Version4)
             {
                 #region V4
 
@@ -87,13 +87,13 @@ namespace S3ServerInterface
                     "  --------------" + Environment.NewLine +
                     _V4StringToSign + Environment.NewLine +
                     Environment.NewLine +
-                    "  Client-supplied signature : " + _Request.Signature + Environment.NewLine +
+                    "  Client-supplied signature : " + _S3Request.Signature + Environment.NewLine +
                     "  Generated HMAC-SHA1       : " + hmacSha1Signature + Environment.NewLine +
                     "  Generated HMAC-SHA256     : " + hmacSha256Signature + Environment.NewLine +
                     "  Success                   : ";
                  
-                if (hmacSha256Signature.Equals(_Request.Signature) 
-                    || hmacSha1Signature.Equals(_Request.Signature))
+                if (hmacSha256Signature.Equals(_S3Request.Signature) 
+                    || hmacSha1Signature.Equals(_S3Request.Signature))
                 {
                     _Logger?.Invoke(logMessage + "true");
                     return true;
@@ -114,7 +114,7 @@ namespace S3ServerInterface
 
         #region Members
 
-        private static S3Request _Request = null;
+        private static S3Request _S3Request = null;
         private static byte[] _SecretKey = null;
         private static string _Header = "[S3Signature] ";
         private static Action<string> _Logger = null;
@@ -135,12 +135,12 @@ namespace S3ServerInterface
                  * Per https://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html
                  * and https://github.com/aws/aws-sdk-net/blob/master/sdk/src/Core/Amazon.Runtime/Internal/Auth/S3Signer.cs
                  */
-                ret += _Request.Method.ToString().ToUpper() + "\n";
-                ret += _Request.ContentMd5 + "\n";
-                ret += _Request.ContentType + "\n";
+                ret += _S3Request.Http.Request.Method.ToString().ToUpper() + "\n";
+                ret += _S3Request.ContentMd5 + "\n";
+                ret += _S3Request.Http.Request.ContentType + "\n";
 
-                if (!String.IsNullOrEmpty(_Request.Expires)) ret += _Request.Expires + "\n";
-                else ret += _Request.Date + "\n";
+                if (!String.IsNullOrEmpty(_S3Request.Expires)) ret += _S3Request.Expires + "\n";
+                else ret += _S3Request.Date + "\n";
 
                 ret += _V2CanonicalHeaders;
                 ret += _V2CanonicalUri; 
@@ -154,17 +154,17 @@ namespace S3ServerInterface
             get
             {
                 Dictionary<string, string> headersAndQuery = new Dictionary<string, string>();
-                if (_Request.Headers != null && _Request.Headers.Count > 0)
+                if (_S3Request.Http.Request.Headers != null && _S3Request.Http.Request.Headers.Count > 0)
                 {
-                    foreach (KeyValuePair<string, string> header in _Request.Headers)
+                    foreach (KeyValuePair<string, string> header in _S3Request.Http.Request.Headers)
                     {
                         headersAndQuery.Add(header.Key.ToLower(), header.Value);
                     }
                 }
 
-                if (_Request.Querystring != null && _Request.Querystring.Count > 0)
+                if (_S3Request.Http.Request.Query.Elements != null && _S3Request.Http.Request.Query.Elements.Count > 0)
                 {
-                    foreach (KeyValuePair<string, string> query in _Request.Querystring)
+                    foreach (KeyValuePair<string, string> query in _S3Request.Http.Request.Query.Elements)
                     {
                         if (!headersAndQuery.ContainsKey(query.Key.ToLower())) 
                             headersAndQuery.Add(query.Key.ToLower(), query.Value);
@@ -184,8 +184,8 @@ namespace S3ServerInterface
                         if (!key.StartsWith("x-amz-")) continue;
                         else
                         {
-                            if (key.Equals("x-amz-date") && !String.IsNullOrEmpty(_Request.Date)) continue;
-                            string val = _Request.RetrieveHeaderValue(header.Key);
+                            if (key.Equals("x-amz-date") && !String.IsNullOrEmpty(_S3Request.Date)) continue;
+                            string val = _S3Request.RetrieveHeaderValue(header.Key);
                             ret += key.ToLower() + ":" + val + "\n";
                         }
                     }
@@ -225,15 +225,15 @@ namespace S3ServerInterface
             {
                 string ret = "/";
 
-                if (_Request.RequestStyle == S3RequestStyle.BucketNotInHostname)
+                if (_S3Request.RequestStyle == S3RequestStyle.BucketNotInHostname)
                 {
-                    if (!String.IsNullOrEmpty(_Request.Bucket))
+                    if (!String.IsNullOrEmpty(_S3Request.Bucket))
                     {
-                        ret += WebUtility.UrlEncode(_Request.Bucket);
+                        ret += WebUtility.UrlEncode(_S3Request.Bucket);
 
-                        if (!String.IsNullOrEmpty(_Request.Key))
+                        if (!String.IsNullOrEmpty(_S3Request.Key))
                         {
-                            ret += "/" + _Request.Key;
+                            ret += "/" + _S3Request.Key;
                         }
                         else
                         {
@@ -247,9 +247,9 @@ namespace S3ServerInterface
                 }
                 else
                 {
-                    if (!String.IsNullOrEmpty(_Request.Key))
+                    if (!String.IsNullOrEmpty(_S3Request.Key))
                     {
-                        ret += _Request.Key;
+                        ret += _S3Request.Key;
                     }
                 }
 
@@ -264,7 +264,7 @@ namespace S3ServerInterface
 
                 foreach (string key in _V2CanonicalQuerystringItems)
                 {
-                    if (_Request.QuerystringExists(key, false)) ret = V2AppendCanonicalizedResource(ret, key);
+                    if (_S3Request.QuerystringExists(key, false)) ret = V2AppendCanonicalizedResource(ret, key);
                 }
 
                 return ret;
@@ -279,7 +279,7 @@ namespace S3ServerInterface
         {
             if (String.IsNullOrEmpty(appendKey)) return original;
 
-            string val = _Request.RetrieveHeaderValue(appendKey);
+            string val = _S3Request.RetrieveHeaderValue(appendKey);
             if (!String.IsNullOrEmpty(val))
             {
                 val = WebUtility.UrlDecode(val);
@@ -323,8 +323,8 @@ namespace S3ServerInterface
                 string ret = "";
 
                 ret += "AWS4-HMAC-SHA256" + "\n";
-                ret += _Request.TimestampUtc.ToString(_AmazonTimestampFormat) + "\n";
-                ret += _Request.TimestampUtc.ToString(_AmazonDateFormat) + "/" + _Request.Region + "/s3/aws4_request" + "\n";
+                ret += _S3Request.TimestampUtc.ToString(_AmazonTimestampFormat) + "\n";
+                ret += _S3Request.TimestampUtc.ToString(_AmazonDateFormat) + "/" + _S3Request.Region + "/s3/aws4_request" + "\n";
                 ret += Common.BytesToHex(Common.Sha256(Encoding.UTF8.GetBytes(_V4CanonicalRequest))).ToLower();
                 return ret;
             }
@@ -335,7 +335,7 @@ namespace S3ServerInterface
             {
                 string ret = "";
 
-                ret += _Request.Method.ToString().ToUpper() + "\n";
+                ret += _S3Request.Http.Request.Method.ToString().ToUpper() + "\n";
                 ret += _V4CanonicalUri + "\n";
                 ret += _V4CanonicalQuerystring + "\n";
 
@@ -343,7 +343,7 @@ namespace S3ServerInterface
                 ret += _V4CanonicalHeaders + "\n";
                 ret += V4SignedHeadersToString() + "\n";
 
-                if (!_Request.Chunked) ret += _Request.ContentSha256;
+                if (!_S3Request.Chunked) ret += _S3Request.ContentSha256;
                 else ret += "STREAMING-AWS4-HMAC-SHA256-PAYLOAD";
 
                 return ret;
@@ -355,15 +355,15 @@ namespace S3ServerInterface
             {
                 string ret = "/";
 
-                if (_Request.RequestStyle == S3RequestStyle.BucketNotInHostname)
+                if (_S3Request.RequestStyle == S3RequestStyle.BucketNotInHostname)
                 {
-                    if (!String.IsNullOrEmpty(_Request.Bucket))
+                    if (!String.IsNullOrEmpty(_S3Request.Bucket))
                     {
-                        ret += WebUtility.UrlEncode(_Request.Bucket);
+                        ret += WebUtility.UrlEncode(_S3Request.Bucket);
 
-                        if (!String.IsNullOrEmpty(_Request.Key))
+                        if (!String.IsNullOrEmpty(_S3Request.Key))
                         {
-                            ret += "/" + _Request.Key;
+                            ret += "/" + _S3Request.Key;
                         }
                         else
                         {
@@ -371,11 +371,11 @@ namespace S3ServerInterface
                         }
                     }
                 }
-                else if (_Request.RequestStyle == S3RequestStyle.BucketInHostname)
+                else if (_S3Request.RequestStyle == S3RequestStyle.BucketInHostname)
                 {
-                    if (!String.IsNullOrEmpty(_Request.Key))
+                    if (!String.IsNullOrEmpty(_S3Request.Key))
                     {
-                        ret += _Request.Key;
+                        ret += _S3Request.Key;
                     }
                 }
 
@@ -388,7 +388,7 @@ namespace S3ServerInterface
             {
                 string ret = "";
 
-                foreach (KeyValuePair<string, string> query in _Request.Querystring)
+                foreach (KeyValuePair<string, string> query in _S3Request.Http.Request.Query.Elements)
                 {
                     if (String.IsNullOrEmpty(query.Key)) continue;
                     if (!String.IsNullOrEmpty(ret)) ret += "&";
@@ -404,12 +404,12 @@ namespace S3ServerInterface
             {
                 string ret = "";
 
-                if (_Request.SignedHeaders != null && _Request.SignedHeaders.Count > 0)
+                if (_S3Request.SignedHeaders != null && _S3Request.SignedHeaders.Count > 0)
                 {
-                    foreach (string key in _Request.SignedHeaders)
+                    foreach (string key in _S3Request.SignedHeaders)
                     {
                         if (String.IsNullOrEmpty(key)) continue;
-                        string val = _Request.RetrieveHeaderValue(key);
+                        string val = _S3Request.RetrieveHeaderValue(key);
                         ret += key.ToLower() + ":" + val + "\n";
                     }
                 }
@@ -451,7 +451,7 @@ namespace S3ServerInterface
         {
             string ret = "";
 
-            foreach (string header in _Request.SignedHeaders)
+            foreach (string header in _S3Request.SignedHeaders)
             {
                 if (String.IsNullOrEmpty(header)) continue;
                 if (String.IsNullOrEmpty(ret)) ret += header.ToLower();
@@ -464,12 +464,12 @@ namespace S3ServerInterface
         private static byte[] V4GenerateSigningKey(byte[] secretKey)
         {
             byte[] dateKey = Common.HmacSha256(
-                Encoding.UTF8.GetBytes(_Request.TimestampUtc.ToString(_AmazonDateFormat)),
+                Encoding.UTF8.GetBytes(_S3Request.TimestampUtc.ToString(_AmazonDateFormat)),
                 Encoding.UTF8.GetBytes("AWS4" + Encoding.UTF8.GetString(secretKey))
                 );
 
             byte[] dateRegionKey = Common.HmacSha256(
-                Encoding.UTF8.GetBytes(_Request.Region),
+                Encoding.UTF8.GetBytes(_S3Request.Region),
                 dateKey
                 );
 

@@ -2,11 +2,16 @@
 
 ## Current Version
 
+v2.2.0
+
+- Breaking change to GetSecretKey (now passing the entire S3Request instead of just the access key)
+- Dependency update
+
+## Previous Versions
+
 v2.1.3
 
 - .NET 5 support
-
-## Previous Versions
 
 v2.1.1
 

@@ -10,9 +10,10 @@ Simple S3 server-side interface, produced using Amazon's public documentation.  
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v2.1.3
+## New in v2.2.0
 
-- .NET 5 support
+- Breaking change to GetSecretKey (now passing the entire S3Request instead of just the access key)
+- Dependency update
 
 ## Examples
 

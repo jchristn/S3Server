@@ -70,7 +70,7 @@ namespace S3ServerInterface
         /// Callback method to retrieve the secret key for the supplied access key from your application.  
         /// This method is only used when AuthenticateSignatures is set to true.
         /// </summary>
-        public Func<string, byte[]> GetSecretKey = null;
+        public Func<S3Request, byte[]> GetSecretKey = null;
 
         /// <summary>
         /// Enable or disable authentication of signatures.  This does not validate signatures for transferred chunks, only authentication of the user.
@@ -276,7 +276,7 @@ namespace S3ServerInterface
                 {
                     if (!String.IsNullOrEmpty(s3req.AccessKey))
                     {
-                        byte[] secretKey = GetSecretKey(s3req.AccessKey);
+                        byte[] secretKey = GetSecretKey(s3req);
                         if (secretKey == null || secretKey.Length < 1)
                         {
                             await s3resp.Send(S3Objects.ErrorCode.InvalidRequest).ConfigureAwait(false);

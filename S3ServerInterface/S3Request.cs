@@ -22,7 +22,12 @@ namespace S3ServerInterface
     public class S3Request
     {
         #region Public-Members
-         
+
+        /// <summary>
+        /// Time of creation in UTC.
+        /// </summary>
+        public DateTime TimestampUtc { get; private set; } = DateTime.Now.ToUniversalTime();
+
         /// <summary>
         /// Indicates if the request includes the bucket name in the hostname or not.
         /// </summary>
@@ -34,44 +39,9 @@ namespace S3ServerInterface
         public S3RequestType RequestType { get; private set; } = S3RequestType.Unknown;
 
         /// <summary>
-        /// Time of creation in UTC.
+        /// HTTP request.
         /// </summary>
-        public DateTime TimestampUtc { get; private set; } = DateTime.Now.ToUniversalTime();
-
-        /// <summary>
-        /// IP address of the client.
-        /// </summary>
-        public string SourceIp { get; private set; } = null;
-
-        /// <summary>
-        /// TCP port of the client.
-        /// </summary>
-        public int SourcePort { get; private set; } = 0;
-
-        /// <summary>
-        /// HTTP method (GET, PUT, POST, DELETE, etc).
-        /// </summary>
-        public HttpMethod Method { get; private set; } = HttpMethod.GET;
-
-        /// <summary>
-        /// Full URL.
-        /// </summary>
-        public string FullUrl { get; private set; } = null;
-
-        /// <summary>
-        /// The raw URL without querystring.
-        /// </summary>
-        public string RawUrl { get; private set; } = null;
-
-        /// <summary>
-        /// The length of the payload.
-        /// </summary>
-        public long ContentLength { get; private set; } = 0;
-
-        /// <summary>
-        /// The content type of the payload.
-        /// </summary>
-        public string ContentType { get; private set; } = null;
+        public HttpRequest Request { get; private set; } = null;
 
         /// <summary>
         /// Indicates if chunked transfer-encoding is in use.
@@ -347,24 +317,6 @@ namespace S3ServerInterface
         public List<string> SignedHeaders { get; private set; } = new List<string>();
 
         /// <summary>
-        /// URL querystring.
-        /// </summary>
-        [JsonProperty(Order = 991)]
-        public Dictionary<string, string> Querystring { get; private set; } = new Dictionary<string, string>();
-
-        /// <summary>
-        /// Full set of HTTP headers.
-        /// </summary>
-        [JsonProperty(Order = 992)]
-        public Dictionary<string, string> Headers { get; private set; } = new Dictionary<string, string>();
-
-        /// <summary>
-        /// The individual elements in the raw URL.
-        /// </summary>
-        [JsonProperty(Order = 993)]
-        public string[] RawUrlEntries { get; private set; } = null;
-
-        /// <summary>
         /// User-defined metadata.
         /// </summary>
         [JsonProperty(Order = 998)]
@@ -453,17 +405,7 @@ namespace S3ServerInterface
         #endregion
 
         #region Public-Methods
-
-        /// <summary>
-        /// Create a JSON representation of the object.
-        /// </summary>
-        /// <param name="pretty">Pretty print.</param>
-        /// <returns>JSON string.</returns>
-        public string ToJson(bool pretty)
-        {
-            return Common.SerializeJson(this, pretty);
-        }
-
+         
         /// <summary>
         /// Populate members using an HttpContext.
         /// </summary>
@@ -480,19 +422,7 @@ namespace S3ServerInterface
 
             TimestampUtc = DateTime.Now.ToUniversalTime();
             Http = ctx;
-            SourceIp = Http.Request.Source.IpAddress;
-            SourcePort = Http.Request.Source.Port;
-            Method = Http.Request.Method;
-            FullUrl = Http.Request.Url.Full;
-            RawUrl = Http.Request.Url.RawWithoutQuery;
-            while (RawUrl.Contains("\\\\")) RawUrl.Replace("\\\\", "\\");
-
-            RawUrlEntries = Http.Request.Url.Elements;
-            ContentLength = Http.Request.ContentLength;
-            ContentType = Http.Request.ContentType;
             Chunked = Http.Request.ChunkedTransfer;
-            Querystring = Http.Request.Query.Elements;
-            Headers = Http.Request.Headers;
             Region = null;
             BaseDomain = baseDomain;
             Hostname = Http.Request.Destination.Hostname;
@@ -508,11 +438,8 @@ namespace S3ServerInterface
 
             #region Set-Parameters-from-Querystring
 
-            if (Querystring != null && Querystring.Count > 0)
+            if (Http.Request.Query.Elements != null && Http.Request.Query.Elements.Count > 0)
             {
-                // sort ascending
-                Querystring = Querystring.OrderBy(o => o.Key, StringComparer.OrdinalIgnoreCase).ToDictionary(o => o.Key, o => o.Value);
-
                 VersionId = RetrieveQueryValue("versionid");
                 Prefix = RetrieveQueryValue("prefix");
                 Delimiter = RetrieveQueryValue("delimiter");
@@ -526,7 +453,7 @@ namespace S3ServerInterface
                     string maxKeysStr = RetrieveQueryValue("max-keys");
                     if (!String.IsNullOrEmpty(maxKeysStr))
                     {
-                        if (Int64.TryParse(Querystring["max-keys"], out maxKeys))
+                        if (Int64.TryParse(Http.Request.Query.Elements["max-keys"], out maxKeys))
                         {
                             MaxKeys = maxKeys;
                         }
@@ -544,11 +471,8 @@ namespace S3ServerInterface
 
             #region Set-Values-From-Headers
 
-            if (Headers != null && Headers.Count > 0)
-            {
-                // sort ascending
-                Headers = Headers.OrderBy(o => o.Key, StringComparer.OrdinalIgnoreCase).ToDictionary(o => o.Key, o => o.Value);
-
+            if (Http.Request.Headers != null && Http.Request.Headers.Count > 0)
+            { 
                 if (HeaderExists("authorization", false))
                 {
                     _Logger?.Invoke(_Header + "Processing Authorization header"); 
@@ -620,9 +544,9 @@ namespace S3ServerInterface
 
             #region Set-Region-Bucket-Style-and-Key
 
-            if (!String.IsNullOrEmpty(Hostname) && !String.IsNullOrEmpty(RawUrl))
+            if (!String.IsNullOrEmpty(Hostname) && !String.IsNullOrEmpty(Http.Request.Url.RawWithoutQuery))
             { 
-                ParseHostnameAndUrl(baseDomain, FullUrl, RawUrl);
+                ParseHostnameAndUrl(baseDomain, Http.Request.Url.Full, Http.Request.Url.RawWithoutQuery);
             }
 
             #endregion
@@ -643,24 +567,7 @@ namespace S3ServerInterface
         public bool HeaderExists(string key, bool caseSensitive)
         {
             if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
-
-            if (caseSensitive)
-            {
-                return Headers.ContainsKey(key);
-            }
-            else
-            {
-                if (Headers != null && Headers.Count > 0)
-                {
-                    foreach (KeyValuePair<string, string> header in Headers)
-                    {
-                        if (String.IsNullOrEmpty(header.Key)) continue;
-                        if (header.Key.ToLower().Trim().Equals(key)) return true;
-                    }
-                }
-            }
-
-            return false;
+            return Http.Request.HeaderExists(key, caseSensitive);
         }
 
         /// <summary>
@@ -672,26 +579,7 @@ namespace S3ServerInterface
         public bool QuerystringExists(string key, bool caseSensitive)
         {
             if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
-
-            if (Querystring != null && Querystring.Count > 0)
-            {
-                if (caseSensitive)
-                {
-                    return Querystring.ContainsKey(key);
-                }
-                else
-                { 
-                    foreach (KeyValuePair<string, string> queryElement in Querystring)
-                    {
-                        if (String.IsNullOrEmpty(queryElement.Key)) continue;
-                        if (queryElement.Key.ToLower().Trim().Equals(key)) return true;
-                    } 
-
-                    return false;
-                }
-            }
-
-            return false;
+            return Http.Request.QuerystringExists(key, caseSensitive);
         }
 
         /// <summary>
@@ -702,25 +590,7 @@ namespace S3ServerInterface
         public string RetrieveHeaderValue(string key)
         {
             if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
-            if (Headers != null && Headers.Count > 0)
-            {
-                foreach (KeyValuePair<string, string> curr in Headers)
-                {
-                    if (String.IsNullOrEmpty(curr.Key)) continue;
-                    if (String.Compare(curr.Key.ToLower(), key.ToLower()) == 0) return curr.Value;
-                }
-            }
-
-            if (Querystring != null && Querystring.Count > 0)
-            {
-                foreach (KeyValuePair<string, string> curr in Querystring)
-                {
-                    if (String.IsNullOrEmpty(curr.Key)) continue;
-                    if (String.Compare(curr.Key.ToLower(), key.ToLower()) == 0) return curr.Value;
-                }
-            }
-
-            return null;
+            return Http.Request.RetrieveHeaderValue(key);
         }
 
         /// <summary>
@@ -732,9 +602,9 @@ namespace S3ServerInterface
         {
             if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key)); 
 
-            if (Querystring != null && Querystring.Count > 0)
+            if (Http.Request.Query.Elements != null && Http.Request.Query.Elements.Count > 0)
             {
-                foreach (KeyValuePair<string, string> curr in Querystring)
+                foreach (KeyValuePair<string, string> curr in Http.Request.Query.Elements)
                 {
                     if (String.IsNullOrEmpty(curr.Key)) continue;
                     if (String.Compare(curr.Key.ToLower(), key.ToLower()) == 0) return curr.Value;
@@ -1020,7 +890,7 @@ namespace S3ServerInterface
          
         private void SetRequestType()
         {
-            switch (Method)
+            switch (Http.Request.Method)
             {
                 case HttpMethod.HEAD:
                     #region HEAD
