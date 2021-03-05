@@ -17,7 +17,7 @@ using Newtonsoft.Json.Converters;
 namespace S3ServerInterface
 {
     /// <summary>
-    /// S3 request object.
+    /// S3 request.
     /// </summary>
     public class S3Request
     {
@@ -37,12 +37,7 @@ namespace S3ServerInterface
         /// Indicates the type of S3 request.
         /// </summary>
         public S3RequestType RequestType { get; private set; } = S3RequestType.Unknown;
-
-        /// <summary>
-        /// HTTP request.
-        /// </summary>
-        public HttpRequest Request { get; private set; } = null;
-
+         
         /// <summary>
         /// Indicates if chunked transfer-encoding is in use.
         /// </summary>
@@ -313,32 +308,9 @@ namespace S3ServerInterface
         /// <summary>
         /// List of signed headers.
         /// </summary>
-        [JsonProperty(Order = 990)]
-        public List<string> SignedHeaders { get; private set; } = new List<string>();
-
-        /// <summary>
-        /// User-defined metadata.
-        /// </summary>
         [JsonProperty(Order = 998)]
-        public Dictionary<object, object> UserMetadata
-        {
-            get
-            {
-                return _UserMetadata;
-            }
-            set
-            {
-                if (value == null)
-                {
-                    _UserMetadata = new Dictionary<object, object>();
-                }
-                else
-                {
-                    _UserMetadata = value;
-                }
-            }
-        }
-
+        public List<string> SignedHeaders { get; private set; } = new List<string>();
+         
         /// <summary>
         /// HTTP context from which this response was created.
         /// </summary>

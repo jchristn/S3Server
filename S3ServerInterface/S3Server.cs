@@ -54,23 +54,23 @@ namespace S3ServerInterface
         /// Callback method to use prior to examining requests for AWS S3 APIs.
         /// Return true if you wish to terminate the request, otherwise, return false, which will further route the request.
         /// </summary>
-        public Func<S3Request, S3Response, Task<bool>> PreRequestHandler = null;
+        public Func<S3Context, Task<bool>> PreRequestHandler = null;
 
         /// <summary>
         /// Callback method to call when no matching AWS S3 API callback could be found. 
         /// </summary>
-        public Func<S3Request, S3Response, Task> DefaultRequestHandler = null;
+        public Func<S3Context, Task> DefaultRequestHandler = null;
 
         /// <summary>
         /// Callback method to call after a response has been sent.
         /// </summary>
-        public Func<S3Request, S3Response, Task> PostRequestHandler = null;
+        public Func<S3Context, Task> PostRequestHandler = null;
 
         /// <summary>
         /// Callback method to retrieve the secret key for the supplied access key from your application.  
         /// This method is only used when AuthenticateSignatures is set to true.
         /// </summary>
-        public Func<S3Request, byte[]> GetSecretKey = null;
+        public Func<S3Context, byte[]> GetSecretKey = null;
 
         /// <summary>
         /// Enable or disable authentication of signatures.  This does not validate signatures for transferred chunks, only authentication of the user.
@@ -146,7 +146,7 @@ namespace S3ServerInterface
             string hostname,
             int port,
             bool ssl,
-            Func<S3Request, S3Response, Task> defaultRequestHandler)
+            Func<S3Context, Task> defaultRequestHandler)
         {
             if (String.IsNullOrEmpty(hostname)) throw new ArgumentNullException(nameof(hostname));
             if (port < 0 || port > 65535) throw new ArgumentException("Port must be between 0 and 65535.");
@@ -173,8 +173,8 @@ namespace S3ServerInterface
             string hostname,
             int port,
             bool ssl,
-            Func<S3Request, S3Response, Task<bool>> preRequestHandler,
-            Func<S3Request, S3Response, Task> defaultRequestHandler)
+            Func<S3Context, Task<bool>> preRequestHandler,
+            Func<S3Context, Task> defaultRequestHandler)
         {
             if (String.IsNullOrEmpty(hostname)) throw new ArgumentNullException(nameof(hostname));
             if (port < 0 || port > 65535) throw new ArgumentException("Port must be between 0 and 65535."); 
@@ -253,6 +253,8 @@ namespace S3ServerInterface
 
             S3Request s3req = new S3Request(BaseDomain, ctx, (Logging.S3Requests ? Logger : null));
             S3Response s3resp = new S3Response(s3req);
+            S3Context s3ctx = new S3Context(s3req, s3resp, null);
+
             bool success = false;
 
             try
@@ -264,7 +266,7 @@ namespace S3ServerInterface
 
                 if (PreRequestHandler != null)
                 {
-                    success = await PreRequestHandler(s3req, s3resp).ConfigureAwait(false);
+                    success = await PreRequestHandler(s3ctx).ConfigureAwait(false);
                     if (success)
                     {
                         await s3resp.Send().ConfigureAwait(false);
@@ -276,7 +278,7 @@ namespace S3ServerInterface
                 {
                     if (!String.IsNullOrEmpty(s3req.AccessKey))
                     {
-                        byte[] secretKey = GetSecretKey(s3req);
+                        byte[] secretKey = GetSecretKey(s3ctx);
                         if (secretKey == null || secretKey.Length < 1)
                         {
                             await s3resp.Send(S3Objects.ErrorCode.InvalidRequest).ConfigureAwait(false);
@@ -296,7 +298,7 @@ namespace S3ServerInterface
                     case S3RequestType.ListBuckets:
                         if (Service.ListBuckets != null)
                         {
-                            await Service.ListBuckets(s3req, s3resp).ConfigureAwait(false);
+                            await Service.ListBuckets(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
@@ -304,231 +306,231 @@ namespace S3ServerInterface
                     case S3RequestType.BucketDelete:
                         if (Bucket.Delete != null)
                         {
-                            await Bucket.Delete(s3req, s3resp).ConfigureAwait(false);
+                            await Bucket.Delete(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.BucketDeleteTags:
                         if (Bucket.DeleteTags != null)
                         {
-                            await Bucket.DeleteTags(s3req, s3resp).ConfigureAwait(false);
+                            await Bucket.DeleteTags(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.BucketDeleteWebsite:
                         if (Bucket.DeleteWebsite != null)
                         {
-                            await Bucket.DeleteWebsite(s3req, s3resp).ConfigureAwait(false);
+                            await Bucket.DeleteWebsite(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.BucketExists:
                         if (Bucket.Exists != null)
                         {
-                            await Bucket.Exists(s3req, s3resp).ConfigureAwait(false);
+                            await Bucket.Exists(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.BucketRead:
                         if (Bucket.Read != null)
                         {
-                            await Bucket.Read(s3req, s3resp).ConfigureAwait(false);
+                            await Bucket.Read(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.BucketReadAcl:
                         if (Bucket.ReadAcl != null)
                         {
-                            await Bucket.ReadAcl(s3req, s3resp).ConfigureAwait(false);
+                            await Bucket.ReadAcl(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.BucketReadLocation:
                         if (Bucket.ReadLocation != null)
                         {
-                            await Bucket.ReadLocation(s3req, s3resp).ConfigureAwait(false);
+                            await Bucket.ReadLocation(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.BucketReadLogging:
                         if (Bucket.ReadLogging != null)
                         {
-                            await Bucket.ReadLogging(s3req, s3resp).ConfigureAwait(false);
+                            await Bucket.ReadLogging(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.BucketReadTags:
                         if (Bucket.ReadTags != null)
                         {
-                            await Bucket.ReadTags(s3req, s3resp).ConfigureAwait(false);
+                            await Bucket.ReadTags(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.BucketReadVersioning:
                         if (Bucket.ReadVersioning != null)
                         {
-                            await Bucket.ReadVersioning(s3req, s3resp).ConfigureAwait(false);
+                            await Bucket.ReadVersioning(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.BucketReadVersions:
                         if (Bucket.ReadVersions != null)
                         {
-                            await Bucket.ReadVersions(s3req, s3resp).ConfigureAwait(false);
+                            await Bucket.ReadVersions(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.BucketReadWebsite:
                         if (Bucket.ReadWebsite != null)
                         {
-                            await Bucket.ReadWebsite(s3req, s3resp).ConfigureAwait(false);
+                            await Bucket.ReadWebsite(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.BucketWrite:
                         if (Bucket.Write != null)
                         {
-                            await Bucket.Write(s3req, s3resp).ConfigureAwait(false);
+                            await Bucket.Write(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.BucketWriteAcl:
                         if (Bucket.WriteAcl != null)
                         {
-                            await Bucket.WriteAcl(s3req, s3resp).ConfigureAwait(false);
+                            await Bucket.WriteAcl(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.BucketWriteLogging:
                         if (Bucket.WriteLogging != null)
                         {
-                            await Bucket.WriteLogging(s3req, s3resp).ConfigureAwait(false);
+                            await Bucket.WriteLogging(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.BucketWriteTags:
                         if (Bucket.WriteTags != null)
                         {
-                            await Bucket.WriteTags(s3req, s3resp).ConfigureAwait(false);
+                            await Bucket.WriteTags(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.BucketWriteVersioning:
                         if (Bucket.WriteVersioning != null)
                         {
-                            await Bucket.WriteVersioning(s3req, s3resp).ConfigureAwait(false);
+                            await Bucket.WriteVersioning(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.BucketWriteWebsite:
                         if (Bucket.WriteWebsite != null)
                         {
-                            await Bucket.WriteWebsite(s3req, s3resp).ConfigureAwait(false);
+                            await Bucket.WriteWebsite(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.ObjectDelete:
                         if (Object.Delete!= null)
                         {
-                            await Object.Delete(s3req, s3resp).ConfigureAwait(false);
+                            await Object.Delete(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.ObjectDeleteMultiple:
                         if (Object.DeleteMultiple != null)
                         {
-                            await Object.DeleteMultiple(s3req, s3resp).ConfigureAwait(false);
+                            await Object.DeleteMultiple(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.ObjectDeleteTags:
                         if (Object.DeleteTags != null)
                         {
-                            await Object.DeleteTags(s3req, s3resp).ConfigureAwait(false);
+                            await Object.DeleteTags(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.ObjectExists:
                         if (Object.Exists != null)
                         {
-                            await Object.Exists(s3req, s3resp).ConfigureAwait(false);
+                            await Object.Exists(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.ObjectRead:
                         if (Object.Read != null)
                         {
-                            await Object.Read(s3req, s3resp).ConfigureAwait(false);
+                            await Object.Read(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.ObjectReadAcl:
                         if (Object.ReadAcl != null)
                         {
-                            await Object.ReadAcl(s3req, s3resp).ConfigureAwait(false);
+                            await Object.ReadAcl(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.ObjectReadLegalHold:
                         if (Object.ReadLegalHold != null)
                         {
-                            await Object.ReadLegalHold(s3req, s3resp).ConfigureAwait(false);
+                            await Object.ReadLegalHold(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.ObjectReadRange:
                         if (Object.ReadRange != null)
                         {
-                            await Object.ReadRange(s3req, s3resp).ConfigureAwait(false);
+                            await Object.ReadRange(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.ObjectReadRetention:
                         if (Object.ReadRetention != null)
                         {
-                            await Object.ReadRetention(s3req, s3resp).ConfigureAwait(false);
+                            await Object.ReadRetention(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.ObjectReadTags:
                         if (Object.ReadTags != null)
                         {
-                            await Object.ReadTags(s3req, s3resp).ConfigureAwait(false);
+                            await Object.ReadTags(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.ObjectWrite:
                         if (Object.Write != null)
                         {
-                            await Object.Write(s3req, s3resp).ConfigureAwait(false);
+                            await Object.Write(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.ObjectWriteAcl:
                         if (Object.WriteAcl != null)
                         {
-                            await Object.WriteAcl(s3req, s3resp).ConfigureAwait(false);
+                            await Object.WriteAcl(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.ObjectWriteLegalHold:
                         if (Object.WriteLegalHold != null)
                         {
-                            await Object.WriteLegalHold(s3req, s3resp).ConfigureAwait(false);
+                            await Object.WriteLegalHold(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.ObjectWriteRetention:
                         if (Object.WriteRetention != null)
                         {
-                            await Object.WriteRetention(s3req, s3resp).ConfigureAwait(false);
+                            await Object.WriteRetention(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
                     case S3RequestType.ObjectWriteTags:
                         if (Object.WriteTags != null)
                         {
-                            await Object.WriteTags(s3req, s3resp).ConfigureAwait(false);
+                            await Object.WriteTags(s3ctx).ConfigureAwait(false);
                             return;
                         }
                         break;
@@ -536,7 +538,7 @@ namespace S3ServerInterface
 
                 if (DefaultRequestHandler != null)
                 {
-                    await DefaultRequestHandler(s3req, s3resp).ConfigureAwait(false);
+                    await DefaultRequestHandler(s3ctx).ConfigureAwait(false);
                     return;
                 }
 
@@ -569,7 +571,7 @@ namespace S3ServerInterface
                         " [" + Common.TotalMsFrom(startTime) + "ms]");
                 }
 
-                if (PostRequestHandler != null) await PostRequestHandler(s3req, s3resp).ConfigureAwait(false);
+                if (PostRequestHandler != null) await PostRequestHandler(s3ctx).ConfigureAwait(false);
             }
         }
          

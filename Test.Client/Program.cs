@@ -9,7 +9,7 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Util;
 
-namespace S3ClientTest
+namespace Test.Client
 {
     class Program
     {

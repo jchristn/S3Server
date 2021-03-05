@@ -2,12 +2,12 @@
 
   <PropertyGroup>
     <TargetFrameworks>netcoreapp3.1;netstandard2.0;netstandard2.1;net462;net5.0</TargetFrameworks>
-    <Version>2.2.0</Version>
+    <Version>3.0.0</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>Joel Christner</Authors>
     <Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
     <Copyright>(c)2021 Joel Christner</Copyright>
-    <PackageReleaseNotes>Breaking change to GetSecretKey, dependency update.</PackageReleaseNotes>
+    <PackageReleaseNotes>Breaking changes, S3Context, user metadata.</PackageReleaseNotes>
     <PackageTags>aws s3 storage rest interface server less3 minio</PackageTags>
     <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/jchristn/S3ServerInterface</PackageProjectUrl>
@@ -16,6 +16,7 @@
     <PackageIconUrl></PackageIconUrl>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageIcon>logo.png</PackageIcon>
+    <PackageId>S3Server</PackageId>
   </PropertyGroup>
 
 
@@ -87,6 +88,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="assets\logo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="S3ServerInterface.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

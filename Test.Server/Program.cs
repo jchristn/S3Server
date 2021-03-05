@@ -14,7 +14,7 @@ using Amazon.S3.Model;
 
 using S3ServerInterface;
 
-namespace Test
+namespace Test.Server
 {
     /*
      * 
@@ -123,246 +123,242 @@ namespace Test
 
         #region S3-API-Handlers
 
-        static async Task SendResponse(S3Request req, S3Response resp, string text)
+        static async Task SendResponse(S3Context ctx, string text)
         {
-            Console.WriteLine("[" + req.Http.Request.Source.IpAddress + ":" + req.Http.Request.Source.Port + "] " + text);
+            Console.WriteLine("[" + ctx.Request.Http.Request.Source.IpAddress + ":" + ctx.Request.Http.Request.Source.Port + "] " + text);
 
             byte[] data = Encoding.UTF8.GetBytes(text);
 
-            resp.StatusCode = 200;
-            resp.ContentType = "text/plain";
-            resp.ContentLength = data.Length;
-            resp.Data = new MemoryStream();
-            resp.Data.Write(data, 0, data.Length);
-            resp.Data.Seek(0, SeekOrigin.Begin);
+            ctx.Response.StatusCode = 200;
+            ctx.Response.ContentType = "text/plain";
+            ctx.Response.ContentLength = data.Length;
+            ctx.Response.Data = new MemoryStream();
+            ctx.Response.Data.Write(data, 0, data.Length);
+            ctx.Response.Data.Seek(0, SeekOrigin.Begin);
 
-            await resp.Send();
+            await ctx.Response.Send();
             return;
         }
 
-        static async Task SendChunkResponse(S3Request req, S3Response resp, string text)
+        static async Task SendChunkResponse(S3Context ctx, string text)
         {
-            Console.WriteLine("[" + req.Http.Request.Source.IpAddress + ":" + req.Http.Request.Source.Port + "] " + text);
+            Console.WriteLine("[" + ctx.Request.Http.Request.Source.IpAddress + ":" + ctx.Request.Http.Request.Source.Port + "] " + text);
 
             byte[] data = Encoding.UTF8.GetBytes(text);
 
-            resp.StatusCode = 200;
-            resp.ContentType = "text/plain";
-            resp.ContentLength = data.Length;
+            ctx.Response.StatusCode = 200;
+            ctx.Response.ContentType = "text/plain";
+            ctx.Response.ContentLength = data.Length;
 
-            await resp.SendFinalChunk(data);
+            await ctx.Response.SendFinalChunk(data);
             return;
         }
 
-        static byte[] GetSecretKey(S3Request req)
+        static byte[] GetSecretKey(S3Context req)
         {
             return Encoding.UTF8.GetBytes("default");
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        static async Task<bool> PreRequestHandler(S3Request req, S3Response resp)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        static async Task<bool> PreRequestHandler(S3Context ctx)
         {
             return false;
         }
 
-        static async Task DefaultRequestHandler(S3Request req, S3Response resp)
+        static async Task DefaultRequestHandler(S3Context ctx)
         {
-            await SendResponse(req, resp, "Default request handler");
+            await SendResponse(ctx, "Default request handler");
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        static async Task PostRequestHandler(S3Request req, S3Response resp)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        static async Task PostRequestHandler(S3Context ctx)
         {
-            Logger("Request complete: " + req.Http.Request.Method.ToString() + " " + req.Http.Request.Url.RawWithoutQuery + ": " + resp.StatusCode);
+            Logger("Request complete: " + ctx.Request.Http.Request.Method.ToString() + " " + ctx.Request.Http.Request.Url.RawWithoutQuery + ": " + ctx.Response.StatusCode);
         }
 
         #region Service-APIs
 
-        static async Task ListBuckets(S3Request req, S3Response resp)
+        static async Task ListBuckets(S3Context ctx)
         {
-            await SendResponse(req, resp, "List buckets");
+            await SendResponse(ctx, "List buckets");
         }
 
         #endregion
 
         #region Bucket-APIs
 
-        static async Task BucketDelete(S3Request req, S3Response resp)
+        static async Task BucketDelete(S3Context ctx)
         {
-            await SendResponse(req, resp, "Bucket delete");
+            await SendResponse(ctx, "Bucket delete");
         }
 
-        static async Task BucketDeleteTags(S3Request req, S3Response resp)
+        static async Task BucketDeleteTags(S3Context ctx)
         {
-            await SendResponse(req, resp, "Bucket delete tags");
+            await SendResponse(ctx, "Bucket delete tags");
         }
 
-        static async Task BucketDeleteWebsite(S3Request req, S3Response resp)
+        static async Task BucketDeleteWebsite(S3Context ctx)
         {
-            await SendResponse(req, resp, "Bucket delete website");
+            await SendResponse(ctx, "Bucket delete website");
         }
 
-        static async Task BucketExists(S3Request req, S3Response resp)
+        static async Task BucketExists(S3Context ctx)
         {
-            await SendResponse(req, resp, "Bucket exists");
+            await SendResponse(ctx, "Bucket exists");
         }
 
-        static async Task BucketRead(S3Request req, S3Response resp)
+        static async Task BucketRead(S3Context ctx)
         {
-            await SendResponse(req, resp, "Bucket read");
+            await SendResponse(ctx, "Bucket read");
         }
 
-        static async Task BucketReadAcl(S3Request req, S3Response resp)
+        static async Task BucketReadAcl(S3Context ctx)
         {
-            await SendResponse(req, resp, "Bucket read ACL");
+            await SendResponse(ctx, "Bucket read ACL");
         }
 
-        static async Task BucketReadLocation(S3Request req, S3Response resp)
+        static async Task BucketReadLocation(S3Context ctx)
         {
-            await SendResponse(req, resp, "Bucket read location");
+            await SendResponse(ctx, "Bucket read location");
         }
 
-        static async Task BucketReadLogging(S3Request req, S3Response resp)
+        static async Task BucketReadLogging(S3Context ctx)
         {
-            await SendResponse(req, resp, "Bucket read logging");
+            await SendResponse(ctx, "Bucket read logging");
         }
 
-        static async Task BucketReadTags(S3Request req, S3Response resp)
+        static async Task BucketReadTags(S3Context ctx)
         {
-            await SendResponse(req, resp, "Bucket read tags");
+            await SendResponse(ctx, "Bucket read tags");
         }
 
-        static async Task BucketReadVersioning(S3Request req, S3Response resp)
+        static async Task BucketReadVersioning(S3Context ctx)
         {
-            await SendResponse(req, resp, "Bucket read versioning");
+            await SendResponse(ctx, "Bucket read versioning");
         }
 
-        static async Task BucketReadVersions(S3Request req, S3Response resp)
+        static async Task BucketReadVersions(S3Context ctx)
         {
-            await SendResponse(req, resp, "Bucket read versions");
+            await SendResponse(ctx, "Bucket read versions");
         }
 
-        static async Task BucketReadWebsite(S3Request req, S3Response resp)
+        static async Task BucketReadWebsite(S3Context ctx)
         {
-            await SendResponse(req, resp, "Bucket read website");
+            await SendResponse(ctx, "Bucket read website");
         }
 
-        static async Task BucketWriteVersioning(S3Request req, S3Response resp)
+        static async Task BucketWriteVersioning(S3Context ctx)
         {
-            await SendResponse(req, resp, "Bucket write versioning");
+            await SendResponse(ctx, "Bucket write versioning");
         }
 
-        static async Task BucketWrite(S3Request req, S3Response resp)
+        static async Task BucketWrite(S3Context ctx)
         {
-            await SendResponse(req, resp, "Bucket write");
+            await SendResponse(ctx, "Bucket write");
         }
 
-        static async Task BucketWriteAcl(S3Request req, S3Response resp)
+        static async Task BucketWriteAcl(S3Context ctx)
         {
-            await SendResponse(req, resp, "Bucket write ACL");
+            await SendResponse(ctx, "Bucket write ACL");
         }
 
-        static async Task BucketWriteLogging(S3Request req, S3Response resp)
+        static async Task BucketWriteLogging(S3Context ctx)
         {
-            await SendResponse(req, resp, "Bucket write logging");
+            await SendResponse(ctx, "Bucket write logging");
         }
 
-        static async Task BucketWriteWebsite(S3Request req, S3Response resp)
+        static async Task BucketWriteWebsite(S3Context ctx)
         {
-            await SendResponse(req, resp, "Bucket write website");
+            await SendResponse(ctx, "Bucket write website");
         }
 
-        static async Task BucketWriteTags(S3Request req, S3Response resp)
+        static async Task BucketWriteTags(S3Context ctx)
         {
-            await SendResponse(req, resp, "Bucket write tags");
+            await SendResponse(ctx, "Bucket write tags");
         }
 
         #endregion
 
         #region Object-APIs
 
-        static async Task ObjectDelete(S3Request req, S3Response resp)
+        static async Task ObjectDelete(S3Context ctx)
         {
-            await SendResponse(req, resp, "Object delete");
+            await SendResponse(ctx, "Object delete");
         }
 
-        static async Task ObjectDeleteMultiple(S3Request req, S3Response resp)
+        static async Task ObjectDeleteMultiple(S3Context ctx)
         {
-            await SendResponse(req, resp, "Object delete multiple");
+            await SendResponse(ctx, "Object delete multiple");
         }
 
-        static async Task ObjectDeleteTags(S3Request req, S3Response resp)
+        static async Task ObjectDeleteTags(S3Context ctx)
         {
-            await SendResponse(req, resp, "Object delete tags");
+            await SendResponse(ctx, "Object delete tags");
         }
 
-        static async Task ObjectExists(S3Request req, S3Response resp)
+        static async Task ObjectExists(S3Context ctx)
         {
-            await SendResponse(req, resp, "Object exists");
+            await SendResponse(ctx, "Object exists");
         }
 
-        static async Task ObjectRead(S3Request req, S3Response resp)
+        static async Task ObjectRead(S3Context ctx)
         {
-            await SendResponse(req, resp, "Object read");
+            await SendResponse(ctx, "Object read");
         }
 
-        static async Task ObjectReadAcl(S3Request req, S3Response resp)
+        static async Task ObjectReadAcl(S3Context ctx)
         {
-            await SendResponse(req, resp, "Object read acl");
+            await SendResponse(ctx, "Object read acl");
         }
 
-        static async Task ObjectReadLegalHold(S3Request req, S3Response resp)
+        static async Task ObjectReadLegalHold(S3Context ctx)
         {
-            await SendResponse(req, resp, "Object read legal hold");
+            await SendResponse(ctx, "Object read legal hold");
         }
 
-        static async Task ObjectReadRange(S3Request req, S3Response resp)
+        static async Task ObjectReadRange(S3Context ctx)
         {
-            await SendResponse(req, resp, "Object read range");
+            await SendResponse(ctx, "Object read range");
         }
 
-        static async Task ObjectReadRetention(S3Request req, S3Response resp)
+        static async Task ObjectReadRetention(S3Context ctx)
         {
-            await SendResponse(req, resp, "Object read retention");
+            await SendResponse(ctx, "Object read retention");
         }
 
-        static async Task ObjectReadTags(S3Request req, S3Response resp)
+        static async Task ObjectReadTags(S3Context ctx)
         {
-            await SendResponse(req, resp, "Object read tags");
+            await SendResponse(ctx, "Object read tags");
         }
 
-        static async Task ObjectWrite(S3Request req, S3Response resp)
+        static async Task ObjectWrite(S3Context ctx)
         {
-            if (req.Chunked)
+            if (ctx.Request.Chunked)
             {
-                await SendChunkResponse(req, resp, "Object write chunked");
+                await SendChunkResponse(ctx, "Object write chunked");
             }
             else
             {
-                await SendResponse(req, resp, "Object write");
+                await SendResponse(ctx, "Object write");
             }
         }
 
-        static async Task ObjectWriteAcl(S3Request req, S3Response resp)
+        static async Task ObjectWriteAcl(S3Context ctx)
         {
-            await SendResponse(req, resp, "Object write acl");
+            await SendResponse(ctx, "Object write acl");
         }
 
-        static async Task ObjectWriteLegalHold(S3Request req, S3Response resp)
+        static async Task ObjectWriteLegalHold(S3Context ctx)
         {
-            await SendResponse(req, resp, "Object write legal hold");
+            await SendResponse(ctx, "Object write legal hold");
         }
 
-        static async Task ObjectWriteRetention(S3Request req, S3Response resp)
+        static async Task ObjectWriteRetention(S3Context ctx)
         {
-            await SendResponse(req, resp, "Object write retention");
+            await SendResponse(ctx, "Object write retention");
         }
 
-        static async Task ObjectWriteTags(S3Request req, S3Response resp)
+        static async Task ObjectWriteTags(S3Context ctx)
         {
-            await SendResponse(req, resp, "Object write tags");
+            await SendResponse(ctx, "Object write tags");
         }
 
         #endregion

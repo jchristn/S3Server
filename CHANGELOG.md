@@ -2,12 +2,17 @@
 
 ## Current Version
 
+v3.0.0
+
+- Breaking change, now passing ```S3Context``` instead of discrete ```S3Request``` and ```S3Response``` objects to callbacks
+- Breaking change, metadata now an ```object``` and moved to ```S3Context```
+
+## Previous Versions
+
 v2.2.0
 
 - Breaking change to GetSecretKey (now passing the entire S3Request instead of just the access key)
 - Dependency update
-
-## Previous Versions
 
 v2.1.3
 

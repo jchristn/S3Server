@@ -9,7 +9,7 @@ using System.Xml.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace S3ClientTest
+namespace Test.Client
 {
     internal class Common
     {

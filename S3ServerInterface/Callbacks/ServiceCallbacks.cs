@@ -15,9 +15,9 @@ namespace S3ServerInterface
 
         /// <summary>
         /// List all buckets.
-        /// Success: return an S3Response object with status 200 and ListAllMyBucketsResult in the body.
+        /// Success: send an S3Response object with status 200 and ListAllMyBucketsResult in the body.
         /// </summary>
-        public Func<S3Request, S3Response, Task> ListBuckets = null;
+        public Func<S3Context, Task> ListBuckets = null;
 
         #endregion
 

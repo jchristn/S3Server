@@ -4,20 +4,20 @@
 
 Simple S3 server-side interface, produced using Amazon's public documentation.  Want a simple S3 storage server built using S3ServerInterface?  Check out [Less3](https://github.com/jchristn/less3).
 
-[![NuGet Version](https://img.shields.io/nuget/v/S3ServerInterface.svg?style=flat)](https://www.nuget.org/packages/S3ServerInterface/) [![NuGet](https://img.shields.io/nuget/dt/S3ServerInterface.svg)](https://www.nuget.org/packages/S3ServerInterface) 
+[![NuGet Version](https://img.shields.io/nuget/v/S3Server.svg?style=flat)](https://www.nuget.org/packages/S3Server/) [![NuGet](https://img.shields.io/nuget/dt/S3ServerInterface.svg)](https://www.nuget.org/packages/S3Server) 
 
 ## Feedback and Enhancements
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v2.2.0
+## New in v3.0.0
 
-- Breaking change to GetSecretKey (now passing the entire S3Request instead of just the access key)
-- Dependency update
+- Breaking change, now passing ```S3Context``` instead of discrete ```S3Request``` and ```S3Response``` objects to callbacks
+- Breaking change, metadata now an ```object``` and moved to ```S3Context```
 
 ## Examples
 
-Refer to ```S3ClientTest``` and ```S3ServerTest``` projects for full examples.
+Refer to ```Test.Client``` and ```Test.Server``` projects for full examples.
 
 ## Important
 
@@ -37,34 +37,34 @@ The following notes should be read prior to using S3ServerInterface:
 using S3ServerInterface;
 
 // Initialize the server
-_Server = new S3Server("+", 8000, false, DefaultRequestHandler); // host, port, SSL
+S3Server server = new S3Server("+", 8000, false, DefaultRequestHandler); // host, port, SSL
 
 // Set callbacks
-_Server.Bucket.Exists = BucketExists;
-_Server.Bucket.Read = BucketRead;
-_Server.Bucket.Delete = BucketDelete;
-_Server.Object.Exists = ObjectExists;
-_Server.Object.Read = ObjectRead;
-_Server.Object.Write = ObjectWrite;
-_Server.Object.Delete = ObjectDelete;
+server.Bucket.Exists = BucketExists;
+server.Bucket.Read = BucketRead;
+server.Bucket.Delete = BucketDelete;
+server.Object.Exists = ObjectExists;
+server.Object.Read = ObjectRead;
+server.Object.Write = ObjectWrite;
+server.Object.Delete = ObjectDelete;
 // etc
 
 // Start the server
-_Server.Start();
+server.Start();
 
 // Example callback definition
-static async Task DefaultRequestHandler(S3Request req, S3Response resp)
+static async Task DefaultRequestHandler(S3Context ctx)
 {
-	resp.StatusCode = 400;
-	resp.ContentType = "text/plain";
-	resp.Send("Bad request");
+	ctx.Response.StatusCode = 400;
+	ctx.Response.ContentType = "text/plain";
+	ctx.Response.Send("Bad request");
 }
 
-static S3Response BucketExists(S3Request req)
+static S3Response BucketExists(S3Context ctx)
 {
    // implement your logic here
-   resp.StatusCode = 200;
-   resp.Send();
+   ctx.Response.StatusCode = 200;
+   ctx.Response.Send();
 }
 ```
 
@@ -90,9 +90,14 @@ IAmazonS3 client = new AmazonS3Client(cred, config);
 
 ## Request and Responses
 
-Both an ```S3Request``` and ```S3Response``` object are passed to the callback.  
+An ```S3Context``` object is passed to your callbacks which includes three properties:
 
-S3ServerInterface expects the code you implement in your callbacks to directly set values in the supplied ```S3Response``` and trigger the end of the connection either:
+- ```S3Request``` - the parsed S3 request
+- ```S3Response``` - the response object with which you will interact to send a response
+- ```Metadata``` - an object that you can choose to set with your own value
+  - This is often helpful if you use the ```PreRequestHandler``` for authentication or other purposes
+
+S3ServerInterface expects the code you implement in your callbacks to directly set values in the supplied ```S3Context.S3Response``` and trigger the end of the connection either:
 
 - When chunk transfer-encoding is not indicated in the request, through the use of one of the ```Send()``` APIs
 - When chunk transfer-encoding is indicated in the request, through the use of ```SendChunk()``` and ```SendFinalChunk()``` APIs
@@ -134,7 +139,7 @@ S3ServerInterface parses incoming HTTP requests, extracting key pieces of inform
 
 Refer to https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html for the S3 API documentation used to create this project.
 
-As of v2.0.x, the following callbacks are supported:
+As of v3.0.0, the following callbacks are supported:
 
 ### Bucket Callbacks
 
