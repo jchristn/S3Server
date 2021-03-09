@@ -34,8 +34,10 @@ namespace Test.Server
 
         static void Main(string[] args)
         {
+            /*
             Console.Write("Base domain (.localhost): ");
             string baseDomain = Console.ReadLine();
+            */
 
             Console.WriteLine("Listening on http://*:8000/");
 
@@ -44,7 +46,12 @@ namespace Test.Server
             _Server.Logging.HttpRequests = true;
             _Server.Logging.S3Requests = true;
             _Server.Logger = Logger;
-            _Server.BaseDomain = baseDomain;
+
+            // Multiple base domains
+            _Server.BaseDomains.Add(".localhost");
+            _Server.BaseDomains.Add(".localhost.com");
+            _Server.BaseDomains.Add(".localhost1.com");
+            _Server.BaseDomains.Add(".localhost2.com");
 
             _Server.AuthenticateSignatures = true;
             _Server.GetSecretKey = GetSecretKey;
@@ -125,7 +132,7 @@ namespace Test.Server
 
         static async Task SendResponse(S3Context ctx, string text)
         {
-            Console.WriteLine("[" + ctx.Request.Http.Request.Source.IpAddress + ":" + ctx.Request.Http.Request.Source.Port + "] " + text);
+            Console.WriteLine("[" + ctx.Http.Request.Source.IpAddress + ":" + ctx.Http.Request.Source.Port + "] " + text);
 
             byte[] data = Encoding.UTF8.GetBytes(text);
 
@@ -142,7 +149,7 @@ namespace Test.Server
 
         static async Task SendChunkResponse(S3Context ctx, string text)
         {
-            Console.WriteLine("[" + ctx.Request.Http.Request.Source.IpAddress + ":" + ctx.Request.Http.Request.Source.Port + "] " + text);
+            Console.WriteLine("[" + ctx.Http.Request.Source.IpAddress + ":" + ctx.Http.Request.Source.Port + "] " + text);
 
             byte[] data = Encoding.UTF8.GetBytes(text);
 
@@ -171,7 +178,7 @@ namespace Test.Server
 
         static async Task PostRequestHandler(S3Context ctx)
         {
-            Logger("Request complete: " + ctx.Request.Http.Request.Method.ToString() + " " + ctx.Request.Http.Request.Url.RawWithoutQuery + ": " + ctx.Response.StatusCode);
+            Logger("Request complete: " + ctx.Http.Request.Method.ToString() + " " + ctx.Http.Request.Url.RawWithoutQuery + ": " + ctx.Response.StatusCode);
         }
 
         #region Service-APIs

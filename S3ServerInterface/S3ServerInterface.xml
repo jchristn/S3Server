@@ -268,6 +268,19 @@
             Instantiates the object.
             </summary>
         </member>
+        <member name="T:S3ServerInterface.ObjectExtensions">
+            <summary>
+            Object extensions.
+            </summary>
+        </member>
+        <member name="M:S3ServerInterface.ObjectExtensions.ToJson(System.Object,System.Boolean)">
+            <summary>
+            Return a JSON string of this object.
+            </summary>
+            <param name="obj">Object.</param>
+            <param name="pretty">Enable or disable pretty print.</param>
+            <returns>JSON string.</returns>
+        </member>
         <member name="T:S3ServerInterface.S3Context">
             <summary>
             S3 context.
@@ -288,18 +301,24 @@
             User metadata, supplied by your application.
             </summary>
         </member>
+        <member name="P:S3ServerInterface.S3Context.Http">
+            <summary>
+            HTTP context from which the S3 context was created.
+            </summary>
+        </member>
         <member name="M:S3ServerInterface.S3Context.#ctor">
             <summary>
             Instantiate the object.
             </summary>
         </member>
-        <member name="M:S3ServerInterface.S3Context.#ctor(S3ServerInterface.S3Request,S3ServerInterface.S3Response,System.Object)">
+        <member name="M:S3ServerInterface.S3Context.#ctor(WatsonWebserver.HttpContext,System.Collections.Generic.List{System.String},System.Object,System.Action{System.String})">
             <summary>
             Instantiate the object.
             </summary>
-            <param name="req">S3 request.</param>
-            <param name="resp">S3 response.</param>
+            <param name="ctx">HTTP context.</param>
+            <param name="baseDomains">List of base domains, if any.</param>
             <param name="metadata">User metadata, provided by your application.</param>
+            <param name="logger">Method to invoke to send log messages.</param>
         </member>
         <member name="T:S3ServerInterface.S3Objects.AccessControlList">
             <summary>
@@ -1701,7 +1720,7 @@
         </member>
         <member name="P:S3ServerInterface.S3Request.BaseDomain">
             <summary>
-            Base domain against which the hostname is evaluated to identify the bucket name.
+            Base domain identified in the hostname.
             </summary>
         </member>
         <member name="P:S3ServerInterface.S3Request.Bucket">
@@ -1754,14 +1773,19 @@
             Signature from authorization header.
             </summary>
         </member>
+        <member name="P:S3ServerInterface.S3Request.ContentType">
+            <summary>
+            Content type.
+            </summary>
+        </member>
         <member name="P:S3ServerInterface.S3Request.ContentMd5">
             <summary>
-            Content MD-5 from request headers.
+            Content MD5 hash from request headers.
             </summary>
         </member>
         <member name="P:S3ServerInterface.S3Request.ContentSha256">
             <summary>
-            Content SHA-256 from request headers.
+            Content SHA256 hash from request headers.
             </summary>
         </member>
         <member name="P:S3ServerInterface.S3Request.Date">
@@ -1820,11 +1844,6 @@
             List of signed headers.
             </summary>
         </member>
-        <member name="P:S3ServerInterface.S3Request.Http">
-            <summary>
-            HTTP context from which this response was created.
-            </summary>
-        </member>
         <member name="P:S3ServerInterface.S3Request.Data">
             <summary>
             Stream containing the request body.
@@ -1835,27 +1854,18 @@
             Instantiate the object.
             </summary>
         </member>
-        <member name="M:S3ServerInterface.S3Request.#ctor(System.String,WatsonWebserver.HttpContext)">
-            <summary>
-            Instantiate the object.
-            </summary>
-            <param name="baseDomain">Base domain against which the hostname should be evaluated to identify the bucket.  For instance, to resolve buckets for *.localhost, specify '.localhost'.</param>
-            <param name="ctx">HttpContext.</param> 
-        </member>
-        <member name="M:S3ServerInterface.S3Request.#ctor(System.String,WatsonWebserver.HttpContext,System.Action{System.String})">
+        <member name="M:S3ServerInterface.S3Request.#ctor(S3ServerInterface.S3Context,System.Collections.Generic.List{System.String},System.Action{System.String})">
             <summary>
             Instantiates the object.
             </summary>
-            <param name="baseDomain">Base domain against which the hostname should be evaluated to identify the bucket.  For instance, to resolve buckets for *.localhost, specify '.localhost'.</param>
-            <param name="ctx">HttpContext.</param> 
+            <param name="ctx">S3 context.</param>
+            <param name="baseDomains">List of base domains against which the hostname should be evaluated to identify the bucket.  For instance, to resolve buckets for *.localhost, specify '.localhost'.</param> 
             <param name="logger">Method to invoke to send log messages.</param> 
         </member>
-        <member name="M:S3ServerInterface.S3Request.ParseHttpContext(System.String,WatsonWebserver.HttpContext)">
+        <member name="M:S3ServerInterface.S3Request.ParseHttpContext">
             <summary>
             Populate members using an HttpContext.
             </summary>
-            <param name="baseDomain">Base domain against which the hostname should be evaluated to identify the bucket.</param>
-            <param name="ctx">HttpContext.</param>
         </member>
         <member name="M:S3ServerInterface.S3Request.HeaderExists(System.String,System.Boolean)">
             <summary>
@@ -2146,27 +2156,32 @@
             The Send(ErrorCode) API is valid for both conditions.
             </summary>
         </member>
-        <member name="M:S3ServerInterface.S3Response.#ctor(S3ServerInterface.S3Request)">
+        <member name="M:S3ServerInterface.S3Response.#ctor">
             <summary>
             Instantiate the object.
             </summary>
-            <param name="s3request">S3Request.</param>
         </member>
-        <member name="M:S3ServerInterface.S3Response.#ctor(S3ServerInterface.S3Request,System.Int32,System.String,System.Collections.Generic.Dictionary{System.String,System.String},System.Int64)">
+        <member name="M:S3ServerInterface.S3Response.#ctor(S3ServerInterface.S3Context)">
             <summary>
             Instantiate the object without supplying a stream.  Useful for HEAD responses.
             </summary>
-            <param name="s3request">S3Request.</param>
+            <param name="ctx">S3 context.</param>
+        </member>
+        <member name="M:S3ServerInterface.S3Response.#ctor(S3ServerInterface.S3Context,System.Int32,System.String,System.Collections.Generic.Dictionary{System.String,System.String},System.Int64)">
+            <summary>
+            Instantiate the object without supplying a stream.  Useful for HEAD responses.
+            </summary>
+            <param name="ctx">S3 context.</param>
             <param name="statusCode">HTTP status code.</param>
             <param name="contentType">Content-type.</param>
             <param name="headers">HTTP headers.</param> 
             <param name="contentLength">Content length.</param>
         </member>
-        <member name="M:S3ServerInterface.S3Response.#ctor(S3ServerInterface.S3Request,System.Int32,System.String,System.Collections.Generic.Dictionary{System.String,System.String},System.Int64,System.IO.Stream)">
+        <member name="M:S3ServerInterface.S3Response.#ctor(S3ServerInterface.S3Context,System.Int32,System.String,System.Collections.Generic.Dictionary{System.String,System.String},System.Int64,System.IO.Stream)">
             <summary>
             Instantiate the object.
             </summary>
-            <param name="s3request">S3Request.</param>
+            <param name="ctx">S3 context.</param>
             <param name="statusCode">HTTP status code.</param>
             <param name="contentType">Content-type.</param>
             <param name="headers">HTTP headers.</param>
@@ -2221,13 +2236,6 @@
             </summary>
             <param name="data">Final chunk of data.</param>
             <returns>True if successful.</returns>
-        </member>
-        <member name="M:S3ServerInterface.S3Response.ToJson(System.Boolean)">
-            <summary>
-            Create a JSON representation of the object.
-            </summary>
-            <param name="pretty">Pretty print.</param>
-            <returns>JSON string.</returns>
         </member>
         <member name="T:S3ServerInterface.S3Server">
             <summary>
@@ -2301,11 +2309,11 @@
             Specify whether or not exceptions should be included in status 500 Internal Server Error messages.
             </summary>
         </member>
-        <member name="F:S3ServerInterface.S3Server.BaseDomain">
+        <member name="P:S3ServerInterface.S3Server.BaseDomains">
             <summary>
-            The base domain against which incoming requests should be compared to identify the bucket name.
+            The list of base domains against which incoming requests should be compared to identify the bucket name.
             For instance, if you wish to identify the bucket 'bucket' from a request to host 'bucket.mys3server.com', set this value to '.mys3server.com'.
-            If you leave this value to null, S3Server will always assume that the bucket name is in the URL.
+            If the list is empty, or, a base domain cannot be identified, S3Server will assume that the bucket name is in the URL.
             </summary>
         </member>
         <member name="M:S3ServerInterface.S3Server.#ctor(System.String,System.Int32,System.Boolean)">

@@ -17,7 +17,7 @@ namespace Test.Client
         static string _Endpoint = null;
         static string _AccessKey = null;
         static string _SecretKey = null;
-        static bool _ForcePathStyle = false;
+        static bool _ForcePathStyle = true;
         static AmazonS3Config _S3Config = null;
         static IAmazonS3 _S3Client = null;
         static BasicAWSCredentials _S3Credentials = null;
@@ -312,7 +312,7 @@ namespace Test.Client
                 ServiceURL = _Endpoint,  
                 ForcePathStyle = _ForcePathStyle,
                 UseHttp = _Ssl,
-                // SignatureVersion = "2"
+                SignatureVersion = "2"
             };
 
             _S3Client = new AmazonS3Client(_S3Credentials, _S3Config);

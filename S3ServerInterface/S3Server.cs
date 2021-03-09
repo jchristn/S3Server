@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks; 
 using WatsonWebserver;
@@ -87,11 +88,22 @@ namespace S3ServerInterface
         public bool SendExceptionsInResponses = true;
 
         /// <summary>
-        /// The base domain against which incoming requests should be compared to identify the bucket name.
+        /// The list of base domains against which incoming requests should be compared to identify the bucket name.
         /// For instance, if you wish to identify the bucket 'bucket' from a request to host 'bucket.mys3server.com', set this value to '.mys3server.com'.
-        /// If you leave this value to null, S3Server will always assume that the bucket name is in the URL.
+        /// If the list is empty, or, a base domain cannot be identified, S3Server will assume that the bucket name is in the URL.
         /// </summary>
-        public string BaseDomain = null;
+        public List<string> BaseDomains
+        {
+            get
+            {
+                return _BaseDomains;
+            }
+            set
+            {
+                if (value == null) _BaseDomains = new List<string>();
+                else _BaseDomains = value;
+            }
+        }
 
         #endregion
 
@@ -104,6 +116,7 @@ namespace S3ServerInterface
         private int _ListenerPort = 0;
         private bool _Ssl = false;
         private Server _Server = null;
+        private List<string> _BaseDomains = new List<string>();
          
         #endregion
 
@@ -250,50 +263,62 @@ namespace S3ServerInterface
         {
             if (ctx == null) throw new ArgumentNullException(nameof(ctx));
             DateTime startTime = DateTime.Now;
+            S3Context s3ctx = null;
 
-            S3Request s3req = new S3Request(BaseDomain, ctx, (Logging.S3Requests ? Logger : null));
-            S3Response s3resp = new S3Response(s3req);
-            S3Context s3ctx = new S3Context(s3req, s3resp, null);
+            try
+            {
+                s3ctx = new S3Context(ctx, _BaseDomains, null, (Logging.S3Requests ? Logger : null));
+            }
+            catch (Exception e)
+            {
+                if (Logging.Exceptions)
+                {
+                    Logger?.Invoke(_Header + "Exception:" + Environment.NewLine + Common.SerializeJson(e, true));
+                }
+
+                return;
+            }
 
             bool success = false;
 
             try
-            { 
+            {
                 if (Logging.HttpRequests)
-                {
-                    Logger?.Invoke(_Header + "HTTP request: " + Environment.NewLine + Common.SerializeJson(s3req, true));
-                }
+                    Logger?.Invoke(_Header + "HTTP request: " + Environment.NewLine + s3ctx.Http.ToJson(true));
+
+                if (Logging.S3Requests)
+                    Logger?.Invoke(_Header + "S3 request: " + Environment.NewLine + s3ctx.Request.ToJson(true));
 
                 if (PreRequestHandler != null)
                 {
                     success = await PreRequestHandler(s3ctx).ConfigureAwait(false);
                     if (success)
                     {
-                        await s3resp.Send().ConfigureAwait(false);
+                        await s3ctx.Response.Send().ConfigureAwait(false);
                         return;
                     } 
                 }
 
                 if (AuthenticateSignatures && GetSecretKey != null)
                 {
-                    if (!String.IsNullOrEmpty(s3req.AccessKey))
+                    if (!String.IsNullOrEmpty(s3ctx.Request.AccessKey))
                     {
                         byte[] secretKey = GetSecretKey(s3ctx);
                         if (secretKey == null || secretKey.Length < 1)
                         {
-                            await s3resp.Send(S3Objects.ErrorCode.InvalidRequest).ConfigureAwait(false);
+                            await s3ctx.Response.Send(S3Objects.ErrorCode.InvalidRequest).ConfigureAwait(false);
                             return;
                         }
 
-                        if (!s3req.IsValidSignature(secretKey))
+                        if (!s3ctx.Request.IsValidSignature(secretKey))
                         {
-                            await s3resp.Send(S3Objects.ErrorCode.SignatureDoesNotMatch).ConfigureAwait(false);
+                            await s3ctx.Response.Send(S3Objects.ErrorCode.SignatureDoesNotMatch).ConfigureAwait(false);
                             return;
                         }
                     }
                 }
 
-                switch (s3req.RequestType)
+                switch (s3ctx.Request.RequestType)
                 {
                     case S3RequestType.ListBuckets:
                         if (Service.ListBuckets != null)
@@ -542,7 +567,7 @@ namespace S3ServerInterface
                     return;
                 }
 
-                await s3resp.Send(S3Objects.ErrorCode.InvalidRequest).ConfigureAwait(false);
+                await s3ctx.Response.Send(S3Objects.ErrorCode.InvalidRequest).ConfigureAwait(false);
                 return;
             }
             catch (Exception e)
@@ -552,7 +577,7 @@ namespace S3ServerInterface
                     Logger?.Invoke(_Header + "Exception:" + Environment.NewLine + Common.SerializeJson(e, true));
                 }
 
-                await s3resp.Send(S3Objects.ErrorCode.InternalError).ConfigureAwait(false);
+                await s3ctx.Response.Send(S3Objects.ErrorCode.InternalError).ConfigureAwait(false);
                 return;
             }
             finally
@@ -567,7 +592,7 @@ namespace S3ServerInterface
                         "] " +
                         ctx.Request.Method.ToString() + " " +
                         ctx.Request.Url.RawWithoutQuery + " " +
-                        s3resp.StatusCode + 
+                        s3ctx.Response.StatusCode + 
                         " [" + Common.TotalMsFrom(startTime) + "ms]");
                 }
 

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Newtonsoft.Json;
+using WatsonWebserver;
 
 namespace S3ServerInterface
 {
@@ -37,6 +39,12 @@ namespace S3ServerInterface
         /// </summary>
         public object Metadata { get; set; } = null;
 
+        /// <summary>
+        /// HTTP context from which the S3 context was created.
+        /// </summary>
+        [JsonProperty(Order = 999)]
+        public HttpContext Http { get; private set; } = null;
+
         #endregion
 
         #region Private-Members
@@ -58,17 +66,18 @@ namespace S3ServerInterface
         /// <summary>
         /// Instantiate the object.
         /// </summary>
-        /// <param name="req">S3 request.</param>
-        /// <param name="resp">S3 response.</param>
+        /// <param name="ctx">HTTP context.</param>
+        /// <param name="baseDomains">List of base domains, if any.</param>
         /// <param name="metadata">User metadata, provided by your application.</param>
-        public S3Context(S3Request req, S3Response resp, object metadata = null)
+        /// <param name="logger">Method to invoke to send log messages.</param>
+        public S3Context(HttpContext ctx, List<string> baseDomains = null, object metadata = null, Action<string> logger = null)
         {
-            if (req == null) throw new ArgumentNullException(nameof(req));
-            if (resp == null) throw new ArgumentNullException(nameof(resp));
-
-            Request = req;
-            Response = resp;
+            if (ctx == null) throw new ArgumentNullException(nameof(ctx));
+             
             Metadata = metadata;
+            Http = ctx;
+            Request = new S3Request(this, baseDomains, logger);
+            Response = new S3Response(this);
         }
 
         #endregion
@@ -78,7 +87,7 @@ namespace S3ServerInterface
         #endregion
 
         #region Private-Methods
-
+         
         #endregion
     }
 }

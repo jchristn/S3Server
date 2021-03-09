@@ -9,10 +9,10 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using WatsonWebserver; 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Converters;
+using WatsonWebserver;
 
 namespace S3ServerInterface
 {
@@ -59,7 +59,7 @@ namespace S3ServerInterface
         public string Host { get; private set; } = null;
 
         /// <summary>
-        /// Base domain against which the hostname is evaluated to identify the bucket name.
+        /// Base domain identified in the hostname.
         /// </summary>
         public string BaseDomain { get; private set; } = null;
 
@@ -114,12 +114,17 @@ namespace S3ServerInterface
         public string Signature { get; private set; } = null;
 
         /// <summary>
-        /// Content MD-5 from request headers.
+        /// Content type.
+        /// </summary>
+        public string ContentType { get; private set; } = null;
+
+        /// <summary>
+        /// Content MD5 hash from request headers.
         /// </summary>
         public string ContentMd5 { get; private set; } = null;
 
         /// <summary>
-        /// Content SHA-256 from request headers.
+        /// Content SHA256 hash from request headers.
         /// </summary>
         public string ContentSha256 { get; private set; } = null;
 
@@ -312,12 +317,6 @@ namespace S3ServerInterface
         public List<string> SignedHeaders { get; private set; } = new List<string>();
          
         /// <summary>
-        /// HTTP context from which this response was created.
-        /// </summary>
-        [JsonProperty(Order = 999)]
-        public HttpContext Http { get; private set; } = null;
-
-        /// <summary>
         /// Stream containing the request body.
         /// </summary>
         [JsonIgnore]
@@ -328,7 +327,9 @@ namespace S3ServerInterface
         #region Private-Members
 
         private string _Header = "[S3Request] ";
+        private S3Context _Context = null;
         private Action<string> _Logger = null;
+        private List<string> _BaseDomains = new List<string>();
 
         private string _AmazonTimestampFormat = "yyyyMMddTHHmmssZ"; 
         private Dictionary<object, object> _UserMetadata = new Dictionary<object, object>();
@@ -342,75 +343,58 @@ namespace S3ServerInterface
         /// </summary>
         public S3Request()
         {
-            TimestampUtc = DateTime.Now.ToUniversalTime();
-        }
-
-        /// <summary>
-        /// Instantiate the object.
-        /// </summary>
-        /// <param name="baseDomain">Base domain against which the hostname should be evaluated to identify the bucket.  For instance, to resolve buckets for *.localhost, specify '.localhost'.</param>
-        /// <param name="ctx">HttpContext.</param> 
-        public S3Request(string baseDomain, HttpContext ctx)
-        {
-            if (ctx == null) throw new ArgumentNullException(nameof(ctx));
-            if (ctx.Request == null) throw new ArgumentNullException(nameof(ctx.Request));
-             
-            ParseHttpContext(baseDomain, ctx);
         }
 
         /// <summary>
         /// Instantiates the object.
         /// </summary>
-        /// <param name="baseDomain">Base domain against which the hostname should be evaluated to identify the bucket.  For instance, to resolve buckets for *.localhost, specify '.localhost'.</param>
-        /// <param name="ctx">HttpContext.</param> 
+        /// <param name="ctx">S3 context.</param>
+        /// <param name="baseDomains">List of base domains against which the hostname should be evaluated to identify the bucket.  For instance, to resolve buckets for *.localhost, specify '.localhost'.</param> 
         /// <param name="logger">Method to invoke to send log messages.</param> 
-        public S3Request(string baseDomain, HttpContext ctx, Action<string> logger)
+        public S3Request(S3Context ctx, List<string> baseDomains = null, Action<string> logger = null)
         {
             if (ctx == null) throw new ArgumentNullException(nameof(ctx));
-            if (ctx.Request == null) throw new ArgumentNullException(nameof(ctx.Request));
+            if (ctx.Http == null) throw new ArgumentNullException(nameof(ctx.Http));
+            if (baseDomains != null) _BaseDomains = baseDomains;
 
+            _Context = ctx;
             _Logger = logger;
+            _BaseDomains = baseDomains;
 
-            ParseHttpContext(baseDomain, ctx);
+            ParseHttpContext();
         }
 
         #endregion
 
         #region Public-Methods
-         
+
         /// <summary>
         /// Populate members using an HttpContext.
         /// </summary>
-        /// <param name="baseDomain">Base domain against which the hostname should be evaluated to identify the bucket.</param>
-        /// <param name="ctx">HttpContext.</param>
-        public void ParseHttpContext(string baseDomain, HttpContext ctx)
+        public void ParseHttpContext()
         {
-            if (ctx == null) throw new ArgumentNullException(nameof(ctx));
-
-            BaseDomain = baseDomain;
-            Http = ctx;
+            if (_Context == null) throw new InvalidOperationException("S3 context not supplied in the S3 request object.");
+            if (_Context.Http == null) throw new InvalidOperationException("HTTP context not supplied in the S3 request object.");
 
             #region Initialize
 
             TimestampUtc = DateTime.Now.ToUniversalTime();
-            Http = ctx;
-            Chunked = Http.Request.ChunkedTransfer;
+            Chunked = _Context.Http.Request.ChunkedTransfer;
             Region = null;
-            BaseDomain = baseDomain;
-            Hostname = Http.Request.Destination.Hostname;
+            Hostname = _Context.Http.Request.Destination.Hostname;
             RequestType = S3RequestType.Unknown;
             RequestStyle = S3RequestStyle.Unknown;
             Bucket = null;
             Key = null;
             Authorization = null;
             AccessKey = null;
-            Data = Http.Request.Data;
+            Data = _Context.Http.Request.Data;
 
             #endregion
 
             #region Set-Parameters-from-Querystring
 
-            if (Http.Request.Query.Elements != null && Http.Request.Query.Elements.Count > 0)
+            if (_Context.Http.Request.Query.Elements != null && _Context.Http.Request.Query.Elements.Count > 0)
             {
                 VersionId = RetrieveQueryValue("versionid");
                 Prefix = RetrieveQueryValue("prefix");
@@ -418,6 +402,8 @@ namespace S3ServerInterface
                 Marker = RetrieveQueryValue("marker");
                 ContinuationToken = RetrieveQueryValue("continuation-token");
                 Expires = RetrieveQueryValue("expires");
+                AccessKey = RetrieveQueryValue("awsaccesskeyid");
+                Signature = RetrieveQueryValue("signature");
 
                 if (QuerystringExists("max-keys", false))
                 {
@@ -425,29 +411,23 @@ namespace S3ServerInterface
                     string maxKeysStr = RetrieveQueryValue("max-keys");
                     if (!String.IsNullOrEmpty(maxKeysStr))
                     {
-                        if (Int64.TryParse(Http.Request.Query.Elements["max-keys"], out maxKeys))
+                        if (Int64.TryParse(_Context.Http.Request.Query.Elements["max-keys"], out maxKeys))
                         {
                             MaxKeys = maxKeys;
                         }
                     }
                 }
-
-                if (QuerystringExists("awsaccesskeyid", false))
-                    AccessKey = RetrieveQueryValue("awsaccesskeyid");
-
-                if (QuerystringExists("signature", false))
-                    Signature = RetrieveQueryValue("signature");
             }
 
             #endregion
 
             #region Set-Values-From-Headers
 
-            if (Http.Request.Headers != null && Http.Request.Headers.Count > 0)
+            if (_Context.Http.Request.Headers != null && _Context.Http.Request.Headers.Count > 0)
             { 
                 if (HeaderExists("authorization", false))
                 {
-                    _Logger?.Invoke(_Header + "Processing Authorization header"); 
+                    _Logger?.Invoke(_Header + "processing Authorization header"); 
                     Authorization = RetrieveHeaderValue("authorization");
                     ParseAuthorizationHeader();
                 }
@@ -467,21 +447,11 @@ namespace S3ServerInterface
                     }
                 }
 
-                if (HeaderExists("content-md5", false))
-                {
-                    Host = RetrieveHeaderValue("content-md5");
-                }
-
-                if (HeaderExists("host", false))
-                {
-                    Host = RetrieveHeaderValue("host");
-                }
-
-                if (HeaderExists("x-amz-content-sha256", false))
-                {
-                    ContentSha256 = RetrieveHeaderValue("x-amz-content-sha256");
-                }
-
+                if (HeaderExists("content-md5", false)) ContentMd5 = RetrieveHeaderValue("content-md5");
+                if (HeaderExists("content-type", false)) ContentType = RetrieveHeaderValue("content-type");
+                if (HeaderExists("host", false)) Host = RetrieveHeaderValue("host");
+                if (HeaderExists("x-amz-content-sha256", false)) ContentSha256 = RetrieveHeaderValue("x-amz-content-sha256");
+                
                 if (HeaderExists("date", false))
                 {
                     Date = RetrieveHeaderValue("date");
@@ -516,9 +486,10 @@ namespace S3ServerInterface
 
             #region Set-Region-Bucket-Style-and-Key
 
-            if (!String.IsNullOrEmpty(Hostname) && !String.IsNullOrEmpty(Http.Request.Url.RawWithoutQuery))
+            if (!String.IsNullOrEmpty(Hostname) 
+                && !String.IsNullOrEmpty(_Context.Http.Request.Url.RawWithoutQuery))
             { 
-                ParseHostnameAndUrl(baseDomain, Http.Request.Url.Full, Http.Request.Url.RawWithoutQuery);
+                ParseHostnameAndUrl();
             }
 
             #endregion
@@ -539,7 +510,7 @@ namespace S3ServerInterface
         public bool HeaderExists(string key, bool caseSensitive)
         {
             if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
-            return Http.Request.HeaderExists(key, caseSensitive);
+            return _Context.Http.Request.HeaderExists(key, caseSensitive);
         }
 
         /// <summary>
@@ -551,7 +522,7 @@ namespace S3ServerInterface
         public bool QuerystringExists(string key, bool caseSensitive)
         {
             if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
-            return Http.Request.QuerystringExists(key, caseSensitive);
+            return _Context.Http.Request.QuerystringExists(key, caseSensitive);
         }
 
         /// <summary>
@@ -562,7 +533,7 @@ namespace S3ServerInterface
         public string RetrieveHeaderValue(string key)
         {
             if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
-            return Http.Request.RetrieveHeaderValue(key);
+            return _Context.Http.Request.RetrieveHeaderValue(key);
         }
 
         /// <summary>
@@ -574,9 +545,9 @@ namespace S3ServerInterface
         {
             if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key)); 
 
-            if (Http.Request.Query.Elements != null && Http.Request.Query.Elements.Count > 0)
+            if (_Context.Http.Request.Query.Elements != null && _Context.Http.Request.Query.Elements.Count > 0)
             {
-                foreach (KeyValuePair<string, string> curr in Http.Request.Query.Elements)
+                foreach (KeyValuePair<string, string> curr in _Context.Http.Request.Query.Elements)
                 {
                     if (String.IsNullOrEmpty(curr.Key)) continue;
                     if (String.Compare(curr.Key.ToLower(), key.ToLower()) == 0) return curr.Value;
@@ -592,7 +563,7 @@ namespace S3ServerInterface
         /// <returns>Chunk.</returns>
         public async Task<Chunk> ReadChunk()
         {
-            return await Http.Request.ReadChunk().ConfigureAwait(false);
+            return await _Context.Http.Request.ReadChunk().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -615,7 +586,7 @@ namespace S3ServerInterface
         public bool IsValidSignature(byte[] secretKey)
         {
             if (secretKey == null || secretKey.Length < 1) throw new ArgumentNullException(nameof(secretKey));
-            return S3Signatures.IsValidSignature(this, secretKey, _Logger);
+            return S3Signatures.IsValidSignature(_Context, secretKey, _Logger);
         }
 
         #endregion
@@ -774,58 +745,55 @@ namespace S3ServerInterface
             }
         }
 
-        private void ParseHostnameAndUrl(string baseHostname, string fullUrl, string rawUrl)
-        { 
-            if (String.IsNullOrEmpty(fullUrl)) return;
-            if (String.IsNullOrEmpty(rawUrl)) return;
-
-            Uri uri = new Uri(fullUrl);
+        private void ParseHostnameAndUrl()
+        {
+            Uri uri = new Uri(_Context.Http.Request.Url.Full);
             Hostname = uri.Host;
 
-            _Logger?.Invoke(_Header +
-                "Parsing URL" + Environment.NewLine +
-                "  Full URL      : " + fullUrl + Environment.NewLine +
-                "  Raw URL       : " + rawUrl + Environment.NewLine + 
-                "  Base Hostname : " + baseHostname);
+            _Logger?.Invoke(_Header + "parsing URL " + _Context.Http.Request.Url.Full);
 
             if (Common.IsIpAddress(Hostname))
             {
                 RequestStyle = S3RequestStyle.BucketNotInHostname;
-                _Logger?.Invoke(_Header + "Supplied hostname is an IP address");
+                _Logger?.Invoke(_Header + "supplied hostname is an IP address");
             }
             else
             {
-                if (String.IsNullOrEmpty(baseHostname))
+                if (_BaseDomains == null || _BaseDomains.Count < 1)
                 {
                     RequestStyle = S3RequestStyle.BucketNotInHostname;
-                    _Logger?.Invoke(_Header + "Base hostname not supplied, request assumed to have bucket in URL");
+                    _Logger?.Invoke(_Header + "no base hostnames, request assumed to have bucket in URL");
                 }
                 else
                 {
-                    if (!Hostname.Contains(baseHostname))
+                    // need to look the OTHER way
+                    // currently looking for exact matches and Hostname has the bucket name in it
+                    // need to look to see if any of the base domains are contained WITHIN the hostname
+
+                    BaseDomain = GetMatchingBaseDomain(Hostname);
+                    if (String.IsNullOrEmpty(BaseDomain))
                     {
                         RequestStyle = S3RequestStyle.BucketNotInHostname;
-                        _Logger?.Invoke(_Header + "Base hostname not found in hostname [" + Hostname + "], assumed to have bucket in URL");
+                        _Logger?.Invoke(_Header + "base hostname not found, assumed to have bucket in URL");
                     }
                     else
                     {
                         RequestStyle = S3RequestStyle.BucketInHostname;
 
-                        string temp = Common.ReplaceLastOccurrence(Hostname, baseHostname, "");
-                        if (!temp.Contains("."))
-                        {
-                            Bucket = temp;
-                        }
-                        else
-                        {
-                            string[] parts = temp.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
-                            Bucket = parts[0];
-                        }
+                        string tempBaseDomain = BaseDomain;
+                        while (tempBaseDomain.StartsWith(".")) tempBaseDomain = tempBaseDomain.Substring(1);
 
-                        _Logger?.Invoke(_Header + "Bucket name [" + Bucket + "] found in hostname [" + Hostname + "]");
+                        string temp = Common.ReplaceLastOccurrence(Hostname, tempBaseDomain, "");
+                        while (temp.EndsWith(".")) temp = temp.Substring(0, (temp.Length - 1));
+
+                        Bucket = temp;
+
+                        _Logger?.Invoke(_Header + "bucket " + Bucket + " found in hostname " + Hostname);
                     }
                 }
             }
+
+            string rawUrl = _Context.Http.Request.Url.RawWithoutQuery;
 
             while (rawUrl.StartsWith("/")) rawUrl = rawUrl.Substring(1);
 
@@ -843,11 +811,11 @@ namespace S3ServerInterface
             }
 
             _Logger?.Invoke(_Header + 
-                "Parsed URL" + Environment.NewLine + 
-                "  Full URL      : " + fullUrl + Environment.NewLine +
-                "  Raw URL       : " + rawUrl + Environment.NewLine +
+                "parsed URL:" + Environment.NewLine + 
+                "  Full URL      : " + _Context.Http.Request.Url.Full + Environment.NewLine +
+                "  Raw URL       : " + _Context.Http.Request.Url.RawWithoutQuery + Environment.NewLine +
                 "  Hostname      : " + Hostname + Environment.NewLine +
-                "  Base Hostname : " + baseHostname + Environment.NewLine +
+                "  Base domain   : " + BaseDomain + Environment.NewLine +
                 "  Bucket name   : " + Bucket + Environment.NewLine +
                 "  Style         : " + RequestStyle.ToString() + Environment.NewLine +
                 "  Object key    : " + Key + Environment.NewLine +
@@ -873,7 +841,7 @@ namespace S3ServerInterface
          
         private void SetRequestType()
         {
-            switch (Http.Request.Method)
+            switch (_Context.Http.Request.Method)
             {
                 case HttpMethod.HEAD:
                     #region HEAD
@@ -930,7 +898,6 @@ namespace S3ServerInterface
                         else
                             RequestType = S3RequestType.ObjectRead;
                     }
-
                     break;
 
                 #endregion
@@ -966,7 +933,6 @@ namespace S3ServerInterface
                         else
                             RequestType = S3RequestType.ObjectWrite;
                     }
-
                     break;
 
                 #endregion
@@ -979,7 +945,6 @@ namespace S3ServerInterface
                         if (QuerystringExists("delete", false))
                             RequestType = S3RequestType.ObjectDeleteMultiple;
                     }
-
                     break;
 
                 #endregion
@@ -1003,11 +968,30 @@ namespace S3ServerInterface
                         else
                             RequestType = S3RequestType.ObjectDelete;
                     }
-
                     break;
 
                     #endregion
             } 
+        }
+
+        private string GetMatchingBaseDomain(string hostname)
+        {
+            string eval = "." + hostname;
+
+            List<string> matches = new List<string>();
+
+            foreach (string baseDomain in _BaseDomains)
+            {
+                if (eval.Equals(baseDomain)) return baseDomain;
+                if (eval.EndsWith(baseDomain)) matches.Add(baseDomain);
+            }
+
+            if (matches.Count > 0)
+            {
+                return matches.Aggregate("", (max, cur) => max.Length > cur.Length ? max : cur);
+            }
+
+            return null;
         }
 
         #endregion
