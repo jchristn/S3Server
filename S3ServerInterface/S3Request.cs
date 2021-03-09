@@ -810,7 +810,18 @@ namespace S3ServerInterface
                     else
                     {
                         RequestStyle = S3RequestStyle.BucketInHostname;
-                        Bucket = Common.ReplaceLastOccurrence(Hostname, baseHostname, "");
+
+                        string temp = Common.ReplaceLastOccurrence(Hostname, baseHostname, "");
+                        if (!temp.Contains("."))
+                        {
+                            Bucket = temp;
+                        }
+                        else
+                        {
+                            string[] parts = temp.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+                            Bucket = parts[0];
+                        }
+
                         _Logger?.Invoke(_Header + "Bucket name [" + Bucket + "] found in hostname [" + Hostname + "]");
                     }
                 }
