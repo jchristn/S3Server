@@ -312,7 +312,7 @@ namespace Test.Client
                 ServiceURL = _Endpoint,  
                 ForcePathStyle = _ForcePathStyle,
                 UseHttp = _Ssl,
-                SignatureVersion = "2"
+                SignatureVersion = "4"
             };
 
             _S3Client = new AmazonS3Client(_S3Credentials, _S3Config);

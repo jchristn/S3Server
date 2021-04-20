@@ -11,8 +11,7 @@ namespace S3ServerInterface
     /// </summary>
     internal static class S3Signatures
     {
-        // For V2, see https://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html
-        // For V4, see https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
+        // see https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
 
         internal static bool IsValidSignature(S3Context ctx, byte[] secretKey, Action<string> logger)
         {
@@ -28,44 +27,7 @@ namespace S3ServerInterface
             string hmacSha256Signature = null;
             string logMessage = null;
 
-            if (_S3Context.Request.SignatureVersion == S3SignatureVersion.Version2)
-            {
-                #region V2
-
-                hmacSha1Signature = Common.BytesToBase64(
-                    Common.HmacSha1(Encoding.UTF8.GetBytes(_V2StringToSign), secretKey)
-                    );
-
-                hmacSha256Signature = Common.BytesToBase64(
-                    Common.HmacSha256(Encoding.UTF8.GetBytes(_V2StringToSign), secretKey)
-                    );
-
-                logMessage =
-                    _Header + "Signature V2 validation:" + Environment.NewLine + 
-                    "  String to sign" + Environment.NewLine +
-                    "  --------------" + Environment.NewLine +
-                    _V2StringToSign + Environment.NewLine +
-                    Environment.NewLine +
-                    "  Client-supplied signature : " + _S3Context.Request.Signature + Environment.NewLine +
-                    "  Generated HMAC-SHA1       : " + hmacSha1Signature + Environment.NewLine +
-                    "  Generated HMAC-SHA256     : " + hmacSha256Signature + Environment.NewLine +
-                    "  Success                   : ";
-
-                if (hmacSha256Signature.Equals(_S3Context.Request.Signature) 
-                    || hmacSha1Signature.Equals(_S3Context.Request.Signature))
-                {
-                    _Logger?.Invoke(logMessage + "true");
-                    return true;
-                }
-                else
-                {
-                    _Logger?.Invoke(logMessage + "false");
-                    return false;
-                }
-
-                #endregion
-            }
-            else if (_S3Context.Request.SignatureVersion == S3SignatureVersion.Version4)
+            if (_S3Context.Request.SignatureVersion == S3SignatureVersion.Version4)
             {
                 #region V4
 
@@ -111,7 +73,7 @@ namespace S3ServerInterface
             }
             else
             {
-                throw new InvalidOperationException("Unable to validate signature unless signature version is V2 or V4.");
+                throw new InvalidOperationException("Unable to validate signature unless signature version is V4.");
             } 
         }
 
@@ -125,190 +87,7 @@ namespace S3ServerInterface
         private static string _AmazonDateFormat = "yyyyMMdd";
 
         #endregion
-
-        #region Signature-V2-Members
-
-        private static string _V2StringToSign
-        {
-            get
-            {
-                string ret = "";
-
-                ret += _S3Context.Http.Request.Method.ToString().ToUpper() + "\n";
-                ret += _S3Context.Request.ContentMd5 + "\n";
-                ret += _S3Context.Request.ContentType + "\n";
-
-                if (!String.IsNullOrEmpty(_S3Context.Request.Expires)) ret += _S3Context.Request.Expires + "\n";
-                else ret += _S3Context.Request.Date + "\n";
-
-                ret += _V2CanonicalHeaders;
-                ret += _V2CanonicalUri; 
-                ret += _V2CanonicalQuerystring;
-
-                return ret;
-            }
-        }
-        private static string _V2CanonicalHeaders
-        {
-            get
-            {
-                Dictionary<string, string> headersAndQuery = new Dictionary<string, string>();
-                if (_S3Context.Http.Request.Headers != null && _S3Context.Http.Request.Headers.Count > 0)
-                {
-                    foreach (KeyValuePair<string, string> header in _S3Context.Http.Request.Headers)
-                    {
-                        headersAndQuery.Add(header.Key.ToLower(), header.Value);
-                    }
-                }
-
-                if (_S3Context.Http.Request.Query.Elements != null && _S3Context.Http.Request.Query.Elements.Count > 0)
-                {
-                    foreach (KeyValuePair<string, string> query in _S3Context.Http.Request.Query.Elements)
-                    {
-                        if (!headersAndQuery.ContainsKey(query.Key.ToLower())) 
-                            headersAndQuery.Add(query.Key.ToLower(), query.Value);
-                    }
-                }
-
-                string ret = "";
-
-                if (headersAndQuery != null && headersAndQuery.Count > 0)
-                {
-                    headersAndQuery = headersAndQuery.OrderBy(o => o.Key, StringComparer.OrdinalIgnoreCase).ToDictionary(o => o.Key, o => o.Value);
-
-                    foreach (KeyValuePair<string, string> header in headersAndQuery)
-                    {
-                        if (String.IsNullOrEmpty(header.Key)) continue;
-                        string key = header.Key.ToLower().Trim();
-                        if (!key.StartsWith("x-amz-")) continue;
-                        else
-                        {
-                            if (key.Equals("x-amz-date") && !String.IsNullOrEmpty(_S3Context.Request.Date)) continue;
-                            string val = _S3Context.Request.RetrieveHeaderValue(header.Key);
-                            ret += key.ToLower() + ":" + val + "\n";
-                        }
-                    }
-                }
-                 
-                return ret;
-            }
-        }
-        private static List<string> _V2CanonicalQuerystringItems = new List<string>
-        {
-            "acl",
-            "delete",
-            "lifecycle",
-            "location",
-            "logging",
-            "notification",
-            "partNumber",
-            "policy",
-            "requestPayment",
-            "torrent",
-            "uploadId",
-            "uploads",
-            "versionId",
-            "versioning",
-            "versions",
-            "website",
-            "response-content-type",
-            "response-content-language",
-            "response-expires",
-            "response-cache-control",
-            "response-content-disposition",
-            "response-content-encoding"
-        };
-        private static string _V2CanonicalUri
-        {
-            get
-            {
-                string ret = "/";
-
-                if (_S3Context.Request.RequestStyle == S3RequestStyle.BucketNotInHostname)
-                {
-                    if (!String.IsNullOrEmpty(_S3Context.Request.Bucket))
-                    {
-                        ret += WebUtility.UrlEncode(_S3Context.Request.Bucket);
-
-                        if (!String.IsNullOrEmpty(_S3Context.Request.Key))
-                        {
-                            ret += "/" + _S3Context.Request.Key;
-                        }
-                    }
-                }
-                else
-                {
-                    ret += WebUtility.UrlEncode(_S3Context.Request.Bucket);
-
-                    if (!String.IsNullOrEmpty(_S3Context.Request.Key))
-                    {
-                        if (!String.IsNullOrEmpty(_S3Context.Request.Bucket)) ret += "/";
-
-                        ret += _S3Context.Request.Key;
-                    }
-                }
-
-                return ret;
-            }
-        }
-        private static string _V2CanonicalQuerystring
-        {
-            get
-            {
-                string ret = "";
-
-                foreach (string key in _V2CanonicalQuerystringItems)
-                {
-                    if (_S3Context.Request.QuerystringExists(key, false)) ret = V2AppendCanonicalizedResource(ret, key);
-                }
-
-                return ret;
-            }
-        }
-
-        #endregion
-
-        #region Signature-V2-Methods
-
-        private static string V2AppendCanonicalizedResource(string original, string appendKey)
-        {
-            if (String.IsNullOrEmpty(appendKey)) return original;
-
-            string val = _S3Context.Request.RetrieveHeaderValue(appendKey);
-            if (!String.IsNullOrEmpty(val))
-            {
-                val = WebUtility.UrlDecode(val);
-                val = WebUtility.UrlEncode(val);
-            }
-
-            appendKey = WebUtility.UrlEncode(appendKey);
-
-            if (String.IsNullOrEmpty(original))
-            {
-                if (String.IsNullOrEmpty(val))
-                {
-                    return "?" + appendKey;
-                }
-                else
-                {
-                    return "?" + appendKey + "=" + val;
-                }
-            }
-            else
-            {
-                if (String.IsNullOrEmpty(val))
-                {
-                    return "&" + appendKey;
-                }
-                else
-                {
-                    return "&" + appendKey + "=" + val;
-                }
-            }
-        }
-
-        #endregion
-
+         
         #region Signature-V4-Members
 
         private static string _V4StringToSign
