@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using S3ServerInterface.S3Objects;
 using WatsonWebserver;
 
@@ -49,6 +50,7 @@ namespace S3ServerInterface
         /// <summary>
         /// The data to return to the requestor.  Set ContentLength before assigning the stream.
         /// </summary>
+        [JsonIgnore]
         public Stream Data { get; set; } = null;
 
         /// <summary>
