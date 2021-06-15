@@ -196,7 +196,10 @@ namespace S3ServerInterface
         public async Task<bool> Send()
         {
             if (Chunked) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk().");
-            return await Send(new byte[0]).ConfigureAwait(false);
+
+            SetResponseHeaders();
+
+            return await _HttpResponse.Send().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -206,16 +209,22 @@ namespace S3ServerInterface
         /// <returns>True if successful.</returns>
         public async Task<bool> Send(string data)
         {
-            if (Chunked) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk()."); 
+            if (Chunked) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk().");
 
-            byte[] bytes = null;
+            byte[] bytes = new byte[0];
             if (!String.IsNullOrEmpty(data))
             {
                 bytes = Encoding.UTF8.GetBytes(data);
                 ContentLength = bytes.Length;
             }
+            else
+            {
+                ContentLength = 0;
+            }
 
-            return await Send(bytes).ConfigureAwait(false); 
+            SetResponseHeaders();
+
+            return await _HttpResponse.Send(bytes).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -241,8 +250,11 @@ namespace S3ServerInterface
                 ms = new MemoryStream(new byte[0]);
             }
 
-            ms.Seek(0, SeekOrigin.Begin); 
-            return await Send(ContentLength, ms).ConfigureAwait(false);
+            ms.Seek(0, SeekOrigin.Begin);
+
+            SetResponseHeaders();
+
+            return await _HttpResponse.Send(ContentLength, ms).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -281,8 +293,8 @@ namespace S3ServerInterface
             Error errorBody = new Error(error);
 
             byte[] bytes = Encoding.UTF8.GetBytes(Common.SerializeXml(errorBody));
-            MemoryStream data = new MemoryStream(bytes);
-            data.Seek(0, SeekOrigin.Begin);
+            MemoryStream ms = new MemoryStream(bytes);
+            ms.Seek(0, SeekOrigin.Begin);
 
             ContentLength = bytes.Length;
             StatusCode = errorBody.HttpStatusCode;
@@ -290,7 +302,7 @@ namespace S3ServerInterface
 
             SetResponseHeaders();
 
-            return await Send(ContentLength, data).ConfigureAwait(false);
+            return await _HttpResponse.Send(ContentLength, ms).ConfigureAwait(false);
         }
            
         /// <summary>
