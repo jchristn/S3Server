@@ -68,21 +68,6 @@ namespace S3ServerInterface
         public Func<S3Context, Task> PostRequestHandler = null;
 
         /// <summary>
-        /// Callback method to retrieve the secret key for the supplied access key from your application.  
-        /// This method is only used when AuthenticateSignatures is set to true.
-        /// </summary>
-        public Func<S3Context, byte[]> GetSecretKey = null;
-
-        /// <summary>
-        /// Enable or disable authentication of signatures.  This does not validate signatures for transferred chunks, only authentication of the user.
-        /// Signatures will only be authenticated if the GetSecretKey callback is set.
-        /// Refer to the following links for how AWS signatures are derived.
-        /// Version 2: https://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html
-        /// Version 4: https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
-        /// </summary>
-        public bool AuthenticateSignatures = false;
-
-        /// <summary>
         /// Specify whether or not exceptions should be included in status 500 Internal Server Error messages.
         /// </summary>
         public bool SendExceptionsInResponses = true;
@@ -297,25 +282,6 @@ namespace S3ServerInterface
                         await s3ctx.Response.Send().ConfigureAwait(false);
                         return;
                     } 
-                }
-
-                if (AuthenticateSignatures && GetSecretKey != null)
-                {
-                    if (!String.IsNullOrEmpty(s3ctx.Request.AccessKey))
-                    {
-                        byte[] secretKey = GetSecretKey(s3ctx);
-                        if (secretKey == null || secretKey.Length < 1)
-                        {
-                            await s3ctx.Response.Send(S3Objects.ErrorCode.InvalidRequest).ConfigureAwait(false);
-                            return;
-                        }
-
-                        if (!s3ctx.Request.IsValidSignature(secretKey))
-                        {
-                            await s3ctx.Response.Send(S3Objects.ErrorCode.SignatureDoesNotMatch).ConfigureAwait(false);
-                            return;
-                        }
-                    }
                 }
 
                 switch (s3ctx.Request.RequestType)

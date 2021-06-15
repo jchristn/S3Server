@@ -10,10 +10,10 @@ Simple S3 server-side interface, produced using Amazon's public documentation.  
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v3.0.0
+## New in v3.2.1
 
-- Breaking change, now passing ```S3Context``` instead of discrete ```S3Request``` and ```S3Response``` objects to callbacks
-- Breaking change, metadata now an ```object``` and moved to ```S3Context```
+- Breaking change, removal of handling for validating S3 signatures (too error-prone)
+- Internal refactor
 
 ## Examples
 

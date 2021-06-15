@@ -2,12 +2,17 @@
 
 ## Current Version
 
+v3.2.1
+
+- Breaking change, removal of handling for validating S3 signatures (too error-prone)
+- Internal refactor
+
+## Previous Versions
+
 v3.0.0
 
 - Breaking change, now passing ```S3Context``` instead of discrete ```S3Request``` and ```S3Response``` objects to callbacks
 - Breaking change, metadata now an ```object``` and moved to ```S3Context```
-
-## Previous Versions
 
 v2.2.0
 

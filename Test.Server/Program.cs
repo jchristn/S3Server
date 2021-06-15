@@ -53,8 +53,6 @@ namespace Test.Server
             _Server.BaseDomains.Add(".localhost1.com");
             _Server.BaseDomains.Add(".localhost2.com");
 
-            _Server.AuthenticateSignatures = true;
-            _Server.GetSecretKey = GetSecretKey;
             _Server.PreRequestHandler = PreRequestHandler;
             _Server.DefaultRequestHandler = DefaultRequestHandler;
             _Server.PostRequestHandler = PostRequestHandler;
@@ -133,37 +131,21 @@ namespace Test.Server
         static async Task SendResponse(S3Context ctx, string text)
         {
             Console.WriteLine("[" + ctx.Http.Request.Source.IpAddress + ":" + ctx.Http.Request.Source.Port + "] " + text);
-
-            byte[] data = Encoding.UTF8.GetBytes(text);
-
             ctx.Response.StatusCode = 200;
             ctx.Response.ContentType = "text/plain";
-            ctx.Response.ContentLength = data.Length;
-            ctx.Response.Data = new MemoryStream();
-            ctx.Response.Data.Write(data, 0, data.Length);
-            ctx.Response.Data.Seek(0, SeekOrigin.Begin);
-
-            await ctx.Response.Send();
+            await ctx.Response.Send(text);
             return;
         }
 
         static async Task SendChunkResponse(S3Context ctx, string text)
         {
             Console.WriteLine("[" + ctx.Http.Request.Source.IpAddress + ":" + ctx.Http.Request.Source.Port + "] " + text);
-
-            byte[] data = Encoding.UTF8.GetBytes(text);
-
             ctx.Response.StatusCode = 200;
             ctx.Response.ContentType = "text/plain";
-            ctx.Response.ContentLength = data.Length;
-
-            await ctx.Response.SendFinalChunk(data);
+            byte[] bytes = new byte[0];
+            if (!String.IsNullOrEmpty(text)) bytes = Encoding.UTF8.GetBytes(text);
+            await ctx.Response.SendFinalChunk(bytes);
             return;
-        }
-
-        static byte[] GetSecretKey(S3Context req)
-        {
-            return Encoding.UTF8.GetBytes("default");
         }
 
         static async Task<bool> PreRequestHandler(S3Context ctx)
