@@ -575,7 +575,10 @@ namespace S3ServerInterface
                 foreach (KeyValuePair<string, string> curr in _HttpRequest.Query.Elements)
                 {
                     if (String.IsNullOrEmpty(curr.Key)) continue;
-                    if (String.Compare(curr.Key.ToLower(), key.ToLower()) == 0) return curr.Value;
+                    if (String.Compare(curr.Key.ToLower(), key.ToLower()) == 0)
+                    {
+                        return WebUtility.UrlDecode(curr.Value);
+                    }
                 }
             }
 
