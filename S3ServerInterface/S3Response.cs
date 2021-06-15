@@ -196,8 +196,6 @@ namespace S3ServerInterface
         public async Task<bool> Send()
         {
             if (Chunked) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk().");
-
-            ContentLength = 0;
             return await Send(new byte[0]).ConfigureAwait(false);
         }
 

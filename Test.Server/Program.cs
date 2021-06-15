@@ -150,6 +150,7 @@ namespace Test.Server
 
         static async Task<bool> PreRequestHandler(S3Context ctx)
         {
+            Console.WriteLine(Common.SerializeJson(ctx, true));
             return false;
         }
 
