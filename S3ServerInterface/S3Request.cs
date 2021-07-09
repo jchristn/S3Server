@@ -129,6 +129,18 @@ namespace S3ServerInterface
         public string ContentSha256 { get; private set; } = null;
 
         /// <summary>
+        /// Content length.
+        /// </summary>
+        public long ContentLength
+        {
+            get
+            {
+                if (_HttpRequest != null) return _HttpRequest.ContentLength;
+                return 0;
+            }
+        }
+
+        /// <summary>
         /// Date parameter.
         /// </summary>
         public string Date { get; private set; } = null;

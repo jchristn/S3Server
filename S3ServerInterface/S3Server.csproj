@@ -2,12 +2,12 @@
 
   <PropertyGroup>
     <TargetFrameworks>netcoreapp3.1;netstandard2.0;netstandard2.1;net462;net5.0</TargetFrameworks>
-    <Version>3.2.4</Version>
+    <Version>3.2.5</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>Joel Christner</Authors>
     <Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
     <Copyright>(c)2021 Joel Christner</Copyright>
-    <PackageReleaseNotes>Breaking changes, removal of handling for signatures.</PackageReleaseNotes>
+    <PackageReleaseNotes>Expose additional properties from HTTP request.</PackageReleaseNotes>
     <PackageTags>aws s3 storage rest interface server less3 minio</PackageTags>
     <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/jchristn/S3ServerInterface</PackageProjectUrl>

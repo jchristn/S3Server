@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <doc>
     <assembly>
-        <name>S3ServerInterface</name>
+        <name>S3Server</name>
     </assembly>
     <members>
         <member name="T:S3ServerInterface.BucketCallbacks">
@@ -1786,6 +1786,11 @@
         <member name="P:S3ServerInterface.S3Request.ContentSha256">
             <summary>
             Content SHA256 hash from request headers.
+            </summary>
+        </member>
+        <member name="P:S3ServerInterface.S3Request.ContentLength">
+            <summary>
+            Content length.
             </summary>
         </member>
         <member name="P:S3ServerInterface.S3Request.Date">

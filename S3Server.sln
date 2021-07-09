@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30711.63
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "S3ServerInterface", "S3ServerInterface\S3ServerInterface.csproj", "{25EAE1BF-CA69-4CB7-A6F5-2F2C5B745EA3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "S3Server", "S3ServerInterface\S3Server.csproj", "{25EAE1BF-CA69-4CB7-A6F5-2F2C5B745EA3}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.Server", "Test.Server\Test.Server.csproj", "{61CA1016-43B7-46BF-9E1C-8CDCF939668A}"
 EndProject
