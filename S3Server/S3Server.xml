@@ -1900,7 +1900,7 @@
             Tag set.
             </summary>
         </member>
-        <member name="P:S3ServerLibrary.S3Objects.TagSet.Tag">
+        <member name="P:S3ServerLibrary.S3Objects.TagSet.Tags">
             <summary>
             Tag.
             </summary>
@@ -1910,11 +1910,11 @@
             Instantiate.
             </summary>
         </member>
-        <member name="M:S3ServerLibrary.S3Objects.TagSet.#ctor(S3ServerLibrary.S3Objects.Tag)">
+        <member name="M:S3ServerLibrary.S3Objects.TagSet.#ctor(System.Collections.Generic.List{S3ServerLibrary.S3Objects.Tag})">
             <summary>
             Instantiate.
             </summary>
-            <param name="tag">Tag.</param>
+            <param name="tags">Tags.</param>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.TargetGrants">
             <summary>

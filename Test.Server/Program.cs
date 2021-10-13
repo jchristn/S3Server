@@ -28,7 +28,7 @@ namespace Test.Server
     {
         static S3Server _Server = null;
         static bool _RunForever = true;
-        static bool _ForcePathStyle = true;
+        static bool _ForcePathStyle = false;
 
         static string _Location = "us-west-1";
         static ObjectMetadata _ObjectMetadata = new ObjectMetadata("hello.txt", DateTime.Now, "etag", 13, new Owner("admin", "Administrator"));
@@ -276,7 +276,7 @@ namespace Test.Server
         {
             Console.WriteLine("BucketReadTags: " + ctx.Request.Bucket);
 
-            Tagging tagging = new Tagging(new TagSet(_Tag));
+            Tagging tagging = new Tagging(new TagSet(new List<Tag> { _Tag }));
 
             return tagging;
         }
@@ -490,7 +490,7 @@ namespace Test.Server
         {
             Console.WriteLine("ObjectReadTags: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
 
-            Tagging tagging = new Tagging(new TagSet(_Tag));
+            Tagging tagging = new Tagging(new TagSet(new List<Tag> { _Tag }));
 
             return tagging;
         }

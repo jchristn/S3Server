@@ -19,11 +19,24 @@ namespace S3ServerLibrary.S3Objects
 		/// Tag.
 		/// </summary>
 		[XmlElement(ElementName = "Tag", IsNullable = true)]
-		public Tag Tag { get; set; } = null;
+		public List<Tag> Tags
+        {
+			get
+            {
+				return _TagList;
+            }
+			set
+            {
+				if (value == null) _TagList = new List<Tag>();
+				else _TagList = value;
+            }
+        }
 
 		#endregion
 
 		#region Private-Members
+
+		private List<Tag> _TagList = new List<Tag>();
 
 		#endregion
 
@@ -40,10 +53,10 @@ namespace S3ServerLibrary.S3Objects
 		/// <summary>
 		/// Instantiate.
 		/// </summary>
-		/// <param name="tag">Tag.</param>
-		public TagSet(Tag tag)
+		/// <param name="tags">Tags.</param>
+		public TagSet(List<Tag> tags)
         {
-			Tag = tag;
+			Tags = tags;
         }
 
 		#endregion
