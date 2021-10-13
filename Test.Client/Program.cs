@@ -21,7 +21,7 @@ namespace Test.Client
         static AmazonS3Config _S3Config = null;
         static IAmazonS3 _S3Client = null;
         static BasicAWSCredentials _S3Credentials = null;
-        static RegionEndpoint _S3Region = RegionEndpoint.USWest1; 
+        static RegionEndpoint _S3Region = RegionEndpoint.USWest1;
         static string _Bucket = null;
 
         static bool _RunForever = true;
@@ -67,7 +67,7 @@ namespace Test.Client
                     case "bucket":
                         SetBucket();
                         break;
-                        
+
                     case "init":
                         InitS3Client();
                         break;
@@ -178,7 +178,7 @@ namespace Test.Client
                         ObjectExists();
                         break;
 
-                    #endregion
+                        #endregion
                 }
             }
         }
@@ -256,28 +256,28 @@ namespace Test.Client
             switch (userInput)
             {
                 case "APNortheast1":
-                    _S3Region = RegionEndpoint.APNortheast1; 
+                    _S3Region = RegionEndpoint.APNortheast1;
                     break;
                 case "APSoutheast1":
-                    _S3Region = RegionEndpoint.APSoutheast1; 
+                    _S3Region = RegionEndpoint.APSoutheast1;
                     break;
                 case "APSoutheast2":
-                    _S3Region = RegionEndpoint.APSoutheast2; 
+                    _S3Region = RegionEndpoint.APSoutheast2;
                     break;
                 case "EUWest1":
-                    _S3Region = RegionEndpoint.EUWest1; 
+                    _S3Region = RegionEndpoint.EUWest1;
                     break;
                 case "SAEast1":
-                    _S3Region = RegionEndpoint.SAEast1; 
+                    _S3Region = RegionEndpoint.SAEast1;
                     break;
                 case "USEast1":
-                    _S3Region = RegionEndpoint.USEast1; 
-                    break; 
+                    _S3Region = RegionEndpoint.USEast1;
+                    break;
                 case "USWest1":
-                    _S3Region = RegionEndpoint.USWest1; 
+                    _S3Region = RegionEndpoint.USWest1;
                     break;
                 case "USWest2":
-                    _S3Region = RegionEndpoint.USWest2; 
+                    _S3Region = RegionEndpoint.USWest2;
                     break;
             }
         }
@@ -294,28 +294,37 @@ namespace Test.Client
 
         static void SetAccessKey()
         {
-            _AccessKey = Common.InputString("Access key:", "default", false); 
+            _AccessKey = Common.InputString("Access key:", "default", false);
         }
 
         static void SetSecretKey()
         {
-            _SecretKey = Common.InputString("Secret key:", "default", false); 
+            _SecretKey = Common.InputString("Secret key:", "default", false);
         }
 
         static void InitS3Client()
         {
             _S3Credentials = new Amazon.Runtime.BasicAWSCredentials(_AccessKey, _SecretKey);
-             
+
             _S3Config = new AmazonS3Config
             {
-                RegionEndpoint = RegionEndpoint.USWest1, 
-                ServiceURL = _Endpoint,  
+                RegionEndpoint = RegionEndpoint.USWest1,
+                ServiceURL = _Endpoint,
                 ForcePathStyle = _ForcePathStyle,
                 UseHttp = _Ssl,
                 SignatureVersion = "4"
             };
 
             _S3Client = new AmazonS3Client(_S3Credentials, _S3Config);
+
+            if (_ForcePathStyle)
+            {
+                Console.WriteLine("Client configured to use path-style URLs; ensure server is configured accordingly");
+            }
+            else
+            { 
+                Console.WriteLine("Client configured to use virtual hosting URLs; ensure server is configured accordingly");
+            }
         }
 
         #endregion
@@ -359,7 +368,7 @@ namespace Test.Client
                 {
                     Console.WriteLine(curr.Key + ": " + curr.Size + " bytes");
                 }
-                 
+
                 if (!String.IsNullOrEmpty(response.NextContinuationToken))
                 {
                     Console.WriteLine("Continuation token: " + response.NextContinuationToken);
@@ -401,7 +410,7 @@ namespace Test.Client
 
         static void WriteBucketAcl()
         {
-            string id = Common.InputString("Bucket:", null, false); 
+            string id = Common.InputString("Bucket:", null, false);
             string owner = Common.InputString("Owner:", "default", false);
 
             PutACLRequest request = new PutACLRequest();
@@ -415,7 +424,6 @@ namespace Test.Client
             S3Grantee grantee = new S3Grantee();
             grantee.CanonicalUser = owner;
             grantee.DisplayName = owner;
-            grantee.EmailAddress = owner;
             grant.Grantee = grantee;
 
             request.AccessControlList.Grants.Add(grant);
@@ -714,8 +722,8 @@ namespace Test.Client
 
             request.Tagging = new Tagging();
             request.Tagging.TagSet = new List<Tag>();
-            request.Tagging.TagSet.Add(tag); 
-             
+            request.Tagging.TagSet.Add(tag);
+
             PutObjectTaggingResponse response = _S3Client.PutObjectTaggingAsync(request).Result;
             int statusCode = (int)response.HttpStatusCode;
 
@@ -728,7 +736,7 @@ namespace Test.Client
             {
                 Console.WriteLine("Failed");
                 return;
-            } 
+            }
         }
 
         static void WriteObjectRetention()
@@ -744,9 +752,9 @@ namespace Test.Client
                 };
 
                 request.Retention = new ObjectLockRetention();
-                request.Retention.Mode = "foo";
+                request.Retention.Mode = "GOVERNANCE";
                 request.Retention.RetainUntilDate = DateTime.Now.AddYears(5);
-                 
+
                 PutObjectRetentionResponse response = _S3Client.PutObjectRetentionAsync(request).Result;
                 int statusCode = (int)response.HttpStatusCode;
 
@@ -778,7 +786,7 @@ namespace Test.Client
                 request.BucketName = _Bucket;
                 request.Key = id;
                 request.VersionId = ver.ToString();
-                 
+
                 using (GetObjectResponse response = _S3Client.GetObjectAsync(request).Result)
                 using (Stream responseStream = response.ResponseStream)
                 using (StreamReader reader = new StreamReader(responseStream))
@@ -792,7 +800,7 @@ namespace Test.Client
                         data = Common.StreamToBytes(bodyStream);
 
                         int statusCode = (int)response.HttpStatusCode;
-                        
+
                         if (data != null && data.Length > 0)
                         {
                             Console.WriteLine(Encoding.UTF8.GetString(data));
@@ -843,7 +851,7 @@ namespace Test.Client
             else
             {
                 Console.WriteLine("Failed");
-            } 
+            }
         }
 
         static void ReadObjectRange()
@@ -912,7 +920,7 @@ namespace Test.Client
                 GetObjectTaggingResponse response = _S3Client.GetObjectTaggingAsync(request).Result;
 
                 if (response != null)
-                { 
+                {
                     Console.WriteLine("Success");
                     foreach (Tag curr in response.Tagging)
                     {
@@ -933,7 +941,7 @@ namespace Test.Client
         static void ReadObjectRetention()
         {
             string id = Common.InputString("Key:", null, false);
-             
+
             GetObjectRetentionRequest request = new GetObjectRetentionRequest();
             request.BucketName = _Bucket;
             request.Key = id;
@@ -942,15 +950,12 @@ namespace Test.Client
 
             if (response != null)
             {
-                if (response.Retention != null) 
-                    Console.WriteLine(Common.SerializeXml(response.Retention));
-
                 Console.WriteLine("Success");
             }
             else
             {
                 Console.WriteLine("Failed");
-            } 
+            }
         }
 
         static void DeleteObject()
@@ -1025,7 +1030,7 @@ namespace Test.Client
             DeleteObjectsRequest request = new DeleteObjectsRequest();
             request.BucketName = _Bucket;
             request.Objects = versions;
-            
+
             DeleteObjectsResponse response = _S3Client.DeleteObjectsAsync(request).Result;
             int statusCode = (int)response.HttpStatusCode;
 
@@ -1042,7 +1047,7 @@ namespace Test.Client
                 else
                 {
                     Console.WriteLine("  (none)");
-                } 
+                }
                 Console.WriteLine("Errors:");
                 if (response.DeleteErrors != null && response.DeleteErrors.Count > 0)
                 {
@@ -1054,7 +1059,7 @@ namespace Test.Client
                 else
                 {
                     Console.WriteLine("  (none)");
-                } 
+                }
                 Console.WriteLine("Success");
             }
             else

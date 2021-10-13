@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\S3ServerInterface\S3Server.csproj" />
+    <ProjectReference Include="..\S3Server\S3Server.csproj" />
   </ItemGroup>
 
 </Project>

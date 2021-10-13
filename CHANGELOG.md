@@ -2,12 +2,28 @@
 
 ## Current Version
 
+v4.0.1
+
+- Breaking changes, massive refactor
+- Namespace change
+- Request body now deserialized from XML and passed to callbacks
+- Callbacks now expect either:
+  - Appropriate response object, or
+  - That your code will throw an ```S3Exception``` with the appropriate ```Error```
+- Variable name consistency within objects
+- S3Objects now have:
+  - Additional constructors for ease of use
+  - Input validation where appropriate (for instance, ```Retention.Mode```)
+  - Valid values are present in the documentation
+- Cleaned up XML annotations and moved to deserialization that ignores namespaces for better compatibility
+- Inclusion of x-amz-request-id and x-amz-id-2 headers
+
+## Previous Versions
+
 v3.2.1
 
 - Breaking change, removal of handling for validating S3 signatures (too error-prone)
 - Internal refactor
-
-## Previous Versions
 
 v3.0.0
 

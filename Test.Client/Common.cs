@@ -59,7 +59,7 @@ namespace Test.Client
                 return null;
             }
         }
-         
+
         public static byte[] StreamToBytes(Stream input)
         {
             if (input == null) throw new ArgumentNullException(nameof(input));
@@ -228,7 +228,7 @@ namespace Test.Client
             {
                 return (T)xmls.Deserialize(ms);
             }
-        } 
+        }
 
         public static string SerializeXml(object obj)
         {
