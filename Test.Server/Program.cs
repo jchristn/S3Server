@@ -412,12 +412,12 @@ namespace Test.Server
         }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        static async Task<long> ObjectExists(S3Context ctx)
+        static async Task<ObjectMetadata> ObjectExists(S3Context ctx)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("ObjectExists: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
 
-            return _S3Object.Size;
+            return _ObjectMetadata;
         }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously

@@ -503,6 +503,12 @@ namespace S3ServerLibrary
             return DeserializeJson<T>(Encoding.UTF8.GetString(data));
         }
 
+        public static T DeserializeXml<T>(byte[] bytes) where T : class
+        {
+            if (bytes == null) throw new ArgumentNullException(nameof(bytes));
+            return DeserializeXml<T>(Encoding.UTF8.GetString(bytes));
+        }
+
         public static T DeserializeXml<T>(string xml) where T : class
         {
             if (String.IsNullOrEmpty(xml)) throw new ArgumentNullException(nameof(xml));

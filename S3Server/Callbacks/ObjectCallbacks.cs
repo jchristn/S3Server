@@ -16,9 +16,8 @@ namespace S3ServerLibrary.Callbacks
 
         /// <summary>
         /// Check for the existence of an object.
-        /// If exists, return the content length.
         /// </summary>
-        public Func<S3Context, Task<long>> Exists = null;
+        public Func<S3Context, Task<ObjectMetadata>> Exists = null;
 
         /// <summary>
         /// Write an object.

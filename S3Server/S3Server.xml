@@ -112,7 +112,6 @@
         <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.Exists">
             <summary>
             Check for the existence of an object.
-            If exists, return the content length.
             </summary>
         </member>
         <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.Write">
