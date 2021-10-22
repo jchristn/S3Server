@@ -264,7 +264,6 @@ namespace S3ServerLibrary
 
             bool success = false;
             bool exists = false;
-            long contentLength = 0;
             S3Object s3obj = null;
             ObjectMetadata md = null;
             AccessControlPolicy acp = null;
@@ -652,7 +651,7 @@ namespace S3ServerLibrary
                                 ctx.Response.StatusCode = 200;
                                 ctx.Response.ContentLength = md.Size;
                                 ctx.Response.ContentType = md.ContentType;
-                                await ctx.Response.Send(contentLength).ConfigureAwait(false);
+                                await ctx.Response.Send(md.Size).ConfigureAwait(false);
                             }
                             else
                             {
