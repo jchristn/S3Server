@@ -646,12 +646,11 @@ namespace S3ServerLibrary
                             md = await Object.Exists(s3ctx).ConfigureAwait(false);
                             if (md != null)
                             {
-                                ctx.Response.Headers.Add("accept-ranges", "0-" + contentLength.ToString());
                                 if (!String.IsNullOrEmpty(md.ETag)) ctx.Response.Headers.Add("ETag", md.ETag);
                                 ctx.Response.Headers.Add("Last-Modified", md.LastModified.ToString());
                                 ctx.Response.Headers.Add("x-amz-storage-class", md.StorageClass);
                                 ctx.Response.StatusCode = 200;
-                                ctx.Response.ContentLength = contentLength;
+                                ctx.Response.ContentLength = md.Size;
                                 ctx.Response.ContentType = md.ContentType;
                                 await ctx.Response.Send(contentLength).ConfigureAwait(false);
                             }
