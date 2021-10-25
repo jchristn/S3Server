@@ -95,7 +95,7 @@ namespace S3ServerLibrary.S3Objects
         /// <summary>
         /// Instantiate.
         /// </summary>
-        /// <param name="name">Name.</param>
+        /// <param name="name">Bucket name.</param>
         /// <param name="versions">Versions.</param>
         /// <param name="maxKeys">Max keys.</param>
         /// <param name="prefix">Prefix.</param>
@@ -103,7 +103,7 @@ namespace S3ServerLibrary.S3Objects
         /// <param name="versionIdMarker">Version ID marker.</param>
         /// <param name="isTruncated">Is truncated.</param>
         /// <param name="deleteMarkers">Delete markers.</param>
-        public ListVersionsResult(string name, List<ObjectVersion> versions, long maxKeys, string prefix = null, string keyMarker = null, string versionIdMarker = null, bool isTruncated = false, List<DeleteMarker> deleteMarkers = null)
+        public ListVersionsResult(string name, List<ObjectVersion> versions, List<DeleteMarker> deleteMarkers, long maxKeys, string prefix = null, string keyMarker = null, string versionIdMarker = null, bool isTruncated = false)
         {
             if (String.IsNullOrEmpty(name)) throw new ArgumentNullException(nameof(name));
             Name = name;

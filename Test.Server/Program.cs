@@ -28,7 +28,7 @@ namespace Test.Server
     {
         static S3Server _Server = null;
         static bool _RunForever = true;
-        static bool _ForcePathStyle = false;
+        static bool _ForcePathStyle = true;
 
         static string _Location = "us-west-1";
         static ObjectMetadata _ObjectMetadata = new ObjectMetadata("hello.txt", DateTime.Now, "etag", 13, new Owner("admin", "Administrator"));
@@ -299,14 +299,19 @@ namespace Test.Server
 
             List<ObjectVersion> versions = new List<ObjectVersion>()
             {
-                new ObjectVersion("hello.txt", "1", true, DateTime.Now, "etag", 13, new Owner("admin", "administrator"))
+                new ObjectVersion("version1.key", "1", true, DateTime.Now.ToUniversalTime(), "etag", 500, _Owner)
             };
 
-            ListVersionsResult lvr = new ListVersionsResult(
-                "default",
-                versions,
-                1);
+            List<DeleteMarker> deleteMarkers = new List<DeleteMarker>()
+            {
+                new DeleteMarker("deleted1.key", "2", true, DateTime.Now.ToUniversalTime(), _Owner)
+            };
 
+            List<VersionedEntity> entities = new List<VersionedEntity>();
+            entities.AddRange(deleteMarkers);
+            entities.AddRange(versions);
+
+            ListVersionsResult lvr = new ListVersionsResult("default", versions, deleteMarkers, 1000);
             return lvr;
         }
 

@@ -110,6 +110,10 @@ namespace Test.Client
                         ReadBucketVersioning();
                         break;
 
+                    case "read bucket vers":
+                        ReadBucketVersions();
+                        break;
+
                     case "delete bucket":
                         DeleteBucket();
                         break;
@@ -219,6 +223,7 @@ namespace Test.Client
             Console.WriteLine("   read bucket tags    Read tags from a bucket");
             Console.WriteLine("   write bucket ver    Write bucket versioning");
             Console.WriteLine("   read bucket ver     Read bucket versioning");
+            Console.WriteLine("   read bucket vers    Read bucket versions");
             Console.WriteLine("   delete bucket       Delete a bucket");
             Console.WriteLine("   delete bucket tags  Delete a bucket's tags");
             Console.WriteLine("   bucket exists       Check if bucket exists");
@@ -559,6 +564,50 @@ namespace Test.Client
                 Console.WriteLine("Success");
                 Console.WriteLine("  MFA delete  : " + response.VersioningConfig.EnableMfaDelete.ToString());
                 Console.WriteLine("  Versioning  : " + response.VersioningConfig.Status.Value);
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+            }
+        }
+
+        static void ReadBucketVersions()
+        {
+            string bucket = Common.InputString("Bucket:", null, false);
+
+            ListVersionsRequest request = new ListVersionsRequest();
+            request.BucketName = bucket;
+
+            ListVersionsResponse response = _S3Client.ListVersionsAsync(request).Result;
+            if (response != null)
+            {
+                Console.WriteLine("Success");
+                Console.WriteLine("Bucket name     : " + response.Name);
+                Console.WriteLine("Max keys        : " + response.MaxKeys);
+                Console.WriteLine("Is truncated    : " + response.IsTruncated);
+
+                Console.Write(    "Versions        : ");
+                if (response.Versions != null && response.Versions.Count > 0)
+                {
+                    Console.WriteLine(response.Versions.Count);
+                    foreach (S3ObjectVersion ver in response.Versions)
+                    {
+                        Console.Write("| " + ver.Key + "[" + ver.VersionId + "] ");
+                        if (ver.IsDeleteMarker) Console.WriteLine("(delete marker)");
+                        else Console.WriteLine(ver.Size + " bytes");
+                    }
+                }
+
+                Console.Write(    "Common prefixes : ");
+                if (response.CommonPrefixes != null && response.CommonPrefixes.Count > 0)
+                {
+                    Console.WriteLine(response.CommonPrefixes.Count);
+                    foreach (string prefix in response.CommonPrefixes) Console.WriteLine("| " + prefix);
+                }
+                else
+                {
+                    Console.WriteLine("0");
+                }
             }
             else
             {

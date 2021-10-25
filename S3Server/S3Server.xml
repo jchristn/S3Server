@@ -633,51 +633,6 @@
             <param name="deleteMarker">Delete marker.</param>
             <param name="deleteMarkerVersionId">Delete marker version ID.</param>
         </member>
-        <member name="T:S3ServerLibrary.S3Objects.DeleteMarker">
-            <summary>
-            Delete marker representing a deleted resource.
-            </summary>
-        </member>
-        <member name="P:S3ServerLibrary.S3Objects.DeleteMarker.Key">
-            <summary>
-            Object key.
-            </summary>
-        </member>
-        <member name="P:S3ServerLibrary.S3Objects.DeleteMarker.VersionId">
-            <summary>
-            The version identifier for the resource.
-            </summary>
-        </member>
-        <member name="P:S3ServerLibrary.S3Objects.DeleteMarker.IsLatest">
-            <summary>
-            Indicates if this version is the latest version of the resource.
-            </summary>
-        </member>
-        <member name="P:S3ServerLibrary.S3Objects.DeleteMarker.LastModified">
-            <summary>
-            Timestamp from the last modification of the resource.
-            </summary>
-        </member>
-        <member name="P:S3ServerLibrary.S3Objects.DeleteMarker.Owner">
-            <summary>
-            Information about the resource owner.
-            </summary>
-        </member>
-        <member name="M:S3ServerLibrary.S3Objects.DeleteMarker.#ctor">
-            <summary>
-            Instantiate.
-            </summary>
-        </member>
-        <member name="M:S3ServerLibrary.S3Objects.DeleteMarker.#ctor(System.String,System.String,System.Nullable{System.Boolean},System.DateTime,S3ServerLibrary.S3Objects.Owner)">
-            <summary>
-            Instantiate.
-            </summary>
-            <param name="key">Key.</param>
-            <param name="versionId">Version ID.</param>
-            <param name="isLatest">Is latest.</param>
-            <param name="lastModified">Last modified.</param>
-            <param name="owner">Owner.</param>
-        </member>
         <member name="T:S3ServerLibrary.S3Objects.DeleteMultiple">
             <summary>
             Request to delete multiple resources.
@@ -1517,11 +1472,11 @@
             Instantiate.
             </summary>
         </member>
-        <member name="M:S3ServerLibrary.S3Objects.ListVersionsResult.#ctor(System.String,System.Collections.Generic.List{S3ServerLibrary.S3Objects.ObjectVersion},System.Int64,System.String,System.String,System.String,System.Boolean,System.Collections.Generic.List{S3ServerLibrary.S3Objects.DeleteMarker})">
+        <member name="M:S3ServerLibrary.S3Objects.ListVersionsResult.#ctor(System.String,System.Collections.Generic.List{S3ServerLibrary.S3Objects.ObjectVersion},System.Collections.Generic.List{S3ServerLibrary.S3Objects.DeleteMarker},System.Int64,System.String,System.String,System.String,System.Boolean)">
             <summary>
             Instantiate.
             </summary>
-            <param name="name">Name.</param>
+            <param name="name">Bucket name.</param>
             <param name="versions">Versions.</param>
             <param name="maxKeys">Max keys.</param>
             <param name="prefix">Prefix.</param>
@@ -1936,50 +1891,60 @@
             </summary>
             <param name="grants">Grants.</param>
         </member>
-        <member name="T:S3ServerLibrary.S3Objects.ObjectVersion">
+        <member name="T:S3ServerLibrary.S3Objects.VersionedEntity">
             <summary>
             Object version.
             </summary>
         </member>
-        <member name="P:S3ServerLibrary.S3Objects.ObjectVersion.Key">
+        <member name="P:S3ServerLibrary.S3Objects.VersionedEntity.Key">
             <summary>
             Object key.
             </summary>
         </member>
-        <member name="P:S3ServerLibrary.S3Objects.ObjectVersion.VersionId">
+        <member name="P:S3ServerLibrary.S3Objects.VersionedEntity.VersionId">
             <summary>
-            Version identifier.
+            The version identifier for the resource.
             </summary>
         </member>
-        <member name="P:S3ServerLibrary.S3Objects.ObjectVersion.IsLatest">
+        <member name="P:S3ServerLibrary.S3Objects.VersionedEntity.IsLatest">
             <summary>
-            Indicates if this version is the latest version for the object.
+            Indicates if this version is the latest version of the resource.
             </summary>
         </member>
-        <member name="P:S3ServerLibrary.S3Objects.ObjectVersion.LastModified">
+        <member name="P:S3ServerLibrary.S3Objects.VersionedEntity.LastModified">
             <summary>
-            Timestamp from the last modification.
+            Timestamp from the last modification of the resource.
             </summary>
         </member>
-        <member name="P:S3ServerLibrary.S3Objects.ObjectVersion.ETag">
+        <member name="P:S3ServerLibrary.S3Objects.VersionedEntity.ETag">
             <summary>
             Object ETag.
             </summary>
         </member>
-        <member name="P:S3ServerLibrary.S3Objects.ObjectVersion.Size">
+        <member name="P:S3ServerLibrary.S3Objects.VersionedEntity.Size">
             <summary>
             Content length of the object.
             </summary>
         </member>
-        <member name="P:S3ServerLibrary.S3Objects.ObjectVersion.StorageClass">
+        <member name="P:S3ServerLibrary.S3Objects.VersionedEntity.StorageClass">
             <summary>
             The class of storage where the resource resides.
             Valid values are STANDARD, REDUCED_REDUNDANCY, GLACIER, STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING, DEEP_ARCHIVE, OUTPOSTS.
             </summary>
         </member>
-        <member name="P:S3ServerLibrary.S3Objects.ObjectVersion.Owner">
+        <member name="P:S3ServerLibrary.S3Objects.VersionedEntity.Owner">
             <summary>
             Object owner.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.VersionedEntity.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.ObjectVersion">
+            <summary>
+            Instantiate.
             </summary>
         </member>
         <member name="M:S3ServerLibrary.S3Objects.ObjectVersion.#ctor">
@@ -1987,7 +1952,7 @@
             Instantiate.
             </summary>
         </member>
-        <member name="M:S3ServerLibrary.S3Objects.ObjectVersion.#ctor(System.String,System.String,System.Boolean,System.DateTime,System.String,System.Int64,S3ServerLibrary.S3Objects.Owner,System.String)">
+        <member name="M:S3ServerLibrary.S3Objects.ObjectVersion.#ctor(System.String,System.String,System.Boolean,System.DateTime,System.String,System.Nullable{System.Int64},S3ServerLibrary.S3Objects.Owner,System.String)">
             <summary>
             Instantiate.
             </summary>
@@ -1999,6 +1964,26 @@
             <param name="size">Size.</param>
             <param name="owner">Owner.</param>
             <param name="storageClass">Storage class.  Valid values are STANDARD, REDUCED_REDUNDANCY, GLACIER, STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING, DEEP_ARCHIVE, OUTPOSTS.</param>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.DeleteMarker">
+            <summary>
+            Instantiate.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.DeleteMarker.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.DeleteMarker.#ctor(System.String,System.String,System.Boolean,System.DateTime,S3ServerLibrary.S3Objects.Owner)">
+            <summary>
+            Instantiate.
+            </summary>
+            <param name="key">Key.</param>
+            <param name="versionId">Version ID.</param>
+            <param name="lastModified">Last modified.</param>
+            <param name="isLatest">Is latest.</param>
+            <param name="owner">Owner.</param>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.VersioningConfiguration">
             <summary>
