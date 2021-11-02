@@ -69,9 +69,9 @@ server.Start();
 // Example callback definition
 static async Task DefaultRequestHandler(S3Context ctx)
 {
-	ctx.Response.StatusCode = 400;
-	ctx.Response.ContentType = "text/plain";
-	ctx.Response.Send("Bad request");
+  ctx.Response.StatusCode = 400;
+  ctx.Response.ContentType = "text/plain";
+  ctx.Response.Send("Bad request");
 }
 
 // Callback expecting a response object
