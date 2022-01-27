@@ -608,13 +608,19 @@ namespace S3ServerLibrary
         public static byte[] Sha1(byte[] input)
         {
             if (input == null) return null;
-            return new SHA1Managed().ComputeHash(input);
+            using (SHA1 sha1 = SHA1.Create())
+            {
+                return sha1.ComputeHash(input);
+            }
         }
 
         public static byte[] Sha256(byte[] data)
         {
             if (data == null) return null;
-            return new SHA256Managed().ComputeHash(data);
+            using (SHA256 sha256 = SHA256.Create())
+            { 
+                return sha256.ComputeHash(data);
+            }
         }
          
         #endregion
