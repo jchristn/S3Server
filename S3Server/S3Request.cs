@@ -46,92 +46,92 @@ namespace S3ServerLibrary
         /// <summary>
         /// Indicates if chunked transfer-encoding is in use.
         /// </summary>
-        public bool Chunked { get; private set; } = false;
+        public bool Chunked { get; set; } = false;
 
         /// <summary>
         /// AWS region.
         /// </summary>
-        public string Region { get; private set; } = null;
+        public string Region { get; set; } = null;
 
         /// <summary>
         /// Hostname.
         /// </summary>
-        public string Hostname { get; private set; } = null;
+        public string Hostname { get; set; } = null;
 
         /// <summary>
         /// Host header value.
         /// </summary>
-        public string Host { get; private set; } = null;
+        public string Host { get; set; } = null;
 
         /// <summary>
         /// Base domain identified in the hostname.
         /// </summary>
-        public string BaseDomain { get; private set; } = null;
+        public string BaseDomain { get; set; } = null;
 
         /// <summary>
         /// Bucket.
         /// </summary>
-        public string Bucket { get; private set; } = null;
+        public string Bucket { get; set; } = null;
 
         /// <summary>
         /// Object key.
         /// </summary>
-        public string Key { get; private set; } = null;
+        public string Key { get; set; } = null;
 
         /// <summary>
         /// Object key prefix.
         /// </summary>
-        public string Prefix { get; private set; } = null;
+        public string Prefix { get; set; } = null;
 
         /// <summary>
         /// Delimiter.
         /// </summary>
-        public string Delimiter { get; private set; } = null;
+        public string Delimiter { get; set; } = null;
 
         /// <summary>
         /// Marker.
         /// </summary>
-        public string Marker { get; private set; } = null;
+        public string Marker { get; set; } = null;
 
         /// <summary>
         /// Maximum number of keys to retrieve in an enumeration.
         /// </summary>
-        public long MaxKeys { get; private set; } = 0;
+        public long MaxKeys { get; set; } = 0;
 
         /// <summary>
         /// Object version ID.
         /// </summary>
-        public string VersionId { get; private set; } = null;
+        public string VersionId { get; set; } = null;
 
         /// <summary>
         /// Authorization header string, in full.
         /// </summary>
-        public string Authorization { get; private set; } = null;
+        public string Authorization { get; set; } = null;
 
         /// <summary>
         /// Signature version from authorization header.
         /// </summary>
-        public S3SignatureVersion SignatureVersion { get; private set; } = S3SignatureVersion.Unknown;
+        public S3SignatureVersion SignatureVersion { get; set; } = S3SignatureVersion.Unknown;
 
         /// <summary>
         /// Signature from authorization header.
         /// </summary>
-        public string Signature { get; private set; } = null;
+        public string Signature { get; set; } = null;
 
         /// <summary>
         /// Content type.
         /// </summary>
-        public string ContentType { get; private set; } = null;
+        public string ContentType { get; set; } = null;
 
         /// <summary>
         /// Content MD5 hash from request headers.
         /// </summary>
-        public string ContentMd5 { get; private set; } = null;
+        public string ContentMd5 { get; set; } = null;
 
         /// <summary>
         /// Content SHA256 hash from request headers.
         /// </summary>
-        public string ContentSha256 { get; private set; } = null;
+        public string ContentSha256 { get; set; } = null;
 
         /// <summary>
         /// Content length.
@@ -148,32 +148,32 @@ namespace S3ServerLibrary
         /// <summary>
         /// Date parameter.
         /// </summary>
-        public string Date { get; private set; } = null;
+        public string Date { get; set; } = null;
 
         /// <summary>
         /// Expiration parameter from authorization header.
         /// </summary>
-        public string Expires { get; private set; } = null;
+        public string Expires { get; set; } = null;
 
         /// <summary>
         /// Access key, parsed from authorization header.
         /// </summary>
-        public string AccessKey { get; private set; } = null;
+        public string AccessKey { get; set; } = null;
 
         /// <summary>
         /// Start value from the Range header.
         /// </summary>
-        public long? RangeStart { get; private set; } = null;
+        public long? RangeStart { get; set; } = null;
 
         /// <summary>
         /// End value from the Range header.
         /// </summary>
-        public long? RangeEnd { get; private set; } = null;
+        public long? RangeEnd { get; set; } = null;
 
         /// <summary>
         /// Continuation token.
         /// </summary>
-        public string ContinuationToken { get; private set; } = null;
+        public string ContinuationToken { get; set; } = null;
 
         /// <summary>
         /// Indicates if the request is a service request.
@@ -331,7 +331,7 @@ namespace S3ServerLibrary
         /// List of signed headers.
         /// </summary>
         [JsonProperty(Order = 998)]
-        public List<string> SignedHeaders { get; private set; } = new List<string>();
+        public List<string> SignedHeaders { get; set; } = new List<string>();
          
         /// <summary>
         /// Stream containing the request body.
@@ -492,7 +492,18 @@ namespace S3ServerLibrary
                 if (HeaderExists("content-md5", false)) ContentMd5 = RetrieveHeaderValue("content-md5");
                 if (HeaderExists("content-type", false)) ContentType = RetrieveHeaderValue("content-type");
                 if (HeaderExists("host", false)) Host = RetrieveHeaderValue("host");
-                if (HeaderExists("x-amz-content-sha256", false)) ContentSha256 = RetrieveHeaderValue("x-amz-content-sha256");
+                if (HeaderExists("x-amz-content-sha256", false))
+                {
+                    ContentSha256 = RetrieveHeaderValue("x-amz-content-sha256");
+                    if (!String.IsNullOrEmpty(ContentSha256))
+                    {
+                        if (ContentSha256.ToLower().Contains("streaming"))
+                        {
+                            Chunked = true;
+                            _HttpRequest.ChunkedTransfer = true;
+                        }
+                    }
+                }
                 
                 if (HeaderExists("date", false))
                 {
