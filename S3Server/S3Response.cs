@@ -336,9 +336,10 @@ namespace S3ServerLibrary
         {
             if (!Chunked) throw new IOException("Responses with chunked transfer-encoding disabled require use of Send().");
 
-            SetResponseHeaders(); 
+            SetResponseHeaders();
 
-            return await _HttpResponse.SendChunk(data).ConfigureAwait(false);
+            if (data == null) data = new byte[0];
+            return await _HttpResponse.SendChunk(data, data.Length).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -352,7 +353,8 @@ namespace S3ServerLibrary
 
             SetResponseHeaders();
 
-            return await _HttpResponse.SendFinalChunk(data).ConfigureAwait(false); 
+            if (data == null) data = new byte[0];
+            return await _HttpResponse.SendFinalChunk(data, data.Length).ConfigureAwait(false); 
         }
 
         #endregion
