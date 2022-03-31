@@ -7,9 +7,9 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Newtonsoft.Json;
-
 using S3ServerLibrary;
 using S3ServerLibrary.S3Objects;
+using WatsonWebserver;
 
 namespace Test.Server
 {
@@ -26,6 +26,9 @@ namespace Test.Server
 
     class Program
     {
+        static string _Hostname = "localhost";
+        static int _Port = 8000;
+
         static S3Server _Server = null;
         static bool _RunForever = true;
         static bool _ForcePathStyle = true;
@@ -44,7 +47,7 @@ namespace Test.Server
             string baseDomain = Console.ReadLine();
             */
 
-            _Server = new S3Server("*", 8000, false, DefaultRequestHandler);
+            _Server = new S3Server(_Hostname, _Port, false, DefaultRequestHandler);
             _Server.Logging.Exceptions = true;
             _Server.Logging.HttpRequests = false;
             _Server.Logging.S3Requests = false;
@@ -107,7 +110,7 @@ namespace Test.Server
             _Server.Object.WriteTagging = ObjectWriteTags;
 
             _Server.Start();
-            Console.WriteLine("Listening on http://*:8000/");
+            Console.WriteLine("Listening on http://" + _Hostname + ":" + _Port);
 
             while (_RunForever)
             {
@@ -504,7 +507,33 @@ namespace Test.Server
         static async Task ObjectWrite(S3Context ctx)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            Console.WriteLine("ObjectWrite: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
+            Console.WriteLine("ObjectWrite      : " + ctx.Request.Bucket + "/" + ctx.Request.Key);
+            Console.WriteLine("Chunked transfer : " + ctx.Request.Chunked);
+
+            if (ctx.Request.Chunked)
+            {
+                while (true)
+                {
+                    Chunk chunk = ctx.Request.ReadChunk().Result;
+                    Console.WriteLine(Common.SerializeJson(chunk, true));
+
+                    Console.Write(chunk.Length + ": ");
+
+                    if (chunk.Length > 0)
+                    {
+                        Console.WriteLine(chunk.Length + "/" + chunk.IsFinalChunk + ": " + Encoding.UTF8.GetString(chunk.Data));
+                    }
+                    if (chunk.IsFinalChunk)
+                    {
+                        Console.WriteLine("Final chunk encountered");
+                        break;
+                    }                    
+                }
+            }
+            else
+            {
+                Console.WriteLine(ctx.Request.ContentLength + ": " + ctx.Request.DataAsString);
+            }
         }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously

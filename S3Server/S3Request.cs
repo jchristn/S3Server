@@ -524,15 +524,6 @@ namespace S3ServerLibrary
                         TimestampUtc = dt;
                     }
                 }
-
-                if (HeaderExists("x-amz-content-sha256", false))
-                {
-                    string sha256content = RetrieveHeaderValue("x-amz-content-sha256");
-                    if (!String.IsNullOrEmpty(sha256content))
-                    {
-                        if (sha256content.Contains("STREAMING")) Chunked = true;
-                    }
-                }
             }
 
             #endregion
