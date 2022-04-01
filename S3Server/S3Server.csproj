@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netcoreapp3.1;netstandard2.1;net462;net5.0;net6.0</TargetFrameworks>
-    <Version>4.0.1.11</Version>
+    <Version>4.0.1.12</Version>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>Joel Christner</Authors>
@@ -77,7 +77,7 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Watson" Version="4.2.2.9" />
+    <PackageReference Include="Watson" Version="4.2.2.10" />
   </ItemGroup>
 
   <ItemGroup>
