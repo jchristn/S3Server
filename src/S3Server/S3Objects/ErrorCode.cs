@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Runtime.Serialization;
 using System.Xml.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Converters;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace S3ServerLibrary.S3Objects
 {
@@ -14,7 +13,7 @@ namespace S3ServerLibrary.S3Objects
     /// <summary>
     /// Amazon S3 error code.
     /// </summary>
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ErrorCode
     { 
         /// <summary>

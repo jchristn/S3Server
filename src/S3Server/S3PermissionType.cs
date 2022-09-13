@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Converters;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Runtime.Serialization;
 
 namespace S3ServerLibrary
@@ -12,7 +11,7 @@ namespace S3ServerLibrary
     /// Permission types used by S3. 
     /// See https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html for details.
     /// </summary>
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum S3PermissionType
     {
         /// <summary>

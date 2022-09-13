@@ -129,7 +129,7 @@ namespace S3ServerLibrary
             {
                 string ret = "/";
 
-                if (_S3Context.Request.RequestStyle == S3RequestStyle.BucketNotInHostname)
+                if (_S3Context.Request.RequestStyle == S3RequestStyle.PathStyle)
                 {
                     if (!String.IsNullOrEmpty(_S3Context.Request.Bucket))
                     {
@@ -141,7 +141,7 @@ namespace S3ServerLibrary
                         }
                     }
                 }
-                else if (_S3Context.Request.RequestStyle == S3RequestStyle.BucketInHostname)
+                else if (_S3Context.Request.RequestStyle == S3RequestStyle.VirtualHostedStyle)
                 {
                     if (!String.IsNullOrEmpty(_S3Context.Request.Key))
                     {

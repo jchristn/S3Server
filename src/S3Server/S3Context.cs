@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using WatsonWebserver;
 
 namespace S3ServerLibrary
@@ -42,7 +43,7 @@ namespace S3ServerLibrary
         /// <summary>
         /// HTTP context from which the S3 context was created.
         /// </summary>
-        [JsonProperty(Order = 999)]
+        [JsonPropertyOrder(999)]
         public HttpContext Http { get; private set; } = null;
 
         #endregion

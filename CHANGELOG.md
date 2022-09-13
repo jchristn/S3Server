@@ -2,6 +2,14 @@
 
 ## Current Version
 
+v5.0.0
+
+- Minor breaking change
+- Rename ```S3RequestStyle``` values to ```PathStyle``` and ```VirtualHostedStyle```
+- Remove Newtonsoft.Json dependency
+
+## Previous Versions
+
 v4.0.1
 
 - Breaking changes, massive refactor
@@ -17,8 +25,6 @@ v4.0.1
   - Valid values are present in the documentation
 - Cleaned up XML annotations and moved to deserialization that ignores namespaces for better compatibility
 - Inclusion of x-amz-request-id and x-amz-id-2 headers
-
-## Previous Versions
 
 v3.2.1
 

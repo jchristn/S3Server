@@ -2365,14 +2365,14 @@
             Unknown request style.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.S3RequestStyle.BucketNotInHostname">
+        <member name="F:S3ServerLibrary.S3RequestStyle.PathStyle">
             <summary>
-            Bucket is not in the hostname, rather, it is in the URL.
+            Path-style request, i.e. bucket is in the URL and not in the hostname, e.g. http://[hostname]/[bucket]/[key].
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.S3RequestStyle.BucketInHostname">
+        <member name="F:S3ServerLibrary.S3RequestStyle.VirtualHostedStyle">
             <summary>
-            Bucket is in the hostname and not in the URL.
+            Virtual-hosted style request, i.e. bucket is in the hostname and not in the URL, e.g. http://[bucket].[hostname]/[key].
             </summary>
         </member>
         <member name="T:S3ServerLibrary.S3RequestType">

@@ -9,13 +9,13 @@ using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace S3ServerLibrary
 {
@@ -445,138 +445,6 @@ namespace S3ServerLibrary
 
         #endregion
 
-        #region Serialization
-
-        public static T CopyObject<T>(T source)
-        {
-            if (source == null) return default(T);
-
-            string json = SerializeJson(source, false);
-            try
-            {
-                return Common.DeserializeJson<T>(json);
-            }
-            catch (Exception)
-            {
-                return default(T);
-            }
-        }
-
-        public static string SerializeJson(object obj, bool pretty)
-        {
-            if (obj == null) return null;
-            string json;
-
-            if (pretty)
-            {
-                json = JsonConvert.SerializeObject(
-                  obj,
-                  Newtonsoft.Json.Formatting.Indented,
-                  new JsonSerializerSettings
-                  {
-                      NullValueHandling = NullValueHandling.Ignore,
-                      DateTimeZoneHandling = DateTimeZoneHandling.Utc,
-                  });
-            }
-            else
-            {
-                json = JsonConvert.SerializeObject(obj,
-                  new JsonSerializerSettings
-                  {
-                      NullValueHandling = NullValueHandling.Ignore,
-                      DateTimeZoneHandling = DateTimeZoneHandling.Utc
-                  });
-            }
-
-            return json;
-        }
-
-        public static T DeserializeJson<T>(string json)
-        {
-            if (String.IsNullOrEmpty(json)) throw new ArgumentNullException(nameof(json)); 
-            return JsonConvert.DeserializeObject<T>(json); 
-        }
-
-        public static T DeserializeJson<T>(byte[] data)
-        {
-            if (data == null || data.Length < 1) throw new ArgumentNullException(nameof(data));
-            return DeserializeJson<T>(Encoding.UTF8.GetString(data));
-        }
-
-        public static T DeserializeXml<T>(byte[] bytes) where T : class
-        {
-            if (bytes == null) throw new ArgumentNullException(nameof(bytes));
-            return DeserializeXml<T>(Encoding.UTF8.GetString(bytes));
-        }
-
-        public static T DeserializeXml<T>(string xml) where T : class
-        {
-            if (String.IsNullOrEmpty(xml)) throw new ArgumentNullException(nameof(xml));
-
-            // remove preamble if exists
-            string byteOrderMarkUtf8 = Encoding.UTF8.GetString(Encoding.UTF8.GetPreamble());
-            while (xml.StartsWith(byteOrderMarkUtf8, StringComparison.Ordinal))
-            {
-                xml = xml.Remove(0, byteOrderMarkUtf8.Length);
-            }
-
-            /*
-             * 
-             * This code respects the supplied namespace and validates it vs the model in code
-             * 
-             * 
-            XmlSerializer xmls = new XmlSerializer(typeof(T));
-            using (MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(xml)))
-            {
-                return (T)xmls.Deserialize(ms);
-            }
-            */
-
-            // The code that follows ignores namespaces
-
-            T obj = null;
-
-            using (TextReader textReader = new StringReader(xml))
-            {
-                using (XmlTextReader reader = new XmlTextReader(textReader))
-                {
-                    reader.Namespaces = false;
-                    XmlSerializer serializer = new XmlSerializer(typeof(T));
-                    obj = (T)serializer.Deserialize(reader);
-                }
-            }
-
-            return obj;
-        }
-
-        public static string SerializeXml(object obj)
-        {
-            if (obj == null) throw new ArgumentNullException(nameof(obj));
-
-            XmlSerializer xml = new XmlSerializer(obj.GetType());
-
-            using (MemoryStream stream = new MemoryStream())
-            {
-                using (StreamWriter writer = new StreamWriter(stream, Encoding.UTF8))
-                {
-                    xml.Serialize(writer, obj);
-                    byte[] bytes = stream.ToArray();
-                    string ret = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
-
-                    // remove preamble if exists
-                    string byteOrderMarkUtf8 = Encoding.UTF8.GetString(Encoding.UTF8.GetPreamble());
-                    while (ret.StartsWith(byteOrderMarkUtf8, StringComparison.Ordinal))
-                    {
-                        ret = ret.Remove(0, byteOrderMarkUtf8.Length);
-                    }
-
-                    return ret;
-                }
-            }
-        }
-
-        #endregion
-
         #region Crypto
 
         public static byte[] Md5(byte[] data)
@@ -735,6 +603,139 @@ namespace S3ServerLibrary
             if (String.IsNullOrEmpty(hexStr)) return null;
 
             return Convert.ToBase64String(HexStringToBytes(hexStr));
+        }
+
+        #endregion
+
+        #region Serialization
+
+        public static T CopyObject<T>(T source)
+        {
+            if (source == null) return default(T);
+
+            string json = SerializeJson(source, false);
+            try
+            {
+                return Common.DeserializeJson<T>(json);
+            }
+            catch (Exception)
+            {
+                return default(T);
+            }
+        }
+
+        public static string SerializeJson(object obj, bool pretty)
+        {
+            if (obj == null) return null;
+            string json;
+
+            if (pretty)
+            {
+                json = JsonSerializer.Serialize(obj,
+                    new JsonSerializerOptions
+                    {
+                        WriteIndented = true,
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                    }
+                );
+            }
+            else
+            {
+                json = JsonSerializer.Serialize(obj,
+                    new JsonSerializerOptions
+                    {
+                        WriteIndented = false,
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                    }
+                );
+            }
+
+            return json;
+        }
+
+        public static T DeserializeJson<T>(string json)
+        {
+            if (String.IsNullOrEmpty(json)) throw new ArgumentNullException(nameof(json));
+            return JsonSerializer.Deserialize<T>(json);
+        }
+
+        public static T DeserializeJson<T>(byte[] data)
+        {
+            if (data == null || data.Length < 1) throw new ArgumentNullException(nameof(data));
+            return JsonSerializer.Deserialize<T>(data);
+        }
+
+
+        public static T DeserializeXml<T>(byte[] bytes) where T : class
+        {
+            if (bytes == null) throw new ArgumentNullException(nameof(bytes));
+            return DeserializeXml<T>(Encoding.UTF8.GetString(bytes));
+        }
+
+        public static T DeserializeXml<T>(string xml) where T : class
+        {
+            if (String.IsNullOrEmpty(xml)) throw new ArgumentNullException(nameof(xml));
+
+            // remove preamble if exists
+            string byteOrderMarkUtf8 = Encoding.UTF8.GetString(Encoding.UTF8.GetPreamble());
+            while (xml.StartsWith(byteOrderMarkUtf8, StringComparison.Ordinal))
+            {
+                xml = xml.Remove(0, byteOrderMarkUtf8.Length);
+            }
+
+            /*
+             * 
+             * This code respects the supplied namespace and validates it vs the model in code
+             * 
+             * 
+            XmlSerializer xmls = new XmlSerializer(typeof(T));
+            using (MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(xml)))
+            {
+                return (T)xmls.Deserialize(ms);
+            }
+            */
+
+            // The code that follows ignores namespaces
+
+            T obj = null;
+
+            using (TextReader textReader = new StringReader(xml))
+            {
+                using (XmlTextReader reader = new XmlTextReader(textReader))
+                {
+                    reader.Namespaces = false;
+                    XmlSerializer serializer = new XmlSerializer(typeof(T));
+                    obj = (T)serializer.Deserialize(reader);
+                }
+            }
+
+            return obj;
+        }
+
+        public static string SerializeXml(object obj)
+        {
+            if (obj == null) throw new ArgumentNullException(nameof(obj));
+
+            XmlSerializer xml = new XmlSerializer(obj.GetType());
+
+            using (MemoryStream stream = new MemoryStream())
+            {
+                using (StreamWriter writer = new StreamWriter(stream, Encoding.UTF8))
+                {
+                    xml.Serialize(writer, obj);
+                    byte[] bytes = stream.ToArray();
+                    string ret = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
+
+                    // remove preamble if exists
+                    string byteOrderMarkUtf8 = Encoding.UTF8.GetString(Encoding.UTF8.GetPreamble());
+                    while (ret.StartsWith(byteOrderMarkUtf8, StringComparison.Ordinal))
+                    {
+                        ret = ret.Remove(0, byteOrderMarkUtf8.Length);
+                    }
+
+                    return ret;
+                }
+            }
         }
 
         #endregion

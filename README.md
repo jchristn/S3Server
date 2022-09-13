@@ -10,21 +10,11 @@ Simple S3 server-side interface, produced using Amazon's public documentation.  
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v4.0.1
+## New in v5.0.0
 
-- Breaking changes, massive refactor
-- Namespace change
-- Request body now deserialized from XML and passed to callbacks
-- Callbacks now expect either:
-  - Appropriate response object, or
-  - That your code will throw an ```S3Exception``` with the appropriate ```Error```
-- Variable name consistency within objects
-- S3Objects now have:
-  - Additional constructors for ease of use
-  - Input validation where appropriate (for instance, ```Retention.Mode```)
-  - Valid values are present in the documentation
-- Cleaned up XML annotations and moved to deserialization that ignores namespaces for better compatibility
-- Inclusion of x-amz-request-id and x-amz-id-2 headers
+- Minor breaking change
+- Rename ```S3RequestStyle``` values to ```PathStyle``` and ```VirtualHostedStyle```
+- Remove Newtonsoft.Json dependency
 
 ## Examples
 

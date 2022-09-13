@@ -7,11 +7,10 @@ using System.Net;
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Converters;
 using WatsonWebserver;
 
 namespace S3ServerLibrary
@@ -330,7 +329,7 @@ namespace S3ServerLibrary
         /// <summary>
         /// List of signed headers.
         /// </summary>
-        [JsonProperty(Order = 998)]
+        [JsonPropertyOrder(998)]
         public List<string> SignedHeaders { get; set; } = new List<string>();
          
         /// <summary>
@@ -778,31 +777,29 @@ namespace S3ServerLibrary
 
             if (Common.IsIpAddress(Hostname))
             {
-                RequestStyle = S3RequestStyle.BucketNotInHostname;
+                RequestStyle = S3RequestStyle.PathStyle;
                 _Logger?.Invoke(_Header + "supplied hostname is an IP address");
             }
             else
             {
                 if (_BaseDomains == null || _BaseDomains.Count < 1)
                 {
-                    RequestStyle = S3RequestStyle.BucketNotInHostname;
+                    RequestStyle = S3RequestStyle.PathStyle;
                     _Logger?.Invoke(_Header + "no base hostnames, request assumed to have bucket in URL");
                 }
                 else
                 {
-                    // need to look the OTHER way
                     // currently looking for exact matches and Hostname has the bucket name in it
                     // need to look to see if any of the base domains are contained WITHIN the hostname
-
                     BaseDomain = GetMatchingBaseDomain(Hostname);
                     if (String.IsNullOrEmpty(BaseDomain))
                     {
-                        RequestStyle = S3RequestStyle.BucketNotInHostname;
+                        RequestStyle = S3RequestStyle.PathStyle;
                         _Logger?.Invoke(_Header + "base hostname not found, assumed to have bucket in URL");
                     }
                     else
                     {
-                        RequestStyle = S3RequestStyle.BucketInHostname;
+                        RequestStyle = S3RequestStyle.VirtualHostedStyle;
 
                         string tempBaseDomain = BaseDomain;
                         while (tempBaseDomain.StartsWith(".")) tempBaseDomain = tempBaseDomain.Substring(1);
@@ -823,11 +820,11 @@ namespace S3ServerLibrary
 
             switch (RequestStyle)
             {
-                case S3RequestStyle.BucketInHostname:
+                case S3RequestStyle.VirtualHostedStyle:
                     Key = WebUtility.UrlDecode(rawUrl);
                     break;
 
-                case S3RequestStyle.BucketNotInHostname:
+                case S3RequestStyle.PathStyle:
                     string[] valsInner = rawUrl.Split(new[] { '/' }, 2);
                     if (valsInner.Length > 0) Bucket = WebUtility.UrlDecode(valsInner[0]);
                     if (valsInner.Length > 1) Key = WebUtility.UrlDecode(valsInner[1]);
