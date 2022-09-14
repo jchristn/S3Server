@@ -24,9 +24,17 @@ namespace S3ServerLibrary.S3Objects
         /// <summary>
         /// Prefix specified in the request.
         /// </summary>
-        [XmlElement(ElementName = "Prefix", IsNullable = false)]
+        [XmlElement(ElementName = "Prefix", IsNullable = true)]
         public string Prefix
         {
+            /*
+             * Without IsNullable property
+             *   When null, not included
+             * With IsNullable property set to false
+             *   When null, "<Prefix />"
+             * With IsNullable property set to true
+             *   When null, "<Prefix />"
+             */
             get
             {
                 return _Prefix;
@@ -48,7 +56,7 @@ namespace S3ServerLibrary.S3Objects
         /// Number of keys.
         /// </summary>
         [XmlElement(ElementName = "KeyCount")]
-        public long KeyCount
+        public int KeyCount
         {
             get
             {
@@ -65,7 +73,7 @@ namespace S3ServerLibrary.S3Objects
         /// Maximum number of keys.
         /// </summary>
         [XmlElement(ElementName = "MaxKeys")]
-        public long MaxKeys
+        public int MaxKeys
         {
             get
             {
@@ -125,12 +133,17 @@ namespace S3ServerLibrary.S3Objects
         [XmlElement(ElementName = "CommonPrefixes", IsNullable = true)]
         public CommonPrefixes CommonPrefixes { get; set; } = new CommonPrefixes();
 
+        /// <summary>
+        /// Bucket region string.  Not included in the XML, but rather as the HTTP header x-amz-bucket-region.
+        /// </summary>
+        public string BucketRegion { get; set; } = "us-west-1";
+
         #endregion
 
         #region Private-Members
 
-        private long _KeyCount = 0;
-        private long _MaxKeys = 1000;
+        private int _KeyCount = 0;
+        private int _MaxKeys = 1000;
         private string _Prefix = "";
         private string _Delimiter = "/";
 
@@ -159,7 +172,7 @@ namespace S3ServerLibrary.S3Objects
         /// <param name="isTruncated">Is truncated.</param>
         /// <param name="nextToken">Next continuation token.</param>
         /// <param name="prefixes">Prefixes</param>
-        public ListBucketResult(string name, List<ObjectMetadata> contents, long keyCount, long maxKeys, string prefix = null, string marker = null, string delimiter = null, bool isTruncated = false, string nextToken = null, CommonPrefixes prefixes = null)
+        public ListBucketResult(string name, List<ObjectMetadata> contents, int keyCount, int maxKeys, string prefix = null, string marker = null, string delimiter = null, bool isTruncated = false, string nextToken = null, CommonPrefixes prefixes = null)
         {
             if (String.IsNullOrEmpty(name)) throw new ArgumentNullException(nameof(name));
             Name = name;
@@ -186,7 +199,7 @@ namespace S3ServerLibrary.S3Objects
         /// <summary>
         /// Helper method for XML serialization.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Boolean</returns>
         public bool ShouldSerializeMarker()
         {
             return !String.IsNullOrEmpty(Marker);
@@ -195,12 +208,24 @@ namespace S3ServerLibrary.S3Objects
         /// <summary>
         /// Helper method for XML serialization.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Boolean</returns>
         public bool ShouldSerializeNextContinuationToken()
         {
             return !String.IsNullOrEmpty(NextContinuationToken);
         }
-        
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean</returns>
+        public bool ShouldSerializeCommonPrefixes()
+        {
+            return (
+                CommonPrefixes != null
+                && CommonPrefixes.Prefixes != null
+                && CommonPrefixes.Prefixes.Count > 0);
+        }
+
         #endregion
 
         #region Private-Methods

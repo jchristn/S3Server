@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks; 
 using WatsonWebserver;
@@ -262,6 +263,7 @@ namespace S3ServerLibrary
                 return;
             }
 
+            byte[] bytes = null;
             bool success = false;
             bool exists = false;
             S3Object s3obj = null;
@@ -374,9 +376,15 @@ namespace S3ServerLibrary
                         if (Bucket.Read != null)
                         {
                             listBucketResult = await Bucket.Read(s3ctx).ConfigureAwait(false);
+                            bytes = Encoding.UTF8.GetBytes(SerializationHelper.SerializeXml(listBucketResult));
+
+                            if (!String.IsNullOrEmpty(listBucketResult.BucketRegion))
+                                ctx.Response.Headers.Add("x-amz-bucket-region", listBucketResult.BucketRegion);
+
+                            ctx.Response.ChunkedTransfer = true;
                             ctx.Response.StatusCode = 200;
                             ctx.Response.ContentType = "application/xml";
-                            await ctx.Response.Send(SerializationHelper.SerializeXml(listBucketResult)).ConfigureAwait(false);
+                            await ctx.Response.SendFinalChunk(bytes, bytes.Length).ConfigureAwait(false);
                             return;
                         }
                         break;

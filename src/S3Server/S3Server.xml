@@ -1407,12 +1407,17 @@
             Common prefixes.
             </summary>
         </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListBucketResult.BucketRegion">
+            <summary>
+            Bucket region string.  Not included in the XML, but rather as the HTTP header x-amz-bucket-region.
+            </summary>
+        </member>
         <member name="M:S3ServerLibrary.S3Objects.ListBucketResult.#ctor">
             <summary>
             Instantiate.
             </summary>
         </member>
-        <member name="M:S3ServerLibrary.S3Objects.ListBucketResult.#ctor(System.String,System.Collections.Generic.List{S3ServerLibrary.S3Objects.ObjectMetadata},System.Int64,System.Int64,System.String,System.String,System.String,System.Boolean,System.String,S3ServerLibrary.S3Objects.CommonPrefixes)">
+        <member name="M:S3ServerLibrary.S3Objects.ListBucketResult.#ctor(System.String,System.Collections.Generic.List{S3ServerLibrary.S3Objects.ObjectMetadata},System.Int32,System.Int32,System.String,System.String,System.String,System.Boolean,System.String,S3ServerLibrary.S3Objects.CommonPrefixes)">
             <summary>
             Instantiate.
             </summary>
@@ -1431,13 +1436,19 @@
             <summary>
             Helper method for XML serialization.
             </summary>
-            <returns></returns>
+            <returns>Boolean</returns>
         </member>
         <member name="M:S3ServerLibrary.S3Objects.ListBucketResult.ShouldSerializeNextContinuationToken">
             <summary>
             Helper method for XML serialization.
             </summary>
-            <returns></returns>
+            <returns>Boolean</returns>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.ListBucketResult.ShouldSerializeCommonPrefixes">
+            <summary>
+            Helper method for XML serialization.
+            </summary>
+            <returns>Boolean</returns>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.ListVersionsResult">
             <summary>
@@ -2887,11 +2898,19 @@
             <param name="xml">XML string.</param>
             <returns>Instance.</returns>
         </member>
-        <member name="M:S3ServerLibrary.SerializationHelper.SerializeXml(System.Object)">
+        <member name="M:S3ServerLibrary.SerializationHelper.SerializeXml2(System.Object)">
             <summary>
             Serialize XML.
             </summary>
             <param name="obj">Object.</param>
+            <returns>XML string.</returns>
+        </member>
+        <member name="M:S3ServerLibrary.SerializationHelper.SerializeXml(System.Object,System.Boolean)">
+            <summary>
+            Serialize XML.
+            </summary>
+            <param name="obj">Object.</param>
+            <param name="pretty">Pretty print.</param>
             <returns>XML string.</returns>
         </member>
     </members>

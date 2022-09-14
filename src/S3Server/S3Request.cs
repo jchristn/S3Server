@@ -95,7 +95,18 @@ namespace S3ServerLibrary
         /// <summary>
         /// Maximum number of keys to retrieve in an enumeration.
         /// </summary>
-        public long MaxKeys { get; set; } = 0;
+        public int MaxKeys
+        {
+            get
+            {
+                return _MaxKeys;
+            }
+            set
+            {
+                if (value < 0) throw new ArgumentOutOfRangeException(nameof(MaxKeys));
+                _MaxKeys = value;
+            }
+        }
 
         /// <summary>
         /// Object version ID.
@@ -162,12 +173,36 @@ namespace S3ServerLibrary
         /// <summary>
         /// Start value from the Range header.
         /// </summary>
-        public long? RangeStart { get; set; } = null;
+        public long? RangeStart
+        {
+            get
+            {
+                return _RangeStart;
+            }
+            set
+            {
+                if (value != null && value.Value < 0) 
+                    throw new ArgumentOutOfRangeException(nameof(RangeStart));
+                _RangeStart = value;
+            }
+        }
 
         /// <summary>
         /// End value from the Range header.
         /// </summary>
-        public long? RangeEnd { get; set; } = null;
+        public long? RangeEnd
+        {
+            get
+            {
+                return _RangeEnd;
+            }
+            set
+            {
+                if (value != null && value.Value < 0)
+                    throw new ArgumentOutOfRangeException(nameof(RangeEnd));
+                _RangeEnd = value;
+            }
+        }
 
         /// <summary>
         /// Continuation token.
@@ -330,7 +365,18 @@ namespace S3ServerLibrary
         /// List of signed headers.
         /// </summary>
         [JsonPropertyOrder(998)]
-        public List<string> SignedHeaders { get; set; } = new List<string>();
+        public List<string> SignedHeaders
+        {
+            get
+            {
+                return _SignedHeaders;
+            }
+            set
+            {
+                if (value == null) _SignedHeaders = new List<string>();
+                else _SignedHeaders = value;
+            }
+        }
          
         /// <summary>
         /// Stream containing the request body.
@@ -372,9 +418,14 @@ namespace S3ServerLibrary
         private HttpRequest _HttpRequest = null;
         private Action<string> _Logger = null;
         private List<string> _BaseDomains = new List<string>();
+        private List<string> _SignedHeaders = new List<string>();
 
         private string _AmazonTimestampFormat = "yyyyMMddTHHmmssZ"; 
         private Dictionary<object, object> _UserMetadata = new Dictionary<object, object>();
+
+        private int _MaxKeys = 1000;
+        private long? _RangeStart = null;
+        private long? _RangeEnd = null;
 
         #endregion
 
@@ -448,11 +499,11 @@ namespace S3ServerLibrary
 
                 if (QuerystringExists("max-keys", false))
                 {
-                    long maxKeys = 0;
+                    int maxKeys = 0;
                     string maxKeysStr = RetrieveQueryValue("max-keys");
                     if (!String.IsNullOrEmpty(maxKeysStr))
                     {
-                        if (Int64.TryParse(_HttpRequest.Query.Elements["max-keys"], out maxKeys))
+                        if (Int32.TryParse(_HttpRequest.Query.Elements["max-keys"], out maxKeys))
                         {
                             MaxKeys = maxKeys;
                         }

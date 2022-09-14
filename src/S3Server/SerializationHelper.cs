@@ -170,7 +170,7 @@ namespace S3ServerLibrary
         /// </summary>
         /// <param name="obj">Object.</param>
         /// <returns>XML string.</returns>
-        public static string SerializeXml(object obj)
+        public static string SerializeXml2(object obj)
         {
             if (obj == null) throw new ArgumentNullException(nameof(obj));
 
@@ -181,6 +181,44 @@ namespace S3ServerLibrary
                 using (StreamWriter writer = new StreamWriter(stream, Encoding.UTF8))
                 {
                     xml.Serialize(writer, obj);
+                    byte[] bytes = stream.ToArray();
+                    string ret = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
+
+                    // remove preamble if exists
+                    string byteOrderMarkUtf8 = Encoding.UTF8.GetString(Encoding.UTF8.GetPreamble());
+                    while (ret.StartsWith(byteOrderMarkUtf8, StringComparison.Ordinal))
+                    {
+                        ret = ret.Remove(0, byteOrderMarkUtf8.Length);
+                    }
+
+                    return ret;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Serialize XML.
+        /// </summary>
+        /// <param name="obj">Object.</param>
+        /// <param name="pretty">Pretty print.</param>
+        /// <returns>XML string.</returns>
+        public static string SerializeXml(object obj, bool pretty = false)
+        {
+            if (obj == null) throw new ArgumentNullException(nameof(obj));
+
+            XmlSerializer xml = new XmlSerializer(obj.GetType());
+
+            using (MemoryStream stream = new MemoryStream())
+            {
+                XmlWriterSettings settings = new XmlWriterSettings();
+                settings.Encoding = Encoding.GetEncoding("ISO-8859-1");
+                settings.NewLineChars = Environment.NewLine;
+                settings.ConformanceLevel = ConformanceLevel.Document;
+                if (pretty) settings.Indent = true;
+
+                using (XmlWriter writer = XmlWriter.Create(stream, settings))
+                {
+                    xml.Serialize(new XmlWriterExtended(writer), obj);
                     byte[] bytes = stream.ToArray();
                     string ret = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
 
