@@ -8,7 +8,7 @@ namespace S3ServerLibrary.S3Objects
     /// <summary>
     /// Result from a ListBucket operation.
     /// </summary>
-    [XmlRoot(ElementName = "ListBucketResult", IsNullable = true)]
+    [XmlRoot(ElementName = "ListBucketResult", IsNullable = true, Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
     public class ListBucketResult
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
@@ -24,8 +24,19 @@ namespace S3ServerLibrary.S3Objects
         /// <summary>
         /// Prefix specified in the request.
         /// </summary>
-        [XmlElement(ElementName = "Prefix", IsNullable = true)]
-        public string Prefix { get; set; } = null;
+        [XmlElement(ElementName = "Prefix", IsNullable = false)]
+        public string Prefix
+        {
+            get
+            {
+                return _Prefix;
+            }
+            set
+            {
+                if (String.IsNullOrEmpty(value)) _Prefix = "";
+                else _Prefix = value;
+            }
+        }
 
         /// <summary>
         /// Marker.
@@ -71,7 +82,24 @@ namespace S3ServerLibrary.S3Objects
         /// Delimiter.
         /// </summary>
         [XmlElement(ElementName = "Delimiter", IsNullable = true)]
-        public string Delimiter { get; set; } = null;
+        public string Delimiter
+        {
+            get
+            {
+                return _Delimiter;
+            }
+            set
+            {
+                if (String.IsNullOrEmpty(value)) _Delimiter = "/";
+                else _Delimiter = value;
+            }
+        }
+
+        /// <summary>
+        /// Encoding type.
+        /// </summary>
+        [XmlElement(ElementName = "EncodingType")]
+        public string EncodingType { get; set; } = "url";
 
         /// <summary>
         /// Indicates if the response is truncated.
@@ -102,7 +130,9 @@ namespace S3ServerLibrary.S3Objects
         #region Private-Members
 
         private long _KeyCount = 0;
-        private long _MaxKeys = 0;
+        private long _MaxKeys = 1000;
+        private string _Prefix = "";
+        private string _Delimiter = "/";
 
         #endregion
 
@@ -148,6 +178,29 @@ namespace S3ServerLibrary.S3Objects
 
         #region Public-Methods
 
+        /*
+         * See https://stackoverflow.com/a/51440611 for information on ShouldSerialize methods
+         * and how they are used by XmlSerializer
+         */
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns></returns>
+        public bool ShouldSerializeMarker()
+        {
+            return !String.IsNullOrEmpty(Marker);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns></returns>
+        public bool ShouldSerializeNextContinuationToken()
+        {
+            return !String.IsNullOrEmpty(NextContinuationToken);
+        }
+        
         #endregion
 
         #region Private-Methods

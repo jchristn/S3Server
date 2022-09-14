@@ -291,7 +291,7 @@ namespace S3ServerLibrary
         {
             Chunked = false;
 
-            byte[] bytes = Encoding.UTF8.GetBytes(Common.SerializeXml(error));
+            byte[] bytes = Encoding.UTF8.GetBytes(SerializationHelper.SerializeXml(error));
             MemoryStream ms = new MemoryStream(bytes);
             ms.Seek(0, SeekOrigin.Begin);
 
@@ -315,7 +315,7 @@ namespace S3ServerLibrary
 
             Error errorBody = new Error(error);
 
-            byte[] bytes = Encoding.UTF8.GetBytes(Common.SerializeXml(errorBody));
+            byte[] bytes = Encoding.UTF8.GetBytes(SerializationHelper.SerializeXml(errorBody));
             MemoryStream ms = new MemoryStream(bytes);
             ms.Seek(0, SeekOrigin.Begin);
 

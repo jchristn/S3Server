@@ -1382,6 +1382,11 @@
             Delimiter.
             </summary>
         </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListBucketResult.EncodingType">
+            <summary>
+            Encoding type.
+            </summary>
+        </member>
         <member name="P:S3ServerLibrary.S3Objects.ListBucketResult.IsTruncated">
             <summary>
             Indicates if the response is truncated.
@@ -1421,6 +1426,18 @@
             <param name="isTruncated">Is truncated.</param>
             <param name="nextToken">Next continuation token.</param>
             <param name="prefixes">Prefixes</param>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.ListBucketResult.ShouldSerializeMarker">
+            <summary>
+            Helper method for XML serialization.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.ListBucketResult.ShouldSerializeNextContinuationToken">
+            <summary>
+            Helper method for XML serialization.
+            </summary>
+            <returns></returns>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.ListVersionsResult">
             <summary>
@@ -2816,6 +2833,66 @@
             <summary>
             Version4.
             </summary>
+        </member>
+        <member name="T:S3ServerLibrary.SerializationHelper">
+            <summary>
+            Serialization helper.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.SerializationHelper.CopyObject``1(``0)">
+            <summary>
+            Copy an object.
+            </summary>
+            <typeparam name="T">Type.</typeparam>
+            <param name="source">Source object.</param>
+            <returns>Copy.</returns>
+        </member>
+        <member name="M:S3ServerLibrary.SerializationHelper.SerializeJson(System.Object,System.Boolean)">
+            <summary>
+            Serialize JSON.
+            </summary>
+            <param name="obj">Object.</param>
+            <param name="pretty">Pretty print.</param>
+            <returns>JSON string.</returns>
+        </member>
+        <member name="M:S3ServerLibrary.SerializationHelper.DeserializeJson``1(System.String)">
+            <summary>
+            Deserialize JSON. 
+            </summary>
+            <typeparam name="T">Type.</typeparam>
+            <param name="json">JSON string.</param>
+            <returns>Instance.</returns>
+        </member>
+        <member name="M:S3ServerLibrary.SerializationHelper.DeserializeJson``1(System.Byte[])">
+            <summary>
+            Deserialize JSON. 
+            </summary>
+            <typeparam name="T">Type.</typeparam>
+            <param name="data">JSON data.</param>
+            <returns>Instance.</returns>
+        </member>
+        <member name="M:S3ServerLibrary.SerializationHelper.DeserializeXml``1(System.Byte[])">
+            <summary>
+            Deserialize XML.
+            </summary>
+            <typeparam name="T">Type.</typeparam>
+            <param name="bytes">XML data.</param>
+            <returns>Instance.</returns>
+        </member>
+        <member name="M:S3ServerLibrary.SerializationHelper.DeserializeXml``1(System.String)">
+            <summary>
+            Deserialize XML.
+            </summary>
+            <typeparam name="T">Type.</typeparam>
+            <param name="xml">XML string.</param>
+            <returns>Instance.</returns>
+        </member>
+        <member name="M:S3ServerLibrary.SerializationHelper.SerializeXml(System.Object)">
+            <summary>
+            Serialize XML.
+            </summary>
+            <param name="obj">Object.</param>
+            <returns>XML string.</returns>
         </member>
     </members>
 </doc>

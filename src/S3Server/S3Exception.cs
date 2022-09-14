@@ -29,7 +29,7 @@ namespace S3ServerLibrary
         {
             get
             {
-                if (InnerException != null) return Common.SerializeJson(InnerException, true);
+                if (InnerException != null) return SerializationHelper.SerializeJson(InnerException, true);
                 return null;
             }
         }

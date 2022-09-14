@@ -17,7 +17,7 @@ namespace S3ServerLibrary
         /// <returns>JSON string.</returns>
         public static string ToJson(this object obj, bool pretty)
         {
-            return Common.SerializeJson(obj, pretty);
+            return SerializationHelper.SerializeJson(obj, pretty);
         }
     }
 }

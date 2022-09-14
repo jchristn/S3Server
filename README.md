@@ -10,11 +10,12 @@ Simple S3 server-side interface, produced using Amazon's public documentation.  
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v5.0.0
+## New in v5.0.x
 
 - Minor breaking change
 - Rename ```S3RequestStyle``` values to ```PathStyle``` and ```VirtualHostedStyle```
 - Remove Newtonsoft.Json dependency
+- Changes to (hopefully) improve compatibility with S3 ListObjects APIs
 
 ## Examples
 

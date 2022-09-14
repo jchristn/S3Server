@@ -2,11 +2,12 @@
 
 ## Current Version
 
-v5.0.0
+v5.0.x
 
 - Minor breaking change
 - Rename ```S3RequestStyle``` values to ```PathStyle``` and ```VirtualHostedStyle```
 - Remove Newtonsoft.Json dependency
+- Changes to (hopefully) improve compatibility with S3 ListObjects APIs
 
 ## Previous Versions
 

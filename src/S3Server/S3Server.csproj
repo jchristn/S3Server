@@ -2,13 +2,13 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>netcoreapp3.1;netstandard2.1;net462;net5.0;net6.0</TargetFrameworks>
-		<Version>5.0.1</Version>
+		<Version>5.0.2</Version>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Authors>Joel Christner</Authors>
 		<Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
 		<Copyright>(c)2022 Joel Christner</Copyright>
-		<PackageReleaseNotes>Breaking change, rename S3 request type values, remove Newtonsoft.</PackageReleaseNotes>
+		<PackageReleaseNotes>Changes to (hopefully) improve compatibility with S3 ListObjects APIs.</PackageReleaseNotes>
 		<PackageTags>aws s3 storage rest interface server less3 minio</PackageTags>
 		<PackageLicenseUrl></PackageLicenseUrl>
 		<PackageProjectUrl>https://github.com/jchristn/S3Server</PackageProjectUrl>

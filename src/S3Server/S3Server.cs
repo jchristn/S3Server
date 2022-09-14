@@ -256,7 +256,7 @@ namespace S3ServerLibrary
             {
                 if (Logging.Exceptions)
                 {
-                    Logger?.Invoke(_Header + "Exception:" + Environment.NewLine + Common.SerializeJson(e, true));
+                    Logger?.Invoke(_Header + "Exception:" + Environment.NewLine + SerializationHelper.SerializeJson(e, true));
                 }
 
                 return;
@@ -308,7 +308,7 @@ namespace S3ServerLibrary
                             buckets = await Service.ListBuckets(s3ctx).ConfigureAwait(false);
                             ctx.Response.StatusCode = 200;
                             ctx.Response.ContentType = "application/xml";
-                            await ctx.Response.Send(Common.SerializeXml(buckets)).ConfigureAwait(false);
+                            await ctx.Response.Send(SerializationHelper.SerializeXml(buckets)).ConfigureAwait(false);
                             return;
                         }
                         break;
@@ -376,7 +376,7 @@ namespace S3ServerLibrary
                             listBucketResult = await Bucket.Read(s3ctx).ConfigureAwait(false);
                             ctx.Response.StatusCode = 200;
                             ctx.Response.ContentType = "application/xml";
-                            await ctx.Response.Send(Common.SerializeXml(listBucketResult)).ConfigureAwait(false);
+                            await ctx.Response.Send(SerializationHelper.SerializeXml(listBucketResult)).ConfigureAwait(false);
                             return;
                         }
                         break;
@@ -387,7 +387,7 @@ namespace S3ServerLibrary
                             acp = await Bucket.ReadAcl(s3ctx).ConfigureAwait(false);
                             ctx.Response.StatusCode = 200;
                             ctx.Response.ContentType = "application/xml";
-                            await ctx.Response.Send(Common.SerializeXml(acp)).ConfigureAwait(false);
+                            await ctx.Response.Send(SerializationHelper.SerializeXml(acp)).ConfigureAwait(false);
                             return;
                         }
                         break;
@@ -398,7 +398,7 @@ namespace S3ServerLibrary
                             location = await Bucket.ReadLocation(s3ctx).ConfigureAwait(false);
                             ctx.Response.StatusCode = 200;
                             ctx.Response.ContentType = "application/xml";
-                            await ctx.Response.Send(Common.SerializeXml(location)).ConfigureAwait(false);
+                            await ctx.Response.Send(SerializationHelper.SerializeXml(location)).ConfigureAwait(false);
                             return;
                         }
                         break;
@@ -409,7 +409,7 @@ namespace S3ServerLibrary
                             bucketLogging = await Bucket.ReadLogging(s3ctx).ConfigureAwait(false);
                             ctx.Response.StatusCode = 200;
                             ctx.Response.ContentType = "application/xml";
-                            await ctx.Response.Send(Common.SerializeXml(bucketLogging)).ConfigureAwait(false);
+                            await ctx.Response.Send(SerializationHelper.SerializeXml(bucketLogging)).ConfigureAwait(false);
                             return;
                         }
                         break;
@@ -420,7 +420,7 @@ namespace S3ServerLibrary
                             tagging = await Bucket.ReadTagging(s3ctx).ConfigureAwait(false);
                             ctx.Response.StatusCode = 200;
                             ctx.Response.ContentType = "application/xml";
-                            await ctx.Response.Send(Common.SerializeXml(tagging)).ConfigureAwait(false);
+                            await ctx.Response.Send(SerializationHelper.SerializeXml(tagging)).ConfigureAwait(false);
                             return;
                         }
                         break;
@@ -431,7 +431,7 @@ namespace S3ServerLibrary
                             versionConfig = await Bucket.ReadVersioning(s3ctx).ConfigureAwait(false);
                             ctx.Response.StatusCode = 200;
                             ctx.Response.ContentType = "application/xml";
-                            await ctx.Response.Send(Common.SerializeXml(versionConfig)).ConfigureAwait(false);
+                            await ctx.Response.Send(SerializationHelper.SerializeXml(versionConfig)).ConfigureAwait(false);
                             return;
                         }
                         break;
@@ -442,7 +442,7 @@ namespace S3ServerLibrary
                             listVersionResult = await Bucket.ReadVersions(s3ctx).ConfigureAwait(false);
                             ctx.Response.StatusCode = 200;
                             ctx.Response.ContentType = "application/xml";
-                            await ctx.Response.Send(Common.SerializeXml(listVersionResult)).ConfigureAwait(false);
+                            await ctx.Response.Send(SerializationHelper.SerializeXml(listVersionResult)).ConfigureAwait(false);
                             return;
                         }
                         break;
@@ -453,7 +453,7 @@ namespace S3ServerLibrary
                             wc = await Bucket.ReadWebsite(s3ctx).ConfigureAwait(false);
                             ctx.Response.StatusCode = 200;
                             ctx.Response.ContentType = "application/xml";
-                            await ctx.Response.Send(Common.SerializeXml(wc)).ConfigureAwait(false);
+                            await ctx.Response.Send(SerializationHelper.SerializeXml(wc)).ConfigureAwait(false);
                             return;
                         }
                         break;
@@ -474,13 +474,13 @@ namespace S3ServerLibrary
                         {
                             try
                             {
-                                acp = Common.DeserializeXml<AccessControlPolicy>(s3ctx.Request.DataAsString);
+                                acp = SerializationHelper.DeserializeXml<AccessControlPolicy>(s3ctx.Request.DataAsString);
                             }
                             catch (InvalidOperationException ioe)
                             {
                                 ioe.Data.Add("Context", s3ctx);
                                 ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + Common.SerializeJson(ioe, true));
+                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                 await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                 return;
                             }
@@ -498,13 +498,13 @@ namespace S3ServerLibrary
                         {
                             try
                             {
-                                bucketLogging = Common.DeserializeXml<BucketLoggingStatus>(s3ctx.Request.DataAsString);
+                                bucketLogging = SerializationHelper.DeserializeXml<BucketLoggingStatus>(s3ctx.Request.DataAsString);
                             }
                             catch (InvalidOperationException ioe)
                             {
                                 ioe.Data.Add("Context", s3ctx);
                                 ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + Common.SerializeJson(ioe, true));
+                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                 await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                 return;
                             }
@@ -522,13 +522,13 @@ namespace S3ServerLibrary
                         {
                             try
                             {
-                                tagging = Common.DeserializeXml<Tagging>(s3ctx.Request.DataAsString);
+                                tagging = SerializationHelper.DeserializeXml<Tagging>(s3ctx.Request.DataAsString);
                             }
                             catch (InvalidOperationException ioe)
                             {
                                 ioe.Data.Add("Context", s3ctx);
                                 ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + Common.SerializeJson(ioe, true));
+                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                 await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                 return;
                             }
@@ -546,13 +546,13 @@ namespace S3ServerLibrary
                         {
                             try
                             {
-                                versionConfig = Common.DeserializeXml<VersioningConfiguration>(s3ctx.Request.DataAsString);
+                                versionConfig = SerializationHelper.DeserializeXml<VersioningConfiguration>(s3ctx.Request.DataAsString);
                             }
                             catch (InvalidOperationException ioe)
                             {
                                 ioe.Data.Add("Context", s3ctx);
                                 ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + Common.SerializeJson(ioe, true));
+                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                 await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                 return;
                             }
@@ -570,13 +570,13 @@ namespace S3ServerLibrary
                         {
                             try
                             {
-                                wc = Common.DeserializeXml<WebsiteConfiguration>(s3ctx.Request.DataAsString);
+                                wc = SerializationHelper.DeserializeXml<WebsiteConfiguration>(s3ctx.Request.DataAsString);
                             }
                             catch (InvalidOperationException ioe)
                             {
                                 ioe.Data.Add("Context", s3ctx);
                                 ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + Common.SerializeJson(ioe, true));
+                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                 await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                 return;
                             }
@@ -609,13 +609,13 @@ namespace S3ServerLibrary
                         {
                             try
                             {
-                                delMultiple = Common.DeserializeXml<DeleteMultiple>(s3ctx.Request.DataAsString);
+                                delMultiple = SerializationHelper.DeserializeXml<DeleteMultiple>(s3ctx.Request.DataAsString);
                             }
                             catch (InvalidOperationException ioe)
                             {
                                 ioe.Data.Add("Context", s3ctx);
                                 ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + Common.SerializeJson(ioe, true));
+                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                 await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                 return;
                             }
@@ -623,7 +623,7 @@ namespace S3ServerLibrary
                             delResult = await Object.DeleteMultiple(s3ctx, delMultiple).ConfigureAwait(false);
                             ctx.Response.StatusCode = 200;
                             ctx.Response.ContentType = "application/xml";
-                            await ctx.Response.Send(Common.SerializeXml(delResult)).ConfigureAwait(false);
+                            await ctx.Response.Send(SerializationHelper.SerializeXml(delResult)).ConfigureAwait(false);
                             return;
                         }
                         break;
@@ -680,7 +680,7 @@ namespace S3ServerLibrary
                             acp = await Object.ReadAcl(s3ctx).ConfigureAwait(false);
                             ctx.Response.StatusCode = 200;
                             ctx.Response.ContentType = "application/xml";
-                            await ctx.Response.Send(Common.SerializeXml(acp)).ConfigureAwait(false);
+                            await ctx.Response.Send(SerializationHelper.SerializeXml(acp)).ConfigureAwait(false);
                             return;
                         }
                         break;
@@ -691,7 +691,7 @@ namespace S3ServerLibrary
                             legalHold = await Object.ReadLegalHold(s3ctx).ConfigureAwait(false);
                             ctx.Response.StatusCode = 200;
                             ctx.Response.ContentType = "application/xml";
-                            await ctx.Response.Send(Common.SerializeXml(legalHold)).ConfigureAwait(false);
+                            await ctx.Response.Send(SerializationHelper.SerializeXml(legalHold)).ConfigureAwait(false);
                             return;
                         }
                         break;
@@ -714,7 +714,7 @@ namespace S3ServerLibrary
                             retention = await Object.ReadRetention(s3ctx).ConfigureAwait(false);
                             ctx.Response.StatusCode = 200;
                             ctx.Response.ContentType = "application/xml";
-                            await ctx.Response.Send(Common.SerializeXml(retention)).ConfigureAwait(false);
+                            await ctx.Response.Send(SerializationHelper.SerializeXml(retention)).ConfigureAwait(false);
                             return;
                         }
                         break;
@@ -725,7 +725,7 @@ namespace S3ServerLibrary
                             tagging = await Object.ReadTagging(s3ctx).ConfigureAwait(false);
                             ctx.Response.StatusCode = 200;
                             ctx.Response.ContentType = "application/xml";
-                            await ctx.Response.Send(Common.SerializeXml(tagging)).ConfigureAwait(false);
+                            await ctx.Response.Send(SerializationHelper.SerializeXml(tagging)).ConfigureAwait(false);
                             return;
                         }
                         break;
@@ -746,13 +746,13 @@ namespace S3ServerLibrary
                         {
                             try
                             {
-                                acp = Common.DeserializeXml<AccessControlPolicy>(s3ctx.Request.DataAsString);
+                                acp = SerializationHelper.DeserializeXml<AccessControlPolicy>(s3ctx.Request.DataAsString);
                             }
                             catch (InvalidOperationException ioe)
                             {
                                 ioe.Data.Add("Context", s3ctx);
                                 ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + Common.SerializeJson(ioe, true));
+                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                 await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                 return;
                             }
@@ -770,13 +770,13 @@ namespace S3ServerLibrary
                         {
                             try
                             {
-                                legalHold = Common.DeserializeXml<LegalHold>(s3ctx.Request.DataAsString);
+                                legalHold = SerializationHelper.DeserializeXml<LegalHold>(s3ctx.Request.DataAsString);
                             }
                             catch (InvalidOperationException ioe)
                             {
                                 ioe.Data.Add("Context", s3ctx);
                                 ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + Common.SerializeJson(ioe, true));
+                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                 await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                 return;
                             }
@@ -794,13 +794,13 @@ namespace S3ServerLibrary
                         {
                             try
                             {
-                                retention = Common.DeserializeXml<Retention>(s3ctx.Request.DataAsString);
+                                retention = SerializationHelper.DeserializeXml<Retention>(s3ctx.Request.DataAsString);
                             }
                             catch (InvalidOperationException ioe)
                             {
                                 ioe.Data.Add("Context", s3ctx);
                                 ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + Common.SerializeJson(ioe, true));
+                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                 await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                 return;
                             }
@@ -818,13 +818,13 @@ namespace S3ServerLibrary
                         {
                             try
                             {
-                                tagging = Common.DeserializeXml<Tagging>(s3ctx.Request.DataAsString);
+                                tagging = SerializationHelper.DeserializeXml<Tagging>(s3ctx.Request.DataAsString);
                             }
                             catch (InvalidOperationException ioe)
                             {
                                 ioe.Data.Add("Context", s3ctx);
                                 ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + Common.SerializeJson(ioe, true));
+                                Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                 await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                 return;
                             }
@@ -851,14 +851,14 @@ namespace S3ServerLibrary
             }
             catch (S3Exception s3e)
             {
-                if (Logging.Exceptions) Logger?.Invoke(_Header + "S3 exception:" + Environment.NewLine + Common.SerializeJson(s3e, true));
+                if (Logging.Exceptions) Logger?.Invoke(_Header + "S3 exception:" + Environment.NewLine + SerializationHelper.SerializeJson(s3e, true));
 
                 await s3ctx.Response.Send(s3e.Error).ConfigureAwait(false);
                 return;
             }
             catch (Exception e)
             {
-                if (Logging.Exceptions) Logger?.Invoke(_Header + "exception:" + Environment.NewLine + Common.SerializeJson(e, true));
+                if (Logging.Exceptions) Logger?.Invoke(_Header + "exception:" + Environment.NewLine + SerializationHelper.SerializeJson(e, true));
 
                 await s3ctx.Response.Send(S3Objects.ErrorCode.InternalError).ConfigureAwait(false);
                 return;

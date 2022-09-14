@@ -148,7 +148,7 @@ namespace Test.Server
         static async Task<bool> PreRequestHandler(S3Context ctx)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            // Console.WriteLine(Common.SerializeJson(ctx, true));
+            // Console.WriteLine(SerializationHelper.SerializeJson(ctx, true));
             return false;
         }
 
@@ -515,7 +515,7 @@ namespace Test.Server
                 while (true)
                 {
                     Chunk chunk = ctx.Request.ReadChunk().Result;
-                    Console.WriteLine(Common.SerializeJson(chunk, true));
+                    Console.WriteLine(SerializationHelper.SerializeJson(chunk, true));
 
                     Console.Write(chunk.Length + ": ");
 

@@ -31,7 +31,18 @@ namespace S3ServerLibrary.S3Objects
         /// ETag of the resource.
         /// </summary>
         [XmlElement(ElementName = "ETag", IsNullable = true)]
-        public string ETag { get; set; } = null;
+        public string ETag
+        {
+            get
+            {
+                return _Etag;
+            }
+            set
+            {
+                if (!String.IsNullOrEmpty(value)) _Etag = value.Replace("\"", "&quot;");
+                else _Etag = value;
+            }
+        }
 
         /// <summary>
         /// Content type.
@@ -97,6 +108,7 @@ namespace S3ServerLibrary.S3Objects
             "OUTPOSTS"
         };
         private long _Size = 0;
+        private string _Etag = null;
 
         #endregion
 
