@@ -232,7 +232,19 @@ namespace Test.Server
                 _ObjectMetadata
             };
 
-            ListBucketResult result = new ListBucketResult("default", contents, 1, ctx.Request.MaxKeys);
+            ListBucketResult result = new ListBucketResult(
+                "default",
+                contents,
+                1,
+                ctx.Request.MaxKeys,
+                ctx.Request.Prefix,
+                ctx.Request.Marker,
+                ctx.Request.Delimiter,
+                false,
+                null,
+                null,
+                "us-west-");
+
             return result;
         }
 
@@ -315,7 +327,17 @@ namespace Test.Server
             entities.AddRange(deleteMarkers);
             entities.AddRange(versions);
 
-            ListVersionsResult lvr = new ListVersionsResult("default", versions, deleteMarkers, 1000);
+            ListVersionsResult lvr = new ListVersionsResult(
+                "default", 
+                versions, 
+                deleteMarkers, 
+                ctx.Request.MaxKeys,
+                ctx.Request.Prefix,
+                ctx.Request.Marker,
+                null,
+                false,
+                "us-west-1");
+
             return lvr;
         }
 

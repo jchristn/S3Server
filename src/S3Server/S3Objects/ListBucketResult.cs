@@ -27,14 +27,6 @@ namespace S3ServerLibrary.S3Objects
         [XmlElement(ElementName = "Prefix", IsNullable = true)]
         public string Prefix
         {
-            /*
-             * Without IsNullable property
-             *   When null, not included
-             * With IsNullable property set to false
-             *   When null, "<Prefix />"
-             * With IsNullable property set to true
-             *   When null, "<Prefix />"
-             */
             get
             {
                 return _Prefix;
@@ -172,7 +164,19 @@ namespace S3ServerLibrary.S3Objects
         /// <param name="isTruncated">Is truncated.</param>
         /// <param name="nextToken">Next continuation token.</param>
         /// <param name="prefixes">Prefixes</param>
-        public ListBucketResult(string name, List<ObjectMetadata> contents, int keyCount, int maxKeys, string prefix = null, string marker = null, string delimiter = null, bool isTruncated = false, string nextToken = null, CommonPrefixes prefixes = null)
+        /// <param name="bucketRegion">Bucket region.</param>
+        public ListBucketResult(
+            string name, 
+            List<ObjectMetadata> contents, 
+            int keyCount, 
+            int maxKeys, 
+            string prefix = null, 
+            string marker = null, 
+            string delimiter = null, 
+            bool isTruncated = false, 
+            string nextToken = null, 
+            CommonPrefixes prefixes = null,
+            string bucketRegion = "us-west-1")
         {
             if (String.IsNullOrEmpty(name)) throw new ArgumentNullException(nameof(name));
             Name = name;
@@ -185,6 +189,7 @@ namespace S3ServerLibrary.S3Objects
             NextContinuationToken = nextToken;
             if (contents != null) Contents = contents;
             if (prefixes != null) CommonPrefixes = prefixes;
+            BucketRegion = bucketRegion;
         }
 
         #endregion

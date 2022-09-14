@@ -25,7 +25,18 @@ namespace S3ServerLibrary.S3Objects
         /// Prefix specified in the request.
         /// </summary>
         [XmlElement(ElementName = "Prefix", IsNullable = true)]
-        public string Prefix { get; set; } = null;
+        public string Prefix
+        {
+            get
+            {
+                return _Prefix;
+            }
+            set
+            {
+                if (String.IsNullOrEmpty(value)) _Prefix = "";
+                else _Prefix = value;
+            }
+        }
 
         /// <summary>
         /// Key marker.
@@ -43,7 +54,7 @@ namespace S3ServerLibrary.S3Objects
         /// Maximum number of keys.
         /// </summary>
         [XmlElement(ElementName = "MaxKeys")]
-        public long MaxKeys
+        public int MaxKeys
         {
             get
             {
@@ -74,11 +85,17 @@ namespace S3ServerLibrary.S3Objects
         [XmlElement(ElementName = "DeleteMarker", IsNullable = true)]
         public List<DeleteMarker> DeleteMarkers { get; set; } = new List<DeleteMarker>();
 
+        /// <summary>
+        /// Bucket region string.  Not included in the XML, but rather as the HTTP header x-amz-bucket-region.
+        /// </summary>
+        public string BucketRegion { get; set; } = "us-west-1";
+
         #endregion
 
         #region Private-Members
 
-        private long _MaxKeys = 0;
+        private int _MaxKeys = 0;
+        private string _Prefix = "";
 
         #endregion
 
@@ -103,7 +120,17 @@ namespace S3ServerLibrary.S3Objects
         /// <param name="versionIdMarker">Version ID marker.</param>
         /// <param name="isTruncated">Is truncated.</param>
         /// <param name="deleteMarkers">Delete markers.</param>
-        public ListVersionsResult(string name, List<ObjectVersion> versions, List<DeleteMarker> deleteMarkers, long maxKeys, string prefix = null, string keyMarker = null, string versionIdMarker = null, bool isTruncated = false)
+        /// <param name="bucketRegion">Bucket region.</param>
+        public ListVersionsResult(
+            string name, 
+            List<ObjectVersion> versions, 
+            List<DeleteMarker> deleteMarkers, 
+            int maxKeys, 
+            string prefix = null, 
+            string keyMarker = null, 
+            string versionIdMarker = null, 
+            bool isTruncated = false,
+            string bucketRegion = "us-west-1")
         {
             if (String.IsNullOrEmpty(name)) throw new ArgumentNullException(nameof(name));
             Name = name;
@@ -114,6 +141,7 @@ namespace S3ServerLibrary.S3Objects
             IsTruncated = isTruncated;
             if (versions != null) Versions = versions;
             if (deleteMarkers != null) DeleteMarkers = deleteMarkers;
+            BucketRegion = bucketRegion;
         }
 
         #endregion

@@ -1417,7 +1417,7 @@
             Instantiate.
             </summary>
         </member>
-        <member name="M:S3ServerLibrary.S3Objects.ListBucketResult.#ctor(System.String,System.Collections.Generic.List{S3ServerLibrary.S3Objects.ObjectMetadata},System.Int32,System.Int32,System.String,System.String,System.String,System.Boolean,System.String,S3ServerLibrary.S3Objects.CommonPrefixes)">
+        <member name="M:S3ServerLibrary.S3Objects.ListBucketResult.#ctor(System.String,System.Collections.Generic.List{S3ServerLibrary.S3Objects.ObjectMetadata},System.Int32,System.Int32,System.String,System.String,System.String,System.Boolean,System.String,S3ServerLibrary.S3Objects.CommonPrefixes,System.String)">
             <summary>
             Instantiate.
             </summary>
@@ -1431,6 +1431,7 @@
             <param name="isTruncated">Is truncated.</param>
             <param name="nextToken">Next continuation token.</param>
             <param name="prefixes">Prefixes</param>
+            <param name="bucketRegion">Bucket region.</param>
         </member>
         <member name="M:S3ServerLibrary.S3Objects.ListBucketResult.ShouldSerializeMarker">
             <summary>
@@ -1495,12 +1496,17 @@
             Delete markers.
             </summary>
         </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListVersionsResult.BucketRegion">
+            <summary>
+            Bucket region string.  Not included in the XML, but rather as the HTTP header x-amz-bucket-region.
+            </summary>
+        </member>
         <member name="M:S3ServerLibrary.S3Objects.ListVersionsResult.#ctor">
             <summary>
             Instantiate.
             </summary>
         </member>
-        <member name="M:S3ServerLibrary.S3Objects.ListVersionsResult.#ctor(System.String,System.Collections.Generic.List{S3ServerLibrary.S3Objects.ObjectVersion},System.Collections.Generic.List{S3ServerLibrary.S3Objects.DeleteMarker},System.Int64,System.String,System.String,System.String,System.Boolean)">
+        <member name="M:S3ServerLibrary.S3Objects.ListVersionsResult.#ctor(System.String,System.Collections.Generic.List{S3ServerLibrary.S3Objects.ObjectVersion},System.Collections.Generic.List{S3ServerLibrary.S3Objects.DeleteMarker},System.Int32,System.String,System.String,System.String,System.Boolean,System.String)">
             <summary>
             Instantiate.
             </summary>
@@ -1512,6 +1518,7 @@
             <param name="versionIdMarker">Version ID marker.</param>
             <param name="isTruncated">Is truncated.</param>
             <param name="deleteMarkers">Delete markers.</param>
+            <param name="bucketRegion">Bucket region.</param>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.LocationConstraint">
             <summary>
