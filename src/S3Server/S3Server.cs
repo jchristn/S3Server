@@ -865,6 +865,8 @@ namespace S3ServerLibrary
             {
                 if (Logging.Exceptions) Logger?.Invoke(_Header + "S3 exception:" + Environment.NewLine + SerializationHelper.SerializeJson(s3e, true));
 
+                s3ctx.Response.StatusCode = s3e.HttpStatusCode;
+                s3ctx.Response.ContentType = "application/xml";
                 await s3ctx.Response.Send(s3e.Error).ConfigureAwait(false);
                 return;
             }
@@ -872,6 +874,8 @@ namespace S3ServerLibrary
             {
                 if (Logging.Exceptions) Logger?.Invoke(_Header + "exception:" + Environment.NewLine + SerializationHelper.SerializeJson(e, true));
 
+                s3ctx.Response.StatusCode = 500;
+                s3ctx.Response.ContentType = "application/xml";
                 await s3ctx.Response.Send(S3Objects.ErrorCode.InternalError).ConfigureAwait(false);
                 return;
             }

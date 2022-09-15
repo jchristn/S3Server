@@ -34,6 +34,18 @@ namespace S3ServerLibrary
             }
         }
 
+        /// <summary>
+        /// Status code for the given exception.
+        /// </summary>
+        public int HttpStatusCode
+        {
+            get
+            {
+                if (Error != null) return Error.HttpStatusCode;
+                return 500;
+            }
+        }
+
         #endregion
 
         #region Private-Members

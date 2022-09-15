@@ -306,6 +306,11 @@
             JSON representation of the inner exception.
             </summary>
         </member>
+        <member name="P:S3ServerLibrary.S3Exception.HttpStatusCode">
+            <summary>
+            Status code for the given exception.
+            </summary>
+        </member>
         <member name="M:S3ServerLibrary.S3Exception.#ctor(S3ServerLibrary.S3Objects.Error,System.Exception)">
             <summary>
             Instantiate.
