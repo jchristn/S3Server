@@ -170,7 +170,7 @@ namespace S3ServerLibrary
         /// </summary>
         /// <param name="obj">Object.</param>
         /// <returns>XML string.</returns>
-        public static string SerializeXml2(object obj)
+        private static string SerializeXml_Original(object obj)
         {
             if (obj == null) throw new ArgumentNullException(nameof(obj));
 

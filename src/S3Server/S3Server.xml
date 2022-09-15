@@ -2905,7 +2905,7 @@
             <param name="xml">XML string.</param>
             <returns>Instance.</returns>
         </member>
-        <member name="M:S3ServerLibrary.SerializationHelper.SerializeXml2(System.Object)">
+        <member name="M:S3ServerLibrary.SerializationHelper.SerializeXml_Original(System.Object)">
             <summary>
             Serialize XML.
             </summary>

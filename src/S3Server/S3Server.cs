@@ -281,6 +281,7 @@ namespace S3ServerLibrary
             WebsiteConfiguration wc = null;
             DeleteMultiple delMultiple = null;
             DeleteResult delResult = null;
+            Error error = null;
 
             try
             {
@@ -364,9 +365,10 @@ namespace S3ServerLibrary
                             }
                             else
                             {
+                                error = new Error(ErrorCode.NoSuchBucket);
                                 ctx.Response.StatusCode = 404;
-                                ctx.Response.ContentType = "text/plain";
-                                await ctx.Response.Send().ConfigureAwait(false);
+                                ctx.Response.ContentType = "application/xml";
+                                await ctx.Response.Send(SerializationHelper.SerializeXml(error)).ConfigureAwait(false);
                             }
                             return;
                         }
@@ -663,8 +665,10 @@ namespace S3ServerLibrary
                             }
                             else
                             {
+                                error = new Error(ErrorCode.NoSuchKey);
                                 ctx.Response.StatusCode = 404;
-                                await ctx.Response.Send().ConfigureAwait(false);
+                                ctx.Response.ContentType = "application/xml";
+                                await ctx.Response.Send(SerializationHelper.SerializeXml(error)).ConfigureAwait(false);
                             }
                             return;
                         }

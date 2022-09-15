@@ -8,6 +8,7 @@ v5.0.x
 - Rename ```S3RequestStyle``` values to ```PathStyle``` and ```VirtualHostedStyle```
 - Remove Newtonsoft.Json dependency
 - Changes to (hopefully) improve compatibility with S3 ListObjects APIs
+- HEAD bucket and object APIs now return 404 with ```NoSuchBucket``` and ```NoSuchKey``` errors
 
 ## Previous Versions
 

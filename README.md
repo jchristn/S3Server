@@ -16,6 +16,7 @@ Is there an API you'd like exposed that isn't currently?  Did you identify an is
 - Rename ```S3RequestStyle``` values to ```PathStyle``` and ```VirtualHostedStyle```
 - Remove Newtonsoft.Json dependency
 - Changes to (hopefully) improve compatibility with S3 ListObjects APIs
+- HEAD bucket and object APIs now return 404 with ```NoSuchBucket``` and ```NoSuchKey``` errors
 
 ## Examples
 
