@@ -16,6 +16,7 @@ namespace S3ServerLibrary.Callbacks
 
         /// <summary>
         /// Check for the existence of an object.
+        /// Return the ObjectMetadata if it exists, null if it doesn't.
         /// </summary>
         public Func<S3Context, Task<ObjectMetadata>> Exists = null;
 

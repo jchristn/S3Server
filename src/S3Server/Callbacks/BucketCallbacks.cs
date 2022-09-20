@@ -30,7 +30,8 @@ namespace S3ServerLibrary
         public Func<S3Context, Task> DeleteWebsite = null;
 
         /// <summary>
-        /// Check for the existence of a bucket.
+        /// Check for the existence of a bucket. 
+        /// Return true if it exists, false if it doesn't.
         /// </summary>
         public Func<S3Context, Task<bool>> Exists = null;
 

@@ -100,6 +100,8 @@ namespace S3ServerLibrary.S3Objects
 
         private void SetErrorDetails(ErrorCode error)
         {
+            Code = error;
+
             switch (error)
             {
                 case ErrorCode.AccessDenied:

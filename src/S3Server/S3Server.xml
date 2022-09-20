@@ -26,7 +26,8 @@
         </member>
         <member name="F:S3ServerLibrary.BucketCallbacks.Exists">
             <summary>
-            Check for the existence of a bucket.
+            Check for the existence of a bucket. 
+            Return true if it exists, false if it doesn't.
             </summary>
         </member>
         <member name="F:S3ServerLibrary.BucketCallbacks.Read">
@@ -112,6 +113,7 @@
         <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.Exists">
             <summary>
             Check for the existence of an object.
+            Return the ObjectMetadata if it exists, null if it doesn't.
             </summary>
         </member>
         <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.Write">

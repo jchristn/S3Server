@@ -364,7 +364,7 @@ namespace S3ServerLibrary
                                 await ctx.Response.Send().ConfigureAwait(false);
                             }
                             else
-                            {
+                            { 
                                 error = new Error(ErrorCode.NoSuchBucket);
                                 ctx.Response.StatusCode = 404;
                                 ctx.Response.ContentType = "application/xml";

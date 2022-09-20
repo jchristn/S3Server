@@ -41,6 +41,9 @@ namespace Test.Server
         static Grantee _Grantee = new Grantee("admin", "Administrator", null, "CanonicalUser", "admin@admin.com");
         static Tag _Tag = new Tag("key", "value");
 
+        static bool _RandomizeHeadResponses = false;
+        static Random _Random = new Random(Int32.MaxValue);
+
         static void Main(string[] args)
         {
             /*
@@ -218,7 +221,12 @@ namespace Test.Server
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketExists: " + ctx.Request.Bucket);
-            return true;
+
+            if (!_RandomizeHeadResponses) return true;
+
+            int val = _Random.Next(100);
+            if (val % 2 == 0) return true;
+            else return false;
         }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
@@ -448,7 +456,11 @@ namespace Test.Server
         {
             Console.WriteLine("ObjectExists: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
 
-            return _ObjectMetadata;
+            if (!_RandomizeHeadResponses) return _ObjectMetadata;
+
+            int val = _Random.Next(100);
+            if (val % 2 == 0) return _ObjectMetadata;
+            else return null;
         }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
