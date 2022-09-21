@@ -954,11 +954,8 @@ namespace S3ServerLibrary
                     }
                     else if (!String.IsNullOrEmpty(Bucket) && !String.IsNullOrEmpty(Key))
                     {
-                        if (QuerystringExists("range", false))
-                        {
-                            if (RangeEnd > 0) RequestType = S3RequestType.ObjectReadRange;
-                            else RequestType = S3RequestType.ObjectRead;
-                        }
+                        if (HeaderExists("range", false) && _RangeStart != null)
+                            RequestType = S3RequestType.ObjectReadRange;
                         else if (QuerystringExists("acl", false))
                             RequestType = S3RequestType.ObjectReadAcl;
                         else if (QuerystringExists("tagging", false))
