@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -59,25 +60,21 @@ namespace S3ServerLibrary
             if (obj == null) return null;
             string json;
 
+            JsonSerializerOptions options = new JsonSerializerOptions();
+            options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+
+            // see https://github.com/dotnet/runtime/issues/43026
+            options.Converters.Add(new ExceptionConverter<Exception>());
+
             if (pretty)
             {
-                json = JsonSerializer.Serialize(obj,
-                    new JsonSerializerOptions
-                    {
-                        WriteIndented = true,
-                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                    }
-                );
+                options.WriteIndented = true;
+                json = JsonSerializer.Serialize(obj, options);
             }
             else
             {
-                json = JsonSerializer.Serialize(obj,
-                    new JsonSerializerOptions
-                    {
-                        WriteIndented = false,
-                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                    }
-                );
+                options.WriteIndented = false;
+                json = JsonSerializer.Serialize(obj, options);
             }
 
             return json;
@@ -237,6 +234,53 @@ namespace S3ServerLibrary
         #endregion
 
         #region Private-Methods
+
+        private class ExceptionConverter<TExceptionType> : JsonConverter<TExceptionType>
+        {
+            public override bool CanConvert(Type typeToConvert)
+            {
+                return typeof(Exception).IsAssignableFrom(typeToConvert);
+            }
+
+            public override TExceptionType Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                throw new NotSupportedException("Deserializing exceptions is not allowed");
+            }
+
+            public override void Write(Utf8JsonWriter writer, TExceptionType value, JsonSerializerOptions options)
+            {
+                var serializableProperties = value.GetType()
+                    .GetProperties()
+                    .Select(uu => new { uu.Name, Value = uu.GetValue(value) })
+                    .Where(uu => uu.Name != nameof(Exception.TargetSite));
+
+#pragma warning disable SYSLIB0020
+                if (options?.IgnoreNullValues == true
+                    || options.DefaultIgnoreCondition == JsonIgnoreCondition.WhenWritingNull)
+                {
+                    serializableProperties = serializableProperties.Where(uu => uu.Value != null);
+                }
+#pragma warning restore SYSLIB0020
+
+                var propList = serializableProperties.ToList();
+
+                if (propList.Count == 0)
+                {
+                    // Nothing to write
+                    return;
+                }
+
+                writer.WriteStartObject();
+
+                foreach (var prop in propList)
+                {
+                    writer.WritePropertyName(prop.Name);
+                    JsonSerializer.Serialize(writer, prop.Value, options);
+                }
+
+                writer.WriteEndObject();
+            }
+        }
 
         #endregion
     }
