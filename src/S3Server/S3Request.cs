@@ -530,8 +530,8 @@ namespace S3ServerLibrary
 
                     if (!String.IsNullOrEmpty(rangeHeaderValue))
                     {
-                        long start = 0;
-                        long end = 0;
+                        long? start = null;
+                        long? end = null;
                         ParseRangeHeader(rangeHeaderValue, out start, out end);
 
                         RangeStart = start;
@@ -896,16 +896,16 @@ namespace S3ServerLibrary
             return;
         }
 
-        private void ParseRangeHeader(string header, out long start, out long end)
+        private void ParseRangeHeader(string header, out long? start, out long? end)
         {
+            start = null;
+            end = null;
+
             if (String.IsNullOrEmpty(header)) throw new ArgumentNullException(nameof(header));
             header = header.ToLower();
             if (header.StartsWith("bytes=")) header = header.Substring(6);
             string[] vals = header.Split('-');
             if (vals.Length != 2) throw new ArgumentException("Invalid range header: " + header);
-
-            start = 0;
-            end = 0;
 
             if (!String.IsNullOrEmpty(vals[0])) start = Convert.ToInt64(vals[0]);
             if (!String.IsNullOrEmpty(vals[1])) end = Convert.ToInt64(vals[1]);
