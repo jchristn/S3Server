@@ -311,7 +311,7 @@ namespace Test.Server
         {
             Console.WriteLine("BucketReadVersioning: " + ctx.Request.Bucket);
 
-            VersioningConfiguration vc = new VersioningConfiguration("Enabled", "Enabled");
+            VersioningConfiguration vc = new VersioningConfiguration(VersioningStatusEnum.Enabled, MfaDeleteStatusEnum.Disabled);
             return vc;
         }
 

@@ -20,61 +20,18 @@ namespace S3ServerLibrary.S3Objects
         /// Valid values are null, Enabled, Suspended.
         /// </summary>
         [XmlElement(ElementName = "Status", IsNullable = true)]
-        public string Status
-        {
-            get
-            {
-                return _Status;
-            }
-            set
-            {
-                if (String.IsNullOrEmpty(value)) _Status = null;
-                else
-                {
-                    if (!_StatusValidValues.Contains(value)) throw new ArgumentException("Unknown Status '" + value + "'.");
-                    _Status = value;
-                }
-            }
-        }
+        public VersioningStatusEnum Status { get; set; } = VersioningStatusEnum.Suspended;
 
         /// <summary>
         /// Indicates if multi-factor authentication is enabled for delete operations.
         /// Valid values are null, Enabled, Disabled.
         /// </summary>
         [XmlElement(ElementName = "MfaDelete", IsNullable = true)]
-        public string MfaDelete
-        {
-            get
-            {
-                return _MfaDelete;
-            }
-            set
-            {
-                if (String.IsNullOrEmpty(value)) _MfaDelete = null;
-                else
-                {
-                    if (!_MfaDeleteValidValues.Contains(value)) throw new ArgumentException("Unknown MfaDelete '" + value + "'.");
-                    _MfaDelete = value;
-                }
-            }
-        }
+        public MfaDeleteStatusEnum MfaDelete { get; set; } = MfaDeleteStatusEnum.Disabled;
 
         #endregion
 
         #region Private-Members
-
-        private string _Status = null;
-        private List<string> _StatusValidValues = new List<string>
-        {
-            "Enabled",
-            "Suspended"
-        };
-        private string _MfaDelete = null;
-        private List<string> _MfaDeleteValidValues = new List<string>
-        {
-            "Enabled",
-            "Disabled"
-        };
 
         #endregion
 
@@ -93,7 +50,7 @@ namespace S3ServerLibrary.S3Objects
         /// </summary>
         /// <param name="status">Status.  Valid values are null, Enabled, Suspended.</param>
         /// <param name="mfaDelete">MFA delete setting.  Valid values are null, Enabled, Disabled.</param>
-        public VersioningConfiguration(string status, string mfaDelete)
+        public VersioningConfiguration(VersioningStatusEnum status, MfaDeleteStatusEnum mfaDelete)
         {
             Status = status;
             MfaDelete = mfaDelete;

@@ -1582,6 +1582,22 @@
             <param name="targetPrefix">Target prefix.</param>
             <param name="targetGrants">Target grants.</param>
         </member>
+        <member name="T:S3ServerLibrary.S3Objects.MfaDeleteStatusEnum">
+            <summary>
+            Permission types used by S3. 
+            See https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html for details.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.MfaDeleteStatusEnum.Enabled">
+            <summary>
+            Enabled.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.MfaDeleteStatusEnum.Disabled">
+            <summary>
+            Disabled.
+            </summary>
+        </member>
         <member name="T:S3ServerLibrary.S3Objects.Object">
             <summary>
             Object.
@@ -2049,12 +2065,28 @@
             Instantiate.
             </summary>
         </member>
-        <member name="M:S3ServerLibrary.S3Objects.VersioningConfiguration.#ctor(System.String,System.String)">
+        <member name="M:S3ServerLibrary.S3Objects.VersioningConfiguration.#ctor(S3ServerLibrary.S3Objects.VersioningStatusEnum,S3ServerLibrary.S3Objects.MfaDeleteStatusEnum)">
             <summary>
             Instantiate.
             </summary>
             <param name="status">Status.  Valid values are null, Enabled, Suspended.</param>
             <param name="mfaDelete">MFA delete setting.  Valid values are null, Enabled, Disabled.</param>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.VersioningStatusEnum">
+            <summary>
+            Permission types used by S3. 
+            See https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html for details.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.VersioningStatusEnum.Enabled">
+            <summary>
+            Enabled.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.VersioningStatusEnum.Suspended">
+            <summary>
+            Suspended.
+            </summary>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.WebsiteConfiguration">
             <summary>
