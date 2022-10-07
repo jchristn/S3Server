@@ -19,23 +19,8 @@ namespace S3ServerLibrary.S3Objects
         /// Retention mode.
         /// Valid values are null, GOVERNANCE, COMPLIANCE.
         /// </summary>
-        [XmlElement(ElementName = "Mode", IsNullable = true)]
-        public string Mode
-        {
-            get
-            {
-                return _Mode;
-            }
-            set
-            {
-                if (String.IsNullOrEmpty(value)) _Mode = value;
-                else
-                {
-                    if (!_ModeValidValues.Contains(value)) throw new ArgumentException("Unknown Mode '" + value + "'.");
-                    _Mode = value;
-                }
-            }
-        }
+        [XmlElement(ElementName = "Mode")]
+        public RetentionModeEnum Mode { get; set; } = RetentionModeEnum.None;
 
         /// <summary>
         /// Date upon which the resource shall no longer be retained.
@@ -46,13 +31,6 @@ namespace S3ServerLibrary.S3Objects
         #endregion
 
         #region Private-Members
-
-        private string _Mode = null;
-        private List<string> _ModeValidValues = new List<string>
-        {
-            "GOVERNANCE",
-            "COMPLIANCE"
-        };
 
         #endregion
 
@@ -71,7 +49,7 @@ namespace S3ServerLibrary.S3Objects
         /// </summary>
         /// <param name="mode">Mode.  Valid values are null, GOVERNANCE, COMPLIANCE.</param>
         /// <param name="retainUntilDate">Retain until.</param>
-        public Retention(string mode, DateTime? retainUntilDate)
+        public Retention(RetentionModeEnum mode, DateTime? retainUntilDate)
         {
             Mode = mode;
             RetainUntilDate = retainUntilDate;

@@ -1201,7 +1201,7 @@
             Instantiate.
             </summary>
         </member>
-        <member name="M:S3ServerLibrary.S3Objects.Grant.#ctor(S3ServerLibrary.S3Objects.Grantee,System.String)">
+        <member name="M:S3ServerLibrary.S3Objects.Grant.#ctor(S3ServerLibrary.S3Objects.Grantee,S3ServerLibrary.S3Objects.PermissionEnum)">
             <summary>
             Instantiate.
             </summary>
@@ -1709,6 +1709,52 @@
             <param name="id">ID.</param>
             <param name="displayName">Display name.</param>
         </member>
+        <member name="T:S3ServerLibrary.S3Objects.PermissionEnum">
+            <summary>
+            Permission types used by S3. 
+            See https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html for details.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.PermissionEnum.FullControl">
+            <summary>
+            Full control.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.PermissionEnum.Write">
+            <summary>
+            Write.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.PermissionEnum.WriteAcp">
+            <summary>
+            Write access control permissions.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.PermissionEnum.Read">
+            <summary>
+            Read.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.PermissionEnum.ReadAcp">
+            <summary>
+            Read access control permissions.
+            </summary>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.ProtocolEnum">
+            <summary>
+            Protocol types used by S3 for redirects. 
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.ProtocolEnum.Http">
+            <summary>
+            HTTP.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.ProtocolEnum.Https">
+            <summary>
+            HTTPS.
+            </summary>
+        </member>
         <member name="T:S3ServerLibrary.S3Objects.Redirect">
             <summary>
             Redirect rule for a bucket's website configuration.
@@ -1745,12 +1791,12 @@
             Instantiate.
             </summary>
         </member>
-        <member name="M:S3ServerLibrary.S3Objects.Redirect.#ctor(System.String,System.String,System.String,System.String,System.String)">
+        <member name="M:S3ServerLibrary.S3Objects.Redirect.#ctor(System.String,System.Int32,S3ServerLibrary.S3Objects.ProtocolEnum,System.String,System.String)">
             <summary>
             Instantiate.
             </summary>
             <param name="hostname">Hostname.</param>
-            <param name="httpRedirectcode">HTTP redirect code.</param>
+            <param name="httpRedirectCode">HTTP redirect code.</param>
             <param name="protocol">Protocol.  Valid values are http, https.</param>
             <param name="replaceKeyPrefixWith">Replace key prefix with.</param>
             <param name="replaceKeyWith">Replace key with.</param>
@@ -1776,7 +1822,7 @@
             Instantiate.
             </summary>
         </member>
-        <member name="M:S3ServerLibrary.S3Objects.RedirectAllRequestsTo.#ctor(System.String,System.String)">
+        <member name="M:S3ServerLibrary.S3Objects.RedirectAllRequestsTo.#ctor(System.String,S3ServerLibrary.S3Objects.ProtocolEnum)">
             <summary>
             Instantiate.
             </summary>
@@ -1804,12 +1850,32 @@
             Instantiate.
             </summary>
         </member>
-        <member name="M:S3ServerLibrary.S3Objects.Retention.#ctor(System.String,System.Nullable{System.DateTime})">
+        <member name="M:S3ServerLibrary.S3Objects.Retention.#ctor(S3ServerLibrary.S3Objects.RetentionModeEnum,System.Nullable{System.DateTime})">
             <summary>
             Instantiate.
             </summary>
             <param name="mode">Mode.  Valid values are null, GOVERNANCE, COMPLIANCE.</param>
             <param name="retainUntilDate">Retain until.</param>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.RetentionModeEnum">
+            <summary>
+            Retention modes used by S3. 
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.RetentionModeEnum.None">
+            <summary>
+            Null.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.RetentionModeEnum.Governance">
+            <summary>
+            Governance.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.RetentionModeEnum.Compliance">
+            <summary>
+            Compliance.
+            </summary>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.RoutingRule">
             <summary>
@@ -1858,6 +1924,56 @@
             Instantiate.
             </summary>
             <param name="rules">Rules.</param>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.StorageClassEnum">
+            <summary>
+            Storage classes used by S3. 
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.Standard">
+            <summary>
+            Standard.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.ReducedRedundancy">
+            <summary>
+            Reduced redundancy.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.Glacier">
+            <summary>
+            Glacier.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.StandardIa">
+            <summary>
+            Standard IA.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.OneZoneIa">
+            <summary>
+            One zone IA.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.IntelligentTiering">
+            <summary>
+            Intelligent tiering.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.DeepArchive">
+            <summary>
+            Deep archive.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.Outposts">
+            <summary>
+            Outposts.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.None">
+            <summary>
+            None.
+            </summary>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.Tag">
             <summary>
@@ -2010,7 +2126,7 @@
             Instantiate.
             </summary>
         </member>
-        <member name="M:S3ServerLibrary.S3Objects.ObjectVersion.#ctor(System.String,System.String,System.Boolean,System.DateTime,System.String,System.Nullable{System.Int64},S3ServerLibrary.S3Objects.Owner,System.String)">
+        <member name="M:S3ServerLibrary.S3Objects.ObjectVersion.#ctor(System.String,System.String,System.Boolean,System.DateTime,System.String,System.Nullable{System.Int64},S3ServerLibrary.S3Objects.Owner,S3ServerLibrary.S3Objects.StorageClassEnum)">
             <summary>
             Instantiate.
             </summary>

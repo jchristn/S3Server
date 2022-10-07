@@ -25,34 +25,12 @@ namespace S3ServerLibrary.S3Objects
         /// The protocol that should be used with the redirect.
         /// Valid values are http, https.
         /// </summary>
-        [XmlElement(ElementName = "Protocol", IsNullable = true)]
-        public string Protocol
-        {
-            get
-            {
-                return _Protocol;
-            }
-            set
-            {
-                if (String.IsNullOrEmpty(value)) _Protocol = value;
-                else
-                {
-                    if (!_ProtocolValidValues.Contains(value)) throw new ArgumentException("Unknown Protocol '" + value + "'.");
-                    _Protocol = value;
-                }
-            }
-        }
+        [XmlElement(ElementName = "Protocol")]
+        public ProtocolEnum Protocol { get; set; } = ProtocolEnum.Http;
 
         #endregion
 
         #region Private-Members
-
-        private string _Protocol = "http";
-        private List<string> _ProtocolValidValues = new List<string>
-        {
-            "http",
-            "https"
-        };
 
         #endregion
 
@@ -71,7 +49,7 @@ namespace S3ServerLibrary.S3Objects
         /// </summary>
         /// <param name="hostname">Hostname.</param>
         /// <param name="protocol">Protocol.  Valid values are http, https.</param>
-        public RedirectAllRequestsTo(string hostname, string protocol)
+        public RedirectAllRequestsTo(string hostname, ProtocolEnum protocol)
         {
             HostName = hostname;
             Protocol = protocol;

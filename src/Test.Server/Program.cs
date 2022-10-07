@@ -251,7 +251,7 @@ namespace Test.Server
                 false,
                 null,
                 null,
-                "us-west-");
+                _Location);
 
             return result;
         }
@@ -265,7 +265,7 @@ namespace Test.Server
             AccessControlList acl = new AccessControlList(
                 new List<Grant>()
                 {
-                    new Grant(_Grantee, "FULL_CONTROL")
+                    new Grant(_Grantee, PermissionEnum.FullControl)
                 });
 
             AccessControlPolicy policy = new AccessControlPolicy(
@@ -358,11 +358,11 @@ namespace Test.Server
             WebsiteConfiguration website = new WebsiteConfiguration();
             website.ErrorDocument = new ErrorDocument("error.html");
             website.IndexDocument = new IndexDocument("index.html");
-            website.RedirectAllRequestsTo = new RedirectAllRequestsTo("localhost", "http");
+            website.RedirectAllRequestsTo = new RedirectAllRequestsTo("localhost", ProtocolEnum.Http);
             website.RoutingRules = new RoutingRules(
                 new List<RoutingRule> {
                     new RoutingRule(new Condition("400", "prefix"),
-                        new Redirect("localhost", "302", "http", null, null))
+                        new Redirect("localhost", 302, ProtocolEnum.Http, null, null))
                 }
             );
             return website;
@@ -481,7 +481,7 @@ namespace Test.Server
             AccessControlList acl = new AccessControlList(
                 new List<Grant>()
                 {
-                    new Grant(_Grantee, "FULL_CONTROL")
+                    new Grant(_Grantee, PermissionEnum.FullControl)
                 });
 
             AccessControlPolicy policy = new AccessControlPolicy(
@@ -522,7 +522,7 @@ namespace Test.Server
         {
             Console.WriteLine("ObjectReadRetention: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
 
-            Retention ret = new Retention("GOVERNANCE", DateTime.Now.AddDays(100));
+            Retention ret = new Retention(RetentionModeEnum.Governance, DateTime.Now.AddDays(100));
             
             return ret;
         }

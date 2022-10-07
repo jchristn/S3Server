@@ -19,14 +19,14 @@ namespace S3ServerLibrary.S3Objects
         /// Status of the versioning configuration.
         /// Valid values are null, Enabled, Suspended.
         /// </summary>
-        [XmlElement(ElementName = "Status", IsNullable = true)]
+        [XmlElement(ElementName = "Status")]
         public VersioningStatusEnum Status { get; set; } = VersioningStatusEnum.Suspended;
 
         /// <summary>
         /// Indicates if multi-factor authentication is enabled for delete operations.
         /// Valid values are null, Enabled, Disabled.
         /// </summary>
-        [XmlElement(ElementName = "MfaDelete", IsNullable = true)]
+        [XmlElement(ElementName = "MfaDelete")]
         public MfaDeleteStatusEnum MfaDelete { get; set; } = MfaDeleteStatusEnum.Disabled;
 
         #endregion

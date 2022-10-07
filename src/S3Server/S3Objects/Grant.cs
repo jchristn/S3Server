@@ -25,34 +25,12 @@ namespace S3ServerLibrary.S3Objects
         /// The permission given to the recipient.
         /// Valid values are FULL_CONTROL, WRITE, WRITE_ACP, READ, READ_ACP.
         /// </summary>
-        [XmlElement(ElementName = "Permission", IsNullable = true)]
-        public string Permission
-        { 
-            get
-            {
-                return _Permission;
-            }
-            set
-            {
-                if (String.IsNullOrEmpty(value)) throw new ArgumentNullException(nameof(Permission));
-                if (!_PermissionValidValues.Contains(value)) throw new ArgumentException("Unknown Permission '" + value + "'.");
-                _Permission = value;
-            }
-        }
+        [XmlElement(ElementName = "Permission")]
+        public PermissionEnum Permission { get; set; } = PermissionEnum.Read;
 
         #endregion
 
         #region Private-Members
-
-        private string _Permission = "READ";
-        private List<string> _PermissionValidValues = new List<string>
-        {
-            "FULL_CONTROL",
-            "WRITE",
-            "WRITE_ACP",
-            "READ",
-            "READ_ACP"
-        };
 
         #endregion
 
@@ -71,7 +49,7 @@ namespace S3ServerLibrary.S3Objects
         /// </summary>
         /// <param name="grantee">Grantee.</param>
         /// <param name="permission">Permission.  Valid values are FULL_CONTROL, WRITE, WRITE_ACP, READ, READ_ACP.</param>
-        public Grant(Grantee grantee, string permission)
+        public Grant(Grantee grantee, PermissionEnum permission)
         {
             Grantee = grantee;
             Permission = permission;

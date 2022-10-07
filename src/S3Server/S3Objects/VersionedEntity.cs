@@ -68,19 +68,8 @@ namespace S3ServerLibrary.S3Objects
         /// The class of storage where the resource resides.
         /// Valid values are STANDARD, REDUCED_REDUNDANCY, GLACIER, STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING, DEEP_ARCHIVE, OUTPOSTS.
         /// </summary>
-        [XmlElement(ElementName = "StorageClass", IsNullable = true)]
-        public string StorageClass
-        {
-            get
-            {
-                return _StorageClass;
-            }
-            set
-            {
-                if (!_StorageClassValidValues.Contains(value)) throw new ArgumentException("Unknown StorageClass '" + value + "'.");
-                _StorageClass = value;
-            }
-        }
+        [XmlElement(ElementName = "StorageClass")]
+        public StorageClassEnum StorageClass { get; set; } = StorageClassEnum.Standard;
 
         /// <summary>
         /// Object owner.
@@ -93,19 +82,6 @@ namespace S3ServerLibrary.S3Objects
         #region Private-Members
 
         private long? _Size = null;
-        private string _StorageClass = "STANDARD";
-        private List<string> _StorageClassValidValues = new List<string>
-        {
-            "STANDARD",
-            "REDUCED_REDUNDANCY",
-            "GLACIER",
-            "STANDARD_IA",
-            "ONEZONE_IA",
-            "INTELLIGENT_TIERING",
-            "DEEP_ARCHIVE",
-            "OUTPOSTS",
-            null
-        };
 
         #endregion
 
@@ -155,7 +131,7 @@ namespace S3ServerLibrary.S3Objects
         /// <param name="size">Size.</param>
         /// <param name="owner">Owner.</param>
         /// <param name="storageClass">Storage class.  Valid values are STANDARD, REDUCED_REDUNDANCY, GLACIER, STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING, DEEP_ARCHIVE, OUTPOSTS.</param>
-        public ObjectVersion(string key, string versionId, bool isLatest, DateTime lastModified, string eTag, long? size, Owner owner, string storageClass = "STANDARD")
+        public ObjectVersion(string key, string versionId, bool isLatest, DateTime lastModified, string eTag, long? size, Owner owner, StorageClassEnum storageClass = StorageClassEnum.Standard)
         {
             base.Key = key;
             base.VersionId = versionId;
@@ -199,7 +175,7 @@ namespace S3ServerLibrary.S3Objects
             base.LastModified = lastModified;
             base.ETag = null;
             base.Size = null;
-            base.StorageClass = null;
+            base.StorageClass = StorageClassEnum.None;
             base.Owner = owner;
         }
     }
