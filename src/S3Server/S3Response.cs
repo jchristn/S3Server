@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Text;
 using System.Text.Json;
@@ -35,7 +36,7 @@ namespace S3ServerLibrary
         /// <summary>
         /// User-supplied headers to include in the response.
         /// </summary>
-        public Dictionary<string, string> Headers 
+        public NameValueCollection Headers
         { 
             get
             {
@@ -43,7 +44,7 @@ namespace S3ServerLibrary
             }
             set
             {
-                if (value == null) _HttpResponse.Headers = new Dictionary<string, string>();
+                if (value == null) _HttpResponse.Headers = new NameValueCollection(StringComparer.InvariantCultureIgnoreCase);
                 else _HttpResponse.Headers = value;
             }
         }
@@ -366,24 +367,25 @@ namespace S3ServerLibrary
         {
             if (Headers != null)
             {
-                if (!Headers.ContainsKey("X-Amz-Date"))
+                if (Headers.Get("X-Amz-Date") == null)
                 {
                     Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
                 }
-                if (!Headers.ContainsKey("Host"))
+                if (Headers.Get("Host") == null)
                 {
                     Headers.Add("Host", _S3Request.Hostname);
                 }
-                if (!Headers.ContainsKey("Server"))
+                if (Headers.Get("Server") == null)
                 {
                     Headers.Add("Server", "S3Server");
                 }
             }
             else
             {
-                Headers = new Dictionary<string, string>();
+                Headers = new NameValueCollection(StringComparer.InvariantCultureIgnoreCase);
                 Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
                 Headers.Add("Host", _S3Request.Hostname);
+                Headers.Add("Server", "S3Server");
             }
         }
 

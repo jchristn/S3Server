@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Timestamps;
 using WatsonWebserver;
 
 namespace S3ServerLibrary
@@ -13,6 +14,11 @@ namespace S3ServerLibrary
     public class S3Context
     {
         #region Public-Members
+
+        /// <summary>
+        /// Time information for start, end, and total runtime.
+        /// </summary>
+        public Timestamp Timestamp { get; set; } = new Timestamp();
 
         /// <summary>
         /// S3 request.

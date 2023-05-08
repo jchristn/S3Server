@@ -462,9 +462,87 @@ namespace S3ServerLibrary
         #region Public-Methods
 
         /// <summary>
-        /// Populate members using an HttpContext.
+        /// Determine if a header exists.
         /// </summary>
-        public void ParseHttpContext()
+        /// <param name="key">Header key.</param>
+        /// <returns>True if exists.</returns>
+        public bool HeaderExists(string key)
+        {
+            if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
+
+            if (_HttpRequest != null 
+                && _HttpRequest.Headers != null)
+            {
+                return _HttpRequest.Headers.AllKeys.Any(k => k.Equals(key));
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Determine if a querystring entry exists.
+        /// </summary>
+        /// <param name="key">Querystring key.</param>
+        /// <returns>True if exists.</returns>
+        public bool QuerystringExists(string key)
+        {
+            if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
+
+            if (_HttpRequest != null 
+                && _HttpRequest.Query != null
+                && _HttpRequest.Query.Elements != null)
+            {
+                return _HttpRequest.Query.Elements.AllKeys.Any(k => k.Equals(key));
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Retrieve a header (or querystring) value.
+        /// </summary>
+        /// <param name="key">Key.</param>
+        /// <returns>Value.</returns>
+        public string RetrieveHeaderValue(string key)
+        {
+            if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
+
+            return _HttpRequest.Headers.Get(key);
+        }
+
+        /// <summary>
+        /// Retrieve a querystring value.
+        /// </summary>
+        /// <param name="key">Key.</param>
+        /// <returns>Value.</returns>
+        public string RetrieveQueryValue(string key)
+        {
+            if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
+
+            string val = _HttpRequest.Query.Elements.Get(key);
+            if (!String.IsNullOrEmpty(val))
+            {
+                val = WebUtility.UrlDecode(val);
+            }
+
+            return val;
+        }
+
+        /// <summary>
+        /// Read a chunk from the request body.
+        /// </summary>
+        /// <returns>Chunk.</returns>
+        public async Task<Chunk> ReadChunk()
+        {
+            return await _HttpRequest.ReadChunk().ConfigureAwait(false);
+        }
+
+        #endregion
+
+        #region Private-Methods
+
+
+        private void ParseHttpContext()
         {
             if (_HttpRequest == null) throw new InvalidOperationException("HTTP context not supplied in the S3 request object.");
 
@@ -497,7 +575,7 @@ namespace S3ServerLibrary
                 AccessKey = RetrieveQueryValue("awsaccesskeyid");
                 Signature = RetrieveQueryValue("signature");
 
-                if (QuerystringExists("max-keys", false))
+                if (QuerystringExists("max-keys"))
                 {
                     int maxKeys = 0;
                     string maxKeysStr = RetrieveQueryValue("max-keys");
@@ -516,15 +594,15 @@ namespace S3ServerLibrary
             #region Set-Values-From-Headers
 
             if (_HttpRequest.Headers != null && _HttpRequest.Headers.Count > 0)
-            { 
-                if (HeaderExists("authorization", false))
+            {
+                if (HeaderExists("authorization"))
                 {
-                    _Logger?.Invoke(_Header + "processing Authorization header"); 
+                    _Logger?.Invoke(_Header + "processing Authorization header");
                     Authorization = RetrieveHeaderValue("authorization");
                     ParseAuthorizationHeader();
                 }
 
-                if (HeaderExists("range", false))
+                if (HeaderExists("range"))
                 {
                     string rangeHeaderValue = RetrieveHeaderValue("range");
 
@@ -539,10 +617,10 @@ namespace S3ServerLibrary
                     }
                 }
 
-                if (HeaderExists("content-md5", false)) ContentMd5 = RetrieveHeaderValue("content-md5");
-                if (HeaderExists("content-type", false)) ContentType = RetrieveHeaderValue("content-type");
-                if (HeaderExists("host", false)) Host = RetrieveHeaderValue("host");
-                if (HeaderExists("x-amz-content-sha256", false))
+                if (HeaderExists("content-md5")) ContentMd5 = RetrieveHeaderValue("content-md5");
+                if (HeaderExists("content-type")) ContentType = RetrieveHeaderValue("content-type");
+                if (HeaderExists("host")) Host = RetrieveHeaderValue("host");
+                if (HeaderExists("x-amz-content-sha256"))
                 {
                     ContentSha256 = RetrieveHeaderValue("x-amz-content-sha256");
                     if (!String.IsNullOrEmpty(ContentSha256))
@@ -554,8 +632,8 @@ namespace S3ServerLibrary
                         }
                     }
                 }
-                
-                if (HeaderExists("date", false))
+
+                if (HeaderExists("date"))
                 {
                     Date = RetrieveHeaderValue("date");
 
@@ -565,7 +643,7 @@ namespace S3ServerLibrary
                     }
                 }
 
-                if (HeaderExists("x-amz-date", false))
+                if (HeaderExists("x-amz-date"))
                 {
                     Date = RetrieveHeaderValue("x-amz-date");
 
@@ -580,9 +658,9 @@ namespace S3ServerLibrary
 
             #region Set-Region-Bucket-Style-and-Key
 
-            if (!String.IsNullOrEmpty(Hostname) 
+            if (!String.IsNullOrEmpty(Hostname)
                 && !String.IsNullOrEmpty(_HttpRequest.Url.RawWithoutQuery))
-            { 
+            {
                 ParseHostnameAndUrl();
             }
 
@@ -594,78 +672,6 @@ namespace S3ServerLibrary
 
             #endregion 
         }
-
-        /// <summary>
-        /// Determine if a header exists.
-        /// </summary>
-        /// <param name="key">Header key.</param>
-        /// <param name="caseSensitive">Specify whether a case sensitive search should be used.</param>
-        /// <returns>True if exists.</returns>
-        public bool HeaderExists(string key, bool caseSensitive)
-        {
-            if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
-            return _HttpRequest.HeaderExists(key, caseSensitive);
-        }
-
-        /// <summary>
-        /// Determine if a querystring entry exists.
-        /// </summary>
-        /// <param name="key">Querystring key.</param>
-        /// <param name="caseSensitive">Specify whether a case sensitive search should be used.</param>
-        /// <returns>True if exists.</returns>
-        public bool QuerystringExists(string key, bool caseSensitive)
-        {
-            if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
-            return _HttpRequest.QuerystringExists(key, caseSensitive);
-        }
-
-        /// <summary>
-        /// Retrieve a header (or querystring) value.
-        /// </summary>
-        /// <param name="key">Key.</param>
-        /// <returns>Value.</returns>
-        public string RetrieveHeaderValue(string key)
-        {
-            if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
-            return _HttpRequest.RetrieveHeaderValue(key);
-        }
-
-        /// <summary>
-        /// Retrieve a querystring value.
-        /// </summary>
-        /// <param name="key">Key.</param>
-        /// <returns>Value.</returns>
-        public string RetrieveQueryValue(string key)
-        {
-            if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key)); 
-
-            if (_HttpRequest.Query.Elements != null && _HttpRequest.Query.Elements.Count > 0)
-            {
-                foreach (KeyValuePair<string, string> curr in _HttpRequest.Query.Elements)
-                {
-                    if (String.IsNullOrEmpty(curr.Key)) continue;
-                    if (String.Compare(curr.Key.ToLower(), key.ToLower()) == 0)
-                    {
-                        return WebUtility.UrlDecode(curr.Value);
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Read a chunk from the request body.
-        /// </summary>
-        /// <returns>Chunk.</returns>
-        public async Task<Chunk> ReadChunk()
-        {
-            return await _HttpRequest.ReadChunk().ConfigureAwait(false);
-        }
-
-        #endregion
-
-        #region Private-Methods
 
         private void ParseAuthorizationHeader()
         {
@@ -935,34 +941,34 @@ namespace S3ServerLibrary
                     }
                     else if (!String.IsNullOrEmpty(Bucket) && String.IsNullOrEmpty(Key))
                     {
-                        if (QuerystringExists("acl", false))
+                        if (QuerystringExists("acl"))
                             RequestType = S3RequestType.BucketReadAcl;
-                        else if (QuerystringExists("location", false))
+                        else if (QuerystringExists("location"))
                             RequestType = S3RequestType.BucketReadLocation;
-                        else if (QuerystringExists("logging", false))
+                        else if (QuerystringExists("logging"))
                             RequestType = S3RequestType.BucketReadLogging;
-                        else if (QuerystringExists("tagging", false))
+                        else if (QuerystringExists("tagging"))
                             RequestType = S3RequestType.BucketReadTags;
-                        else if (QuerystringExists("versions", false))
+                        else if (QuerystringExists("versions"))
                             RequestType = S3RequestType.BucketReadVersions;
-                        else if (QuerystringExists("versioning", false))
+                        else if (QuerystringExists("versioning"))
                             RequestType = S3RequestType.BucketReadVersioning;
-                        else if (QuerystringExists("website", false))
+                        else if (QuerystringExists("website"))
                             RequestType = S3RequestType.BucketReadWebsite;
                         else
                             RequestType = S3RequestType.BucketRead;
                     }
                     else if (!String.IsNullOrEmpty(Bucket) && !String.IsNullOrEmpty(Key))
                     {
-                        if (HeaderExists("range", false) && _RangeStart != null)
+                        if (HeaderExists("range") && _RangeStart != null)
                             RequestType = S3RequestType.ObjectReadRange;
-                        else if (QuerystringExists("acl", false))
+                        else if (QuerystringExists("acl"))
                             RequestType = S3RequestType.ObjectReadAcl;
-                        else if (QuerystringExists("tagging", false))
+                        else if (QuerystringExists("tagging"))
                             RequestType = S3RequestType.ObjectReadTags;
-                        else if (QuerystringExists("legal-hold", false))
+                        else if (QuerystringExists("legal-hold"))
                             RequestType = S3RequestType.ObjectReadLegalHold;
-                        else if (QuerystringExists("retention", false))
+                        else if (QuerystringExists("retention"))
                             RequestType = S3RequestType.ObjectReadRetention;
                         else
                             RequestType = S3RequestType.ObjectRead;
@@ -976,28 +982,28 @@ namespace S3ServerLibrary
 
                     if (!String.IsNullOrEmpty(Bucket) && String.IsNullOrEmpty(Key))
                     {
-                        if (QuerystringExists("acl", false))
+                        if (QuerystringExists("acl"))
                             RequestType = S3RequestType.BucketWriteAcl;
-                        else if (QuerystringExists("logging", false))
+                        else if (QuerystringExists("logging"))
                             RequestType = S3RequestType.BucketWriteLogging;
-                        else if (QuerystringExists("tagging", false))
+                        else if (QuerystringExists("tagging"))
                             RequestType = S3RequestType.BucketWriteTags;
-                        else if (QuerystringExists("versioning", false))
+                        else if (QuerystringExists("versioning"))
                             RequestType = S3RequestType.BucketWriteVersioning;
-                        else if (QuerystringExists("website", false))
+                        else if (QuerystringExists("website"))
                             RequestType = S3RequestType.BucketWriteWebsite;
                         else
                             RequestType = S3RequestType.BucketWrite;
                     }
                     else if (!String.IsNullOrEmpty(Bucket) && !String.IsNullOrEmpty(Key))
                     {
-                        if (QuerystringExists("tagging", false))
+                        if (QuerystringExists("tagging"))
                             RequestType = S3RequestType.ObjectWriteTags;
-                        else if (QuerystringExists("acl", false))
+                        else if (QuerystringExists("acl"))
                             RequestType = S3RequestType.ObjectWriteAcl;
-                        else if (QuerystringExists("legal-hold", false))
+                        else if (QuerystringExists("legal-hold"))
                             RequestType = S3RequestType.ObjectWriteLegalHold;
-                        else if (QuerystringExists("retention", false))
+                        else if (QuerystringExists("retention"))
                             RequestType = S3RequestType.ObjectWriteRetention;
                         else
                             RequestType = S3RequestType.ObjectWrite;
@@ -1011,7 +1017,7 @@ namespace S3ServerLibrary
 
                     if (!String.IsNullOrEmpty(Bucket))
                     {
-                        if (QuerystringExists("delete", false))
+                        if (QuerystringExists("delete"))
                             RequestType = S3RequestType.ObjectDeleteMultiple;
                     }
                     break;
@@ -1023,16 +1029,16 @@ namespace S3ServerLibrary
 
                     if (!String.IsNullOrEmpty(Bucket) && String.IsNullOrEmpty(Key))
                     {
-                        if (QuerystringExists("tagging", false))
+                        if (QuerystringExists("tagging"))
                             RequestType = S3RequestType.BucketDeleteTags;
-                        else if (QuerystringExists("website", false))
+                        else if (QuerystringExists("website"))
                             RequestType = S3RequestType.BucketDeleteWebsite;
                         else
                             RequestType = S3RequestType.BucketDelete;
                     }
                     else if (!String.IsNullOrEmpty(Bucket) && !String.IsNullOrEmpty(Key))
                     {
-                        if (QuerystringExists("tagging", false))
+                        if (QuerystringExists("tagging"))
                             RequestType = S3RequestType.ObjectDeleteTags;
                         else
                             RequestType = S3RequestType.ObjectDelete;

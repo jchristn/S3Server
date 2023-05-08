@@ -244,7 +244,6 @@ namespace S3ServerLibrary
         private async Task RequestHandler(HttpContext ctx)
         {
             if (ctx == null) throw new ArgumentNullException(nameof(ctx));
-            DateTime startTime = DateTime.Now;
             S3Context s3ctx = null;
 
             try
@@ -880,7 +879,9 @@ namespace S3ServerLibrary
                 return;
             }
             finally
-            { 
+            {
+                s3ctx.Timestamp.End = DateTime.UtcNow;
+
                 if (Logging.HttpRequests)
                 {
                     Logger?.Invoke(
@@ -892,7 +893,7 @@ namespace S3ServerLibrary
                         ctx.Request.Method.ToString() + " " +
                         ctx.Request.Url.RawWithoutQuery + " " +
                         s3ctx.Response.StatusCode + 
-                        " [" + Common.TotalMsFrom(startTime) + "ms]");
+                        " [" + s3ctx.Timestamp.TotalMs + "ms]");
                 }
 
                 if (PostRequestHandler != null) await PostRequestHandler(s3ctx).ConfigureAwait(false);

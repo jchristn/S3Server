@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -23,6 +24,9 @@ namespace S3ServerLibrary
         #endregion
 
         #region Private-Members
+
+        private static ExceptionConverter<Exception> _ExceptionConverter = new ExceptionConverter<Exception>();
+        private static NameValueCollectionConverter _NameValueCollectionConverter = new NameValueCollectionConverter();
 
         #endregion
 
@@ -58,26 +62,18 @@ namespace S3ServerLibrary
         public static string SerializeJson(object obj, bool pretty)
         {
             if (obj == null) return null;
-            string json;
 
             JsonSerializerOptions options = new JsonSerializerOptions();
             options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 
             // see https://github.com/dotnet/runtime/issues/43026
-            options.Converters.Add(new ExceptionConverter<Exception>());
+            options.Converters.Add(_ExceptionConverter);
+            options.Converters.Add(_NameValueCollectionConverter);
 
-            if (pretty)
-            {
-                options.WriteIndented = true;
-                json = JsonSerializer.Serialize(obj, options);
-            }
-            else
-            {
-                options.WriteIndented = false;
-                json = JsonSerializer.Serialize(obj, options);
-            }
+            if (pretty) options.WriteIndented = true;
+            else options.WriteIndented = false;
 
-            return json;
+            return JsonSerializer.Serialize(obj, options);
         }
 
         /// <summary>
@@ -166,37 +162,6 @@ namespace S3ServerLibrary
         /// Serialize XML.
         /// </summary>
         /// <param name="obj">Object.</param>
-        /// <returns>XML string.</returns>
-        private static string SerializeXml_Original(object obj)
-        {
-            if (obj == null) throw new ArgumentNullException(nameof(obj));
-
-            XmlSerializer xml = new XmlSerializer(obj.GetType());
-
-            using (MemoryStream stream = new MemoryStream())
-            {
-                using (StreamWriter writer = new StreamWriter(stream, Encoding.UTF8))
-                {
-                    xml.Serialize(writer, obj);
-                    byte[] bytes = stream.ToArray();
-                    string ret = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
-
-                    // remove preamble if exists
-                    string byteOrderMarkUtf8 = Encoding.UTF8.GetString(Encoding.UTF8.GetPreamble());
-                    while (ret.StartsWith(byteOrderMarkUtf8, StringComparison.Ordinal))
-                    {
-                        ret = ret.Remove(0, byteOrderMarkUtf8.Length);
-                    }
-
-                    return ret;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Serialize XML.
-        /// </summary>
-        /// <param name="obj">Object.</param>
         /// <param name="pretty">Pretty print.</param>
         /// <returns>XML string.</returns>
         public static string SerializeXml(object obj, bool pretty = false)
@@ -279,6 +244,18 @@ namespace S3ServerLibrary
                 }
 
                 writer.WriteEndObject();
+            }
+        }
+
+        private class NameValueCollectionConverter : JsonConverter<NameValueCollection>
+        {
+            public override NameValueCollection Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) => throw new NotImplementedException();
+
+            public override void Write(Utf8JsonWriter writer, NameValueCollection value, JsonSerializerOptions options)
+            {
+                var val = value.Keys.Cast<string>()
+                    .ToDictionary(k => k, k => string.Join(", ", value.GetValues(k)));
+                System.Text.Json.JsonSerializer.Serialize(writer, val);
             }
         }
 

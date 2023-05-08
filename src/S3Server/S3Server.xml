@@ -254,6 +254,11 @@
             S3 context.
             </summary>
         </member>
+        <member name="P:S3ServerLibrary.S3Context.Timestamp">
+            <summary>
+            Time information for start, end, and total runtime.
+            </summary>
+        </member>
         <member name="P:S3ServerLibrary.S3Context.Request">
             <summary>
             S3 request.
@@ -2504,25 +2509,18 @@
             <param name="baseDomains">List of base domains against which the hostname should be evaluated to identify the bucket.  For instance, to resolve buckets for *.localhost, specify '.localhost'.</param> 
             <param name="logger">Method to invoke to send log messages.</param> 
         </member>
-        <member name="M:S3ServerLibrary.S3Request.ParseHttpContext">
-            <summary>
-            Populate members using an HttpContext.
-            </summary>
-        </member>
-        <member name="M:S3ServerLibrary.S3Request.HeaderExists(System.String,System.Boolean)">
+        <member name="M:S3ServerLibrary.S3Request.HeaderExists(System.String)">
             <summary>
             Determine if a header exists.
             </summary>
             <param name="key">Header key.</param>
-            <param name="caseSensitive">Specify whether a case sensitive search should be used.</param>
             <returns>True if exists.</returns>
         </member>
-        <member name="M:S3ServerLibrary.S3Request.QuerystringExists(System.String,System.Boolean)">
+        <member name="M:S3ServerLibrary.S3Request.QuerystringExists(System.String)">
             <summary>
             Determine if a querystring entry exists.
             </summary>
             <param name="key">Querystring key.</param>
-            <param name="caseSensitive">Specify whether a case sensitive search should be used.</param>
             <returns>True if exists.</returns>
         </member>
         <member name="M:S3ServerLibrary.S3Request.RetrieveHeaderValue(System.String)">
@@ -3059,13 +3057,6 @@
             <typeparam name="T">Type.</typeparam>
             <param name="xml">XML string.</param>
             <returns>Instance.</returns>
-        </member>
-        <member name="M:S3ServerLibrary.SerializationHelper.SerializeXml_Original(System.Object)">
-            <summary>
-            Serialize XML.
-            </summary>
-            <param name="obj">Object.</param>
-            <returns>XML string.</returns>
         </member>
         <member name="M:S3ServerLibrary.SerializationHelper.SerializeXml(System.Object,System.Boolean)">
             <summary>
