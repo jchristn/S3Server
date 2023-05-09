@@ -64,7 +64,7 @@ namespace S3ServerLibrary.S3Objects
 		public Tag(string key, string val)
         {
 			Key = key;
-			Value = Value;
+			Value = val;
         }
 
 		#endregion
