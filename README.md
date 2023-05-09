@@ -10,13 +10,10 @@ Simple S3 server-side interface, produced using Amazon's public documentation.  
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v5.0.x
+## New in v5.1.x
 
-- Minor breaking change
-- Rename ```S3RequestStyle``` values to ```PathStyle``` and ```VirtualHostedStyle```
-- Remove Newtonsoft.Json dependency
-- Changes to (hopefully) improve compatibility with S3 ListObjects APIs
-- HEAD bucket and object APIs now return 404 with ```NoSuchBucket``` and ```NoSuchKey``` errors
+- Dependency updates and bugfixes
+- Added ```BucketDeleteAcl``` API
 
 ## Examples
 
@@ -121,13 +118,14 @@ S3Server parses incoming HTTP requests, extracting key pieces of information to 
 
 Refer to https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html for the S3 API documentation used to create this project.
 
-As of v3.0.0, the following callbacks are supported:
+The following callbacks are supported:
 
 ### Bucket Callbacks
 
 | Callback Name            | Description                         | Method | URL                  |
 |--------------------------|-------------------------------------|--------|----------------------|
 | Bucket.Delete            | Delete a bucket                     | DELETE | /[bucket]            |
+| Bucket.DeleteAcl         | Delete ACLs from a bucket           | DELETE | /[bucket]?acl        |
 | Bucket.DeleteTagging     | Delete tags from a bucket           | DELETE | /[bucket]?tagging    |
 | Bucket.DeleteWebsite     | Delete bucket website configuration | DELETE | /[bucket]?website    |
 | Bucket.Exists            | Check if a bucket exists            | HEAD   | /[bucket]            |

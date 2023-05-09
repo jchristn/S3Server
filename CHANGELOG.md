@@ -2,6 +2,13 @@
 
 ## Current Version
 
+v5.1.x
+
+- Dependency updates and bugfixes
+- Added ```BucketDeleteAcl``` API
+
+## Previous Versions
+
 v5.0.x
 
 - Minor breaking change
@@ -9,8 +16,6 @@ v5.0.x
 - Remove Newtonsoft.Json dependency
 - Changes to (hopefully) improve compatibility with S3 ListObjects APIs
 - HEAD bucket and object APIs now return 404 with ```NoSuchBucket``` and ```NoSuchKey``` errors
-
-## Previous Versions
 
 v4.0.1
 
