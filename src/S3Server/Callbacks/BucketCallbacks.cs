@@ -20,6 +20,11 @@ namespace S3ServerLibrary
         public Func<S3Context, Task> Delete = null;
 
         /// <summary>
+        /// Delete a bucket's ACL.
+        /// </summary>
+        public Func<S3Context, Task> DeleteAcl = null;
+
+        /// <summary>
         /// Delete a bucket's tags.
         /// </summary>
         public Func<S3Context, Task> DeleteTagging = null;

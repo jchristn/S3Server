@@ -543,6 +543,7 @@ namespace Test.Server
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("ObjectWrite      : " + ctx.Request.Bucket + "/" + ctx.Request.Key);
+            Console.WriteLine("Content type     : " + ctx.Request.ContentType);
             Console.WriteLine("Chunked transfer : " + ctx.Request.Chunked);
 
             if (ctx.Request.Chunked)

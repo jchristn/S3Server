@@ -473,7 +473,7 @@ namespace S3ServerLibrary
             if (_HttpRequest != null 
                 && _HttpRequest.Headers != null)
             {
-                return _HttpRequest.Headers.AllKeys.Any(k => k.Equals(key));
+                return _HttpRequest.Headers.AllKeys.Any(k => k.ToLower().Equals(key.ToLower()));
             }
 
             return false;
@@ -492,7 +492,7 @@ namespace S3ServerLibrary
                 && _HttpRequest.Query != null
                 && _HttpRequest.Query.Elements != null)
             {
-                return _HttpRequest.Query.Elements.AllKeys.Any(k => k.Equals(key));
+                return _HttpRequest.Query.Elements.AllKeys.Any(k => k.ToLower().Equals(key.ToLower()));
             }
 
             return false;
@@ -1029,7 +1029,9 @@ namespace S3ServerLibrary
 
                     if (!String.IsNullOrEmpty(Bucket) && String.IsNullOrEmpty(Key))
                     {
-                        if (QuerystringExists("tagging"))
+                        if (QuerystringExists("acl"))
+                            RequestType = S3RequestType.BucketDeleteAcl;
+                        else if (QuerystringExists("tagging"))
                             RequestType = S3RequestType.BucketDeleteTags;
                         else if (QuerystringExists("website"))
                             RequestType = S3RequestType.BucketDeleteWebsite;

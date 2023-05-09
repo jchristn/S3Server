@@ -29,6 +29,11 @@ namespace S3ServerLibrary
         [EnumMember(Value = "BucketDelete")]
         BucketDelete,
         /// <summary>
+        /// Delete bucket ACL.
+        /// </summary>
+        [EnumMember(Value = "BucketDeleteAcl")]
+        BucketDeleteAcl,
+        /// <summary>
         /// Delete bucket tags.
         /// </summary>
         [EnumMember(Value = "BucketDeleteTags")]

@@ -14,6 +14,11 @@
             Delete a bucket.
             </summary>
         </member>
+        <member name="F:S3ServerLibrary.BucketCallbacks.DeleteAcl">
+            <summary>
+            Delete a bucket's ACL.
+            </summary>
+        </member>
         <member name="F:S3ServerLibrary.BucketCallbacks.DeleteTagging">
             <summary>
             Delete a bucket's tags.
@@ -2581,6 +2586,11 @@
         <member name="F:S3ServerLibrary.S3RequestType.BucketDelete">
             <summary>
             Delete a bucket.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3RequestType.BucketDeleteAcl">
+            <summary>
+            Delete bucket ACL.
             </summary>
         </member>
         <member name="F:S3ServerLibrary.S3RequestType.BucketDeleteTags">

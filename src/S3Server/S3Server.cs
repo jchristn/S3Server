@@ -330,6 +330,17 @@ namespace S3ServerLibrary
                         }
                         break;
 
+                    case S3RequestType.BucketDeleteAcl:
+                        if (Bucket.DeleteAcl != null)
+                        {
+                            await Bucket.DeleteAcl(s3ctx).ConfigureAwait(false);
+                            ctx.Response.StatusCode = 204;
+                            ctx.Response.ContentType = "text/plain";
+                            await ctx.Response.Send().ConfigureAwait(false);
+                            return;
+                        }
+                        break;
+
                     case S3RequestType.BucketDeleteTags:
                         if (Bucket.DeleteTagging != null)
                         {
