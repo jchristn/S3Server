@@ -624,6 +624,17 @@ namespace S3ServerLibrary
                         }
                         break;
 
+                    case S3RequestType.ObjectDeleteAcl:
+                        if (Object.DeleteAcl != null)
+                        {
+                            await Object.DeleteAcl(s3ctx).ConfigureAwait(false);
+                            ctx.Response.StatusCode = 204;
+                            ctx.Response.ContentType = "text/plain";
+                            await ctx.Response.Send().ConfigureAwait(false);
+                            return;
+                        }
+                        break;
+
                     case S3RequestType.ObjectDeleteMultiple:
                         if (Object.DeleteMultiple != null)
                         {

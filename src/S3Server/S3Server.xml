@@ -181,6 +181,11 @@
             Delete an object.
             </summary>
         </member>
+        <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.DeleteAcl">
+            <summary>
+            Delete an object's ACL.
+            </summary>
+        </member>
         <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.DeleteTagging">
             <summary>
             Delete an object's tags.
@@ -2681,6 +2686,11 @@
         <member name="F:S3ServerLibrary.S3RequestType.ObjectDelete">
             <summary>
             Delete an object.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3RequestType.ObjectDeleteAcl">
+            <summary>
+            Delete an object's ACLs.
             </summary>
         </member>
         <member name="F:S3ServerLibrary.S3RequestType.ObjectDeleteMultiple">

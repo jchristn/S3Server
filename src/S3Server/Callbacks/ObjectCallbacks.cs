@@ -81,6 +81,11 @@ namespace S3ServerLibrary.Callbacks
         public Func<S3Context, Task> Delete = null;
 
         /// <summary>
+        /// Delete an object's ACL.
+        /// </summary>
+        public Func<S3Context, Task> DeleteAcl = null;
+
+        /// <summary>
         /// Delete an object's tags.
         /// </summary>
         public Func<S3Context, Task> DeleteTagging = null;

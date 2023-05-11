@@ -124,6 +124,11 @@ namespace S3ServerLibrary
         [EnumMember(Value = "ObjectDelete")]
         ObjectDelete,
         /// <summary>
+        /// Delete an object's ACLs.
+        /// </summary>
+        [EnumMember(Value = "ObjectDeleteAcl")]
+        ObjectDeleteAcl,
+        /// <summary>
         /// Delete multiple objects.
         /// </summary>
         [EnumMember(Value = "ObjectDeleteMultiple")]

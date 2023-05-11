@@ -1040,7 +1040,9 @@ namespace S3ServerLibrary
                     }
                     else if (!String.IsNullOrEmpty(Bucket) && !String.IsNullOrEmpty(Key))
                     {
-                        if (QuerystringExists("tagging"))
+                        if (QuerystringExists("acl"))
+                            RequestType = S3RequestType.ObjectDeleteAcl;
+                        else if (QuerystringExists("tagging"))
                             RequestType = S3RequestType.ObjectDeleteTags;
                         else
                             RequestType = S3RequestType.ObjectDelete;
