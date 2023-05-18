@@ -470,10 +470,9 @@ namespace S3ServerLibrary
         {
             if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
 
-            if (_HttpRequest != null 
-                && _HttpRequest.Headers != null)
+            if (_HttpRequest != null )
             {
-                return _HttpRequest.Headers.AllKeys.Any(k => k.ToLower().Equals(key.ToLower()));
+                return _HttpRequest.HeaderExists(key);
             }
 
             return false;
@@ -488,11 +487,9 @@ namespace S3ServerLibrary
         {
             if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
 
-            if (_HttpRequest != null 
-                && _HttpRequest.Query != null
-                && _HttpRequest.Query.Elements != null)
+            if (_HttpRequest != null)
             {
-                return _HttpRequest.Query.Elements.AllKeys.Any(k => k.ToLower().Equals(key.ToLower()));
+                return _HttpRequest.QuerystringExists(key);
             }
 
             return false;
@@ -507,7 +504,12 @@ namespace S3ServerLibrary
         {
             if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
 
-            return _HttpRequest.Headers.Get(key);
+            if (_HttpRequest != null)
+            {
+                return _HttpRequest.RetrieveHeaderValue(key);
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -519,13 +521,12 @@ namespace S3ServerLibrary
         {
             if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
 
-            string val = _HttpRequest.Query.Elements.Get(key);
-            if (!String.IsNullOrEmpty(val))
+            if (_HttpRequest != null)
             {
-                val = WebUtility.UrlDecode(val);
+                return _HttpRequest.RetrieveQueryValue(key);
             }
 
-            return val;
+            return null;
         }
 
         /// <summary>

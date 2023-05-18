@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.1;netcoreapp3.1;net462;net48;net6.0;net7.0</TargetFrameworks>
-		<Version>5.1.6</Version>
+		<Version>5.1.7</Version>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Authors>Joel Christner</Authors>
@@ -77,7 +77,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Timestamps" Version="1.0.1" />
-		<PackageReference Include="Watson" Version="5.0.1" />
+		<PackageReference Include="Watson" Version="5.0.2" />
 	</ItemGroup>
 
 	<ItemGroup>
