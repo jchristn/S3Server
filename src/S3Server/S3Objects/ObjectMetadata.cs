@@ -31,7 +31,24 @@ namespace S3ServerLibrary.S3Objects
         /// ETag of the resource.
         /// </summary>
         [XmlElement(ElementName = "ETag", IsNullable = true)]
-        public string ETag { get; set; } = null;
+        public string ETag
+        {
+            get
+            {
+                return _ETag;
+            }
+            set
+            {
+                if (!String.IsNullOrEmpty(value))
+                {
+                    value = value.Trim();
+                    if (!value.StartsWith("\"")) value = "\"" + value;
+                    if (!value.EndsWith("\"")) value = value + "\"";
+                }
+
+                _ETag = value;
+            }
+        }
 
         /// <summary>
         /// Content type.
@@ -60,19 +77,7 @@ namespace S3ServerLibrary.S3Objects
         /// Valid values are STANDARD, REDUCED_REDUNDANCY, GLACIER, STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING, DEEP_ARCHIVE, OUTPOSTS.
         /// </summary>
         [XmlElement(ElementName = "StorageClass", IsNullable = true)]
-        public string StorageClass
-        {
-            get
-            {
-                return _StorageClass;
-            }
-            set
-            {
-                if (String.IsNullOrEmpty(value)) throw new ArgumentNullException(nameof(StorageClass));
-                if (!_StorageClassValidValues.Contains(value)) throw new ArgumentException("Unknown StorageClass '" + value + "'.");
-                _StorageClass = value;
-            }
-        }
+        public StorageClassEnum StorageClass { get; set; } = StorageClassEnum.STANDARD;
 
         /// <summary>
         /// Object owner.
@@ -84,19 +89,8 @@ namespace S3ServerLibrary.S3Objects
 
         #region Private-Members
 
-        private string _StorageClass = "STANDARD";
-        private List<string> _StorageClassValidValues = new List<string>
-        {
-            "STANDARD",
-            "REDUCED_REDUNDANCY",
-            "GLACIER",
-            "STANDARD_IA",
-            "ONEZONE_IA",
-            "INTELLIGENT_TIERING",
-            "DEEP_ARCHIVE",
-            "OUTPOSTS"
-        };
         private long _Size = 0;
+        private string _ETag = null;
 
         #endregion
 
@@ -118,8 +112,8 @@ namespace S3ServerLibrary.S3Objects
         /// <param name="eTag">ETag.</param>
         /// <param name="size">Size.</param>
         /// <param name="owner">Owner.</param>
-        /// <param name="storageClass">Storage class.  Valid values are STANDARD, REDUCED_REDUNDANCY, GLACIER, STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING, DEEP_ARCHIVE, OUTPOSTS.</param>
-        public ObjectMetadata(string key, DateTime lastModified, string eTag, long size, Owner owner, string storageClass = "STANDARD")
+        /// <param name="storageClass">Storage class.</param>
+        public ObjectMetadata(string key, DateTime lastModified, string eTag, long size, Owner owner, StorageClassEnum storageClass = StorageClassEnum.STANDARD)
         {
             Key = key;
             LastModified = lastModified;

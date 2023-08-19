@@ -19,54 +19,48 @@ namespace S3ServerLibrary.S3Objects
         /// </summary>
         [EnumMember(Value = "STANDARD")]
         [XmlEnum(Name = "STANDARD")]
-        Standard,
+        STANDARD,
         /// <summary>
         /// Reduced redundancy.
         /// </summary>
         [EnumMember(Value = "REDUCED_REDUNDANCY")]
         [XmlEnum(Name = "REDUCED_REDUNDANCY")]
-        ReducedRedundancy,
+        REDUCED_REDUNDANCY,
         /// <summary>
         /// Glacier.
         /// </summary>
         [EnumMember(Value = "GLACIER")]
         [XmlEnum(Name = "GLACIER")]
-        Glacier,
+        GLACIER,
         /// <summary>
         /// Standard IA.
         /// </summary>
         [EnumMember(Value = "STANDARD_IA")]
         [XmlEnum(Name = "STANDARD_IA")]
-        StandardIa,
+        STANDARD_IA,
         /// <summary>
         /// One zone IA.
         /// </summary>
         [EnumMember(Value = "ONEZONE_IA")]
         [XmlEnum(Name = "ONEZONE_IA")]
-        OneZoneIa,
+        ONEZONE_IA,
         /// <summary>
         /// Intelligent tiering.
         /// </summary>
         [EnumMember(Value = "INTELLIGENT_TIERING")]
         [XmlEnum(Name = "INTELLIGENT_TIERING")]
-        IntelligentTiering,
+        INTELLIGENT_TIERING,
         /// <summary>
         /// Deep archive.
         /// </summary>
         [EnumMember(Value = "DEEP_ARCHIVE")]
         [XmlEnum(Name = "DEEP_ARCHIVE")]
-        DeepArchive,
+        DEEP_ARCHIVE,
         /// <summary>
         /// Outposts.
         /// </summary>
         [EnumMember(Value = "OUTPOSTS")]
         [XmlEnum(Name = "OUTPOSTS")]
-        Outposts,
-        /// <summary>
-        /// None.
-        /// </summary>
-        [EnumMember(Value = null)]
-        [XmlEnum(Name = null)]
-        None
+        OUTPOSTS
     }
 }

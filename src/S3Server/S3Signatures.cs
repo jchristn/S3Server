@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace S3ServerLibrary
@@ -33,12 +34,12 @@ namespace S3ServerLibrary
 
                 signingKey = V4GenerateSigningKey(secretKey);
 
-                hmacSha1Signature = Common.BytesToBase64(
-                    Common.HmacSha1(Encoding.UTF8.GetBytes(_V4StringToSign), secretKey)
+                hmacSha1Signature = Convert.ToBase64String(
+                    HmacSha1(Encoding.UTF8.GetBytes(_V4StringToSign), secretKey)
                     );
 
-                hmacSha256Signature = Common.BytesToHex(
-                    Common.HmacSha256(Encoding.UTF8.GetBytes(_V4StringToSign), signingKey)
+                hmacSha256Signature = Convert.ToHexString(
+                    HmacSha256(Encoding.UTF8.GetBytes(_V4StringToSign), signingKey)
                     )
                     .ToLower();
 
@@ -83,8 +84,6 @@ namespace S3ServerLibrary
         private static byte[] _SecretKey = null;
         private static string _Header = "[S3Signature] ";
         private static Action<string> _Logger = null;
-        private static string _AmazonTimestampFormat = "yyyyMMddTHHmmssZ";
-        private static string _AmazonDateFormat = "yyyyMMdd";
 
         #endregion
          
@@ -97,9 +96,9 @@ namespace S3ServerLibrary
                 string ret = "";
 
                 ret += "AWS4-HMAC-SHA256" + "\n";
-                ret += _S3Context.Request.TimestampUtc.ToString(_AmazonTimestampFormat) + "\n";
-                ret += _S3Context.Request.TimestampUtc.ToString(_AmazonDateFormat) + "/" + _S3Context.Request.Region + "/s3/aws4_request" + "\n";
-                ret += Common.BytesToHex(Common.Sha256(Encoding.UTF8.GetBytes(_V4CanonicalRequest))).ToLower();
+                ret += _S3Context.Request.TimestampUtc.ToString(Constants.AmazonTimestampFormatCompact) + "\n";
+                ret += _S3Context.Request.TimestampUtc.ToString(Constants.AmazonDatestampFormat) + "/" + _S3Context.Request.Region + "/s3/aws4_request" + "\n";
+                ret += Convert.ToHexString(Sha256(Encoding.UTF8.GetBytes(_V4CanonicalRequest))).ToLower();
                 return ret;
             }
         }
@@ -233,27 +232,56 @@ namespace S3ServerLibrary
          
         private static byte[] V4GenerateSigningKey(byte[] secretKey)
         {
-            byte[] dateKey = Common.HmacSha256(
-                Encoding.UTF8.GetBytes(_S3Context.Request.TimestampUtc.ToString(_AmazonDateFormat)),
+            byte[] dateKey = HmacSha256(
+                Encoding.UTF8.GetBytes(_S3Context.Request.TimestampUtc.ToString(Constants.AmazonDatestampFormat)),
                 Encoding.UTF8.GetBytes("AWS4" + Encoding.UTF8.GetString(secretKey))
                 );
 
-            byte[] dateRegionKey = Common.HmacSha256(
+            byte[] dateRegionKey = HmacSha256(
                 Encoding.UTF8.GetBytes(_S3Context.Request.Region),
                 dateKey
                 );
 
-            byte[] dateRegionServiceKey = Common.HmacSha256(
+            byte[] dateRegionServiceKey = HmacSha256(
                 Encoding.UTF8.GetBytes("s3"),
                 dateRegionKey
                 );
 
-            byte[] signingKey = Common.HmacSha256(
+            byte[] signingKey = HmacSha256(
                 Encoding.UTF8.GetBytes("aws4_request"),
                 dateRegionServiceKey
                 );
 
             return signingKey;
+        }
+
+        private static byte[] Md5(byte[] data)
+        {
+            if (data == null) return null;
+            return MD5.Create().ComputeHash(data);
+        }
+
+        private static byte[] HmacSha1(byte[] input, byte[] key)
+        {
+            if (input == null) return null;
+            if (key == null || key.Length < 1) return null;
+            return new HMACSHA1(key).ComputeHash(input);
+        }
+
+        private static byte[] HmacSha256(byte[] input, byte[] key)
+        {
+            if (input == null) return null;
+            if (key == null || key.Length < 1) return null;
+            return new HMACSHA256(key).ComputeHash(input);
+        }
+
+        private static byte[] Sha256(byte[] data)
+        {
+            if (data == null) return null;
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                return sha256.ComputeHash(data);
+            }
         }
 
         #endregion

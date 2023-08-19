@@ -87,7 +87,7 @@ namespace S3ServerLibrary
         /// If Chunked is true, use SendChunk() or SendFinalChunk() APIs.
         /// The Send(ErrorCode) API is valid for both conditions.
         /// </summary>
-        public bool Chunked
+        public bool ChunkedTransfer
         {
             get
             {
@@ -166,27 +166,6 @@ namespace S3ServerLibrary
             _S3Request = ctx.Request;
         }
 
-        /// <summary>
-        /// Instantiate the object without supplying a stream.  Useful for HEAD responses.
-        /// </summary>
-        /// <param name="ctx">S3 context.</param>
-        /// <param name="statusCode">HTTP status code.</param>
-        /// <param name="contentType">Content-type.</param>
-        /// <param name="headers">HTTP headers.</param> 
-        /// <param name="contentLength">Content length.</param>
-        public S3Response(S3Context ctx, int statusCode = 200, string contentType = "text/plain", Dictionary<string, string> headers = null, long contentLength = 0)
-        {
-            if (ctx == null) throw new ArgumentNullException(nameof(ctx));
-
-            _HttpResponse = ctx.Http.Response;
-            _S3Request = ctx.Request;
-
-            StatusCode = statusCode;
-            ContentType = contentType;
-            ContentLength = contentLength;
-            Chunked = _S3Request.Chunked;
-        }
-
         #endregion
 
         #region Public-Methods
@@ -197,7 +176,7 @@ namespace S3ServerLibrary
         /// <returns>True if successful.</returns>
         public async Task<bool> Send()
         {
-            if (Chunked) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk().");
+            if (ChunkedTransfer) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk().");
 
             SetResponseHeaders();
 
@@ -211,7 +190,7 @@ namespace S3ServerLibrary
         /// <returns>True if successful.</returns>
         public async Task<bool> Send(string data)
         {
-            if (Chunked) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk().");
+            if (ChunkedTransfer) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk().");
 
             byte[] bytes = new byte[0];
             if (!String.IsNullOrEmpty(data))
@@ -236,7 +215,7 @@ namespace S3ServerLibrary
         /// <returns>True if successful.</returns>
         public async Task<bool> Send(byte[] data)
         {
-            if (Chunked) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk().");
+            if (ChunkedTransfer) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk().");
 
             MemoryStream ms = null;
             ContentLength = 0;
@@ -267,7 +246,7 @@ namespace S3ServerLibrary
         /// <returns>True if successful.</returns>
         public async Task<bool> Send(long contentLength, Stream stream)
         {
-            if (Chunked) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk()."); 
+            if (ChunkedTransfer) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk()."); 
 
             ContentLength = contentLength;
 
@@ -290,7 +269,7 @@ namespace S3ServerLibrary
         /// <returns>True if successful.</returns>
         public async Task<bool> Send(Error error)
         {
-            Chunked = false;
+            ChunkedTransfer = false;
 
             byte[] bytes = Encoding.UTF8.GetBytes(SerializationHelper.SerializeXml(error));
             MemoryStream ms = new MemoryStream(bytes);
@@ -298,7 +277,7 @@ namespace S3ServerLibrary
 
             ContentLength = bytes.Length;
             StatusCode = error.HttpStatusCode;
-            ContentType = "application/xml";
+            ContentType = Constants.ContentTypeXml;
 
             SetResponseHeaders();
 
@@ -312,7 +291,7 @@ namespace S3ServerLibrary
         /// <returns>True if successful.</returns>
         public async Task<bool> Send(ErrorCode error)
         {
-            Chunked = false;
+            ChunkedTransfer = false;
 
             Error errorBody = new Error(error);
 
@@ -322,7 +301,7 @@ namespace S3ServerLibrary
 
             ContentLength = bytes.Length;
             StatusCode = errorBody.HttpStatusCode;
-            ContentType = "application/xml";
+            ContentType = Constants.ContentTypeXml;
 
             SetResponseHeaders();
 
@@ -336,7 +315,7 @@ namespace S3ServerLibrary
         /// <returns>True if successful.</returns>
         public async Task<bool> SendChunk(byte[] data)
         {
-            if (!Chunked) throw new IOException("Responses with chunked transfer-encoding disabled require use of Send().");
+            if (!ChunkedTransfer) throw new IOException("Responses with chunked transfer-encoding disabled require use of Send().");
 
             SetResponseHeaders();
 
@@ -351,7 +330,7 @@ namespace S3ServerLibrary
         /// <returns>True if successful.</returns>
         public async Task<bool> SendFinalChunk(byte[] data)
         {
-            if (!Chunked) throw new IOException("Responses with chunked transfer-encoding disabled require use of Send().");
+            if (!ChunkedTransfer) throw new IOException("Responses with chunked transfer-encoding disabled require use of Send().");
 
             SetResponseHeaders();
 
@@ -365,28 +344,20 @@ namespace S3ServerLibrary
 
         private void SetResponseHeaders()
         {
-            if (Headers != null)
-            {
-                if (Headers.Get("X-Amz-Date") == null)
-                {
-                    Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
-                }
-                if (Headers.Get("Host") == null)
-                {
-                    Headers.Add("Host", _S3Request.Hostname);
-                }
-                if (Headers.Get("Server") == null)
-                {
-                    Headers.Add("Server", "S3Server");
-                }
-            }
-            else
-            {
-                Headers = new NameValueCollection(StringComparer.InvariantCultureIgnoreCase);
-                Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString("yyyyMMddTHHmmssZ"));
+            if (Headers == null) Headers = new NameValueCollection(StringComparer.InvariantCultureIgnoreCase);
+
+            if (Headers.Get("X-Amz-Date") == null)
+                Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString(Constants.AmazonTimestampFormatVerbose));
+
+            if (Headers.Get("Host") == null)
                 Headers.Add("Host", _S3Request.Hostname);
+
+            if (Headers.Get("Server") == null)
                 Headers.Add("Server", "S3Server");
-            }
+
+            if (Headers.Get("Date") != null) Headers.Remove("Date");
+            
+            Headers.Add("Date", DateTime.UtcNow.ToString(Constants.AmazonTimestampFormatVerbose));
         }
 
         #endregion

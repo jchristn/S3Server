@@ -211,14 +211,14 @@
             List all buckets.
             </summary>
         </member>
+        <member name="F:S3ServerLibrary.ServiceCallbacks.ServiceExists">
+            <summary>
+            Service exists.
+            </summary>
+        </member>
         <member name="M:S3ServerLibrary.ServiceCallbacks.#ctor">
             <summary>
             Instantiate.
-            </summary>
-        </member>
-        <member name="T:S3ServerLibrary.Common">
-            <summary>
-            Common static methods.
             </summary>
         </member>
         <member name="T:S3ServerLibrary.LoggingSettings">
@@ -302,6 +302,11 @@
             <param name="baseDomains">List of base domains, if any.</param>
             <param name="metadata">User metadata, provided by your application.</param>
             <param name="logger">Method to invoke to send log messages.</param>
+        </member>
+        <member name="M:S3ServerLibrary.S3Context.Dispose">
+            <summary>
+            Dispose.
+            </summary>
         </member>
         <member name="T:S3ServerLibrary.S3Exception">
             <summary>
@@ -406,7 +411,7 @@
             Instantiate.
             </summary>
         </member>
-        <member name="M:S3ServerLibrary.S3Object.#ctor(System.String,System.String,System.Boolean,System.DateTime,System.String,System.Int64,S3ServerLibrary.S3Objects.Owner,System.IO.Stream,System.String,System.String)">
+        <member name="M:S3ServerLibrary.S3Object.#ctor(System.String,System.String,System.Boolean,System.DateTime,System.String,System.Int64,S3ServerLibrary.S3Objects.Owner,System.IO.Stream,System.String,S3ServerLibrary.S3Objects.StorageClassEnum)">
             <summary>
             Instantiate.
             </summary>
@@ -421,7 +426,7 @@
             <param name="contentType">Content type.</param>
             <param name="storageClass">Storage class.</param>
         </member>
-        <member name="M:S3ServerLibrary.S3Object.#ctor(System.String,System.String,System.Boolean,System.DateTime,System.String,System.Int64,S3ServerLibrary.S3Objects.Owner,System.Byte[],System.String,System.String)">
+        <member name="M:S3ServerLibrary.S3Object.#ctor(System.String,System.String,System.Boolean,System.DateTime,System.String,System.Int64,S3ServerLibrary.S3Objects.Owner,System.Byte[],System.String,S3ServerLibrary.S3Objects.StorageClassEnum)">
             <summary>
             Instantiate.
             </summary>
@@ -436,7 +441,7 @@
             <param name="contentType">Content type.</param>
             <param name="storageClass">Storage class.</param>
         </member>
-        <member name="M:S3ServerLibrary.S3Object.#ctor(System.String,System.String,System.Boolean,System.DateTime,System.String,System.Int64,S3ServerLibrary.S3Objects.Owner,System.String,System.String,System.String)">
+        <member name="M:S3ServerLibrary.S3Object.#ctor(System.String,System.String,System.Boolean,System.DateTime,System.String,System.Int64,S3ServerLibrary.S3Objects.Owner,System.String,System.String,S3ServerLibrary.S3Objects.StorageClassEnum)">
             <summary>
             Instantiate.
             </summary>
@@ -1686,7 +1691,7 @@
             Instantiate.
             </summary>
         </member>
-        <member name="M:S3ServerLibrary.S3Objects.ObjectMetadata.#ctor(System.String,System.DateTime,System.String,System.Int64,S3ServerLibrary.S3Objects.Owner,System.String)">
+        <member name="M:S3ServerLibrary.S3Objects.ObjectMetadata.#ctor(System.String,System.DateTime,System.String,System.Int64,S3ServerLibrary.S3Objects.Owner,S3ServerLibrary.S3Objects.StorageClassEnum)">
             <summary>
             Instantiate.
             </summary>
@@ -1695,7 +1700,7 @@
             <param name="eTag">ETag.</param>
             <param name="size">Size.</param>
             <param name="owner">Owner.</param>
-            <param name="storageClass">Storage class.  Valid values are STANDARD, REDUCED_REDUNDANCY, GLACIER, STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING, DEEP_ARCHIVE, OUTPOSTS.</param>
+            <param name="storageClass">Storage class.</param>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.Owner">
             <summary>
@@ -1945,49 +1950,44 @@
             Storage classes used by S3. 
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.Standard">
+        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.STANDARD">
             <summary>
             Standard.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.ReducedRedundancy">
+        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.REDUCED_REDUNDANCY">
             <summary>
             Reduced redundancy.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.Glacier">
+        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.GLACIER">
             <summary>
             Glacier.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.StandardIa">
+        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.STANDARD_IA">
             <summary>
             Standard IA.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.OneZoneIa">
+        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.ONEZONE_IA">
             <summary>
             One zone IA.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.IntelligentTiering">
+        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.INTELLIGENT_TIERING">
             <summary>
             Intelligent tiering.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.DeepArchive">
+        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.DEEP_ARCHIVE">
             <summary>
             Deep archive.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.Outposts">
+        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.OUTPOSTS">
             <summary>
             Outposts.
-            </summary>
-        </member>
-        <member name="F:S3ServerLibrary.S3Objects.StorageClassEnum.None">
-            <summary>
-            None.
             </summary>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.Tag">
@@ -2330,6 +2330,11 @@
             Request ID.
             </summary>
         </member>
+        <member name="P:S3ServerLibrary.S3Request.TraceId">
+            <summary>
+            Trace ID.
+            </summary>
+        </member>
         <member name="P:S3ServerLibrary.S3Request.RequestStyle">
             <summary>
             Indicates if the request includes the bucket name in the hostname or not.
@@ -2588,6 +2593,11 @@
             List buckets owned by the user.
             </summary>
         </member>
+        <member name="F:S3ServerLibrary.S3RequestType.ServiceExists">
+            <summary>
+            Service exists.
+            </summary>
+        </member>
         <member name="F:S3ServerLibrary.S3RequestType.BucketDelete">
             <summary>
             Delete a bucket.
@@ -2788,7 +2798,7 @@
             The length of the data in the response stream.  This value must be set before assigning the stream.
             </summary>
         </member>
-        <member name="P:S3ServerLibrary.S3Response.Chunked">
+        <member name="P:S3ServerLibrary.S3Response.ChunkedTransfer">
             <summary>
             Enable or disable chunked transfer-encoding.
             By default this parameter is set to the value of Chunked in the S3Request object.
@@ -2822,16 +2832,6 @@
             Instantiate the object without supplying a stream.  Useful for HEAD responses.
             </summary>
             <param name="ctx">S3 context.</param>
-        </member>
-        <member name="M:S3ServerLibrary.S3Response.#ctor(S3ServerLibrary.S3Context,System.Int32,System.String,System.Collections.Generic.Dictionary{System.String,System.String},System.Int64)">
-            <summary>
-            Instantiate the object without supplying a stream.  Useful for HEAD responses.
-            </summary>
-            <param name="ctx">S3 context.</param>
-            <param name="statusCode">HTTP status code.</param>
-            <param name="contentType">Content-type.</param>
-            <param name="headers">HTTP headers.</param> 
-            <param name="contentLength">Content length.</param>
         </member>
         <member name="M:S3ServerLibrary.S3Response.Send">
             <summary>
@@ -2965,17 +2965,6 @@
             <param name="hostname">The hostname on which to listen for HTTP requests.  If you listen on a wildcard such as '*', '+', or '0.0.0.0', you must run with elevated/administrative privileges.</param>
             <param name="port">The TCP port number.</param>
             <param name="ssl">Enable or disable SSL.</param> 
-            <param name="defaultRequestHandler">Default request handler used when no other callbacks can be found.</param>
-        </member>
-        <member name="M:S3ServerLibrary.S3Server.#ctor(System.String,System.Int32,System.Boolean,System.Func{S3ServerLibrary.S3Context,System.Threading.Tasks.Task{System.Boolean}},System.Func{S3ServerLibrary.S3Context,System.Threading.Tasks.Task})">
-            <summary>
-            Instantiate.
-            Using this constructor results in (if not null) a pre-request handler (your own API handler), and (if not null) a custom default request handler (when an S3 API cannot be matched).
-            </summary>
-            <param name="hostname">The hostname on which to listen for HTTP requests.  If you listen on a wildcard such as '*', '+', or '0.0.0.0', you must run with elevated/administrative privileges.</param>
-            <param name="port">The TCP port number.</param>
-            <param name="ssl">Enable or disable SSL.</param>
-            <param name="preRequestHandler">Request handler to call prior to evaluating for S3 requests, can be null.</param>
             <param name="defaultRequestHandler">Default request handler used when no other callbacks can be found.</param>
         </member>
         <member name="M:S3ServerLibrary.S3Server.Dispose">

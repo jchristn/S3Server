@@ -10,10 +10,19 @@ Simple S3 server-side interface, produced using Amazon's public documentation.  
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v5.1.x
+## New in v5.2.x
 
+- Minor breaking changes
 - Dependency updates and bugfixes
-- Added ```BucketDeleteAcl``` API
+- Strong naming
+- Add HEAD service API (```Service.ServiceExists```)
+- ```StorageClassEnum``` replaces the previous string value
+- Remove unnecessary static methods
+- Disable connection keepalive (via dependency updates)
+- Bugfixes in test app
+- Fix timestamp formats (impacting ```ObjectExists``` and ```ObjectRead```)
+- No longer using GUID strings for request ID and trace ID
+- ETag now encapsulated in quotes
 
 ## Examples
 
@@ -59,7 +68,7 @@ server.Start();
 static async Task DefaultRequestHandler(S3Context ctx)
 {
   ctx.Response.StatusCode = 400;
-  ctx.Response.ContentType = "text/plain";
+  ctx.Response.ContentType = Constants.ContentTypeText;
   ctx.Response.Send("Bad request");
 }
 
@@ -119,6 +128,13 @@ S3Server parses incoming HTTP requests, extracting key pieces of information to 
 Refer to https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html for the S3 API documentation used to create this project.
 
 The following callbacks are supported:
+
+### Service Callbacks
+
+| Callback Name            | Description                         | Method | URL                  |
+|--------------------------|-------------------------------------|--------|----------------------|
+| Service.ListBuckets      | List buckets                        | GET    | /                    |
+| Service.ServiceExists    | Retrieve region for the service     | HEAD   | /                    |
 
 ### Bucket Callbacks
 

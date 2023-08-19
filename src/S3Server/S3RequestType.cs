@@ -24,6 +24,11 @@ namespace S3ServerLibrary
         [EnumMember(Value = "ListBuckets")]
         ListBuckets,
         /// <summary>
+        /// Service exists.
+        /// </summary>
+        [EnumMember(Value = "ServiceExists")]
+        ServiceExists,
+        /// <summary>
         /// Delete a bucket.
         /// </summary>
         [EnumMember(Value = "BucketDelete")]

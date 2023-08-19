@@ -69,7 +69,7 @@ namespace S3ServerLibrary.S3Objects
         /// Valid values are STANDARD, REDUCED_REDUNDANCY, GLACIER, STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING, DEEP_ARCHIVE, OUTPOSTS.
         /// </summary>
         [XmlElement(ElementName = "StorageClass")]
-        public StorageClassEnum StorageClass { get; set; } = StorageClassEnum.Standard;
+        public StorageClassEnum StorageClass { get; set; } = StorageClassEnum.STANDARD;
 
         /// <summary>
         /// Object owner.
@@ -131,7 +131,7 @@ namespace S3ServerLibrary.S3Objects
         /// <param name="size">Size.</param>
         /// <param name="owner">Owner.</param>
         /// <param name="storageClass">Storage class.  Valid values are STANDARD, REDUCED_REDUNDANCY, GLACIER, STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING, DEEP_ARCHIVE, OUTPOSTS.</param>
-        public ObjectVersion(string key, string versionId, bool isLatest, DateTime lastModified, string eTag, long? size, Owner owner, StorageClassEnum storageClass = StorageClassEnum.Standard)
+        public ObjectVersion(string key, string versionId, bool isLatest, DateTime lastModified, string eTag, long? size, Owner owner, StorageClassEnum storageClass = StorageClassEnum.STANDARD)
         {
             base.Key = key;
             base.VersionId = versionId;
@@ -175,7 +175,7 @@ namespace S3ServerLibrary.S3Objects
             base.LastModified = lastModified;
             base.ETag = null;
             base.Size = null;
-            base.StorageClass = StorageClassEnum.None;
+            base.StorageClass = StorageClassEnum.STANDARD;
             base.Owner = owner;
         }
     }

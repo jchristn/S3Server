@@ -11,7 +11,7 @@ namespace S3ServerLibrary
     /// <summary>
     /// S3 context.
     /// </summary>
-    public class S3Context
+    public class S3Context : IDisposable
     {
         #region Public-Members
 
@@ -91,10 +91,28 @@ namespace S3ServerLibrary
 
         #region Public-Methods
 
+        /// <summary>
+        /// Dispose.
+        /// </summary>
+        public void Dispose()
+        {
+            if (Http.Request.Data != null)
+            {
+                Http.Request.Data.Dispose();
+                Http.Request.Data.Close();
+            }
+
+            if (Http.Response.Data != null)
+            {
+                Http.Response.Data.Dispose();
+                Http.Response.Data.Close();
+            }
+        }
+
         #endregion
 
         #region Private-Methods
-         
+
         #endregion
     }
 }

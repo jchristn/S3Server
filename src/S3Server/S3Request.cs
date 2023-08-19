@@ -9,8 +9,10 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using PrettyId;
 using WatsonWebserver;
 
 namespace S3ServerLibrary
@@ -30,7 +32,12 @@ namespace S3ServerLibrary
         /// <summary>
         /// Request ID.
         /// </summary>
-        public string RequestId { get; set; } = Guid.NewGuid().ToString();
+        public string RequestId { get; set; } = IdGenerator.Generate(32);
+
+        /// <summary>
+        /// Trace ID.
+        /// </summary>
+        public string TraceId { get; set; } = IdGenerator.Generate(32);
 
         /// <summary>
         /// Indicates if the request includes the bucket name in the hostname or not.
@@ -420,7 +427,6 @@ namespace S3ServerLibrary
         private List<string> _BaseDomains = new List<string>();
         private List<string> _SignedHeaders = new List<string>();
 
-        private string _AmazonTimestampFormat = "yyyyMMddTHHmmssZ"; 
         private Dictionary<object, object> _UserMetadata = new Dictionary<object, object>();
 
         private int _MaxKeys = 1000;
@@ -542,7 +548,6 @@ namespace S3ServerLibrary
 
         #region Private-Methods
 
-
         private void ParseHttpContext()
         {
             if (_HttpRequest == null) throw new InvalidOperationException("HTTP context not supplied in the S3 request object.");
@@ -637,8 +642,13 @@ namespace S3ServerLibrary
                 if (HeaderExists("date"))
                 {
                     Date = RetrieveHeaderValue("date");
+                    DateTime dt;
 
-                    if (DateTime.TryParseExact(Date, _AmazonTimestampFormat, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out DateTime dt))
+                    if (DateTime.TryParseExact(Date, Constants.AmazonTimestampFormatVerbose, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out dt))
+                    {
+                        TimestampUtc = dt;
+                    }
+                    else if (DateTime.TryParseExact(Date, Constants.AmazonTimestampFormatCompact, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out dt))
                     {
                         TimestampUtc = dt;
                     }
@@ -647,8 +657,13 @@ namespace S3ServerLibrary
                 if (HeaderExists("x-amz-date"))
                 {
                     Date = RetrieveHeaderValue("x-amz-date");
+                    DateTime dt;
 
-                    if (DateTime.TryParseExact(Date, _AmazonTimestampFormat, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out DateTime dt))
+                    if (DateTime.TryParseExact(Date, Constants.AmazonTimestampFormatVerbose, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out dt))
+                    {
+                        TimestampUtc = dt;
+                    }
+                    else if (DateTime.TryParseExact(Date, Constants.AmazonTimestampFormatCompact, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out dt))
                     {
                         TimestampUtc = dt;
                     }
@@ -833,7 +848,7 @@ namespace S3ServerLibrary
 
             _Logger?.Invoke(_Header + "parsing URL " + _HttpRequest.Url.Full);
 
-            if (Common.IsIpAddress(Hostname))
+            if (IsIpAddress(Hostname))
             {
                 RequestStyle = S3RequestStyle.PathStyle;
                 _Logger?.Invoke(_Header + "supplied hostname is an IP address");
@@ -862,7 +877,7 @@ namespace S3ServerLibrary
                         string tempBaseDomain = BaseDomain;
                         while (tempBaseDomain.StartsWith(".")) tempBaseDomain = tempBaseDomain.Substring(1);
 
-                        string temp = Common.ReplaceLastOccurrence(Hostname, tempBaseDomain, "");
+                        string temp = ReplaceLastOccurrence(Hostname, tempBaseDomain, "");
                         while (temp.EndsWith(".")) temp = temp.Substring(0, (temp.Length - 1));
 
                         Bucket = temp;
@@ -925,8 +940,10 @@ namespace S3ServerLibrary
                 case HttpMethod.HEAD:
                     #region HEAD
 
+                    if (String.IsNullOrEmpty(Bucket) && String.IsNullOrEmpty(Key))
+                        RequestType = S3RequestType.ServiceExists;
                     if (!String.IsNullOrEmpty(Bucket) && String.IsNullOrEmpty(Key))
-                        RequestType = RequestType = S3RequestType.BucketExists;
+                        RequestType = S3RequestType.BucketExists;
                     else if (!String.IsNullOrEmpty(Bucket) && !String.IsNullOrEmpty(Key))
                         RequestType = S3RequestType.ObjectExists;
                     break;
@@ -1072,6 +1089,46 @@ namespace S3ServerLibrary
             }
 
             return null;
+        }
+
+        private static bool IsIpv4Address(string val)
+        {
+            if (String.IsNullOrEmpty(val)) throw new ArgumentNullException(nameof(val));
+
+            string ipv4Pattern = @"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$";
+            Match match = Regex.Match(val, ipv4Pattern);
+            if (match.Success) return true; // IPv4 regular expression match
+
+            IPAddress ip = null;
+            return IPAddress.TryParse(val, out ip);
+        }
+
+        private static bool IsIpv6Address(string val)
+        {
+            if (String.IsNullOrEmpty(val)) throw new ArgumentNullException(nameof(val));
+
+            string ipv6Pattern = @"(?:^|(?<=\s))(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))(?=\s|$)";
+            Match match = Regex.Match(val, ipv6Pattern);
+            if (match.Success) return true; // IPv6 regular expression match
+
+            IPAddress ip = null;
+            return IPAddress.TryParse(val, out ip);
+        }
+
+        private static bool IsIpAddress(string val)
+        {
+            return IsIpv4Address(val) || IsIpv6Address(val);
+        }
+
+        private static string ReplaceLastOccurrence(string src, string find, string replace)
+        {
+            int place = src.LastIndexOf(find);
+
+            if (place == -1)
+                return src;
+
+            string result = src.Remove(place, find.Length).Insert(place, replace);
+            return result;
         }
 
         #endregion

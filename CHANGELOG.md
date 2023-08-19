@@ -2,12 +2,26 @@
 
 ## Current Version
 
+v5.2.x
+
+- Minor breaking changes
+- Dependency updates and bugfixes
+- Strong naming
+- Add HEAD service API (```Service.ServiceExists```)
+- ```StorageClassEnum``` replaces the previous string value
+- Remove unnecessary static methods
+- Disable connection keepalive (via dependency updates)
+- Bugfixes in test app
+- Fix timestamp formats (impacting ```ObjectExists``` and ```ObjectRead```)
+- No longer using GUID strings for request ID and trace ID
+- ETag now encapsulated in quotes
+
+## Previous Versions
+
 v5.1.x
 
 - Dependency updates and bugfixes
 - Added ```BucketDeleteAcl``` API
-
-## Previous Versions
 
 v5.0.x
 

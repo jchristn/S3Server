@@ -19,6 +19,11 @@ namespace S3ServerLibrary
         /// </summary>
         public Func<S3Context, Task<ListAllMyBucketsResult>> ListBuckets = null;
 
+        /// <summary>
+        /// Service exists.
+        /// </summary>
+        public Func<S3Context, Task<string>> ServiceExists = null;
+
         #endregion
 
         #region Private-Members

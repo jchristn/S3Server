@@ -15,18 +15,15 @@ using WatsonWebserver;
 namespace Test.Server
 {
     /*
-     * 
-     * 
      * Note: This must be run as administrator if the S3Server constructor uses '*', '+', or '0.0.0.0' as the listener hostname.
      *       Administrator not required if using 'localhost'.
      *       S3 clients will report failed operation if interacting with this node; it returns a simple 200 to each request.
-     * 
-     * 
-     * 
      */
 
-    class Program
+    public class Program
     {
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+
         static string _Hostname = "localhost";
         static int _Port = 8000;
 
@@ -36,7 +33,6 @@ namespace Test.Server
 
         static string _Location = "us-west-1";
         static ObjectMetadata _ObjectMetadata = new ObjectMetadata("hello.txt", DateTime.Now, "etag", 13, new Owner("admin", "Administrator"));
-        static S3Object _S3Object = new S3Object("hello.txt", "1", true, DateTime.Now, "etag", 13, new Owner("admin", "Administrator"), "Hello, world!", "text/plain");
         static Owner _Owner = new Owner("admin", "Administrator");
         static Grantee _Grantee = new Grantee("admin", "Administrator", null, "CanonicalUser", "admin@admin.com");
         static Tag _Tag = new Tag("key", "value");
@@ -75,6 +71,7 @@ namespace Test.Server
             _Server.PostRequestHandler = PostRequestHandler;
 
             _Server.Service.ListBuckets = ListBuckets;
+            _Server.Service.ServiceExists = ServiceExists;
 
             _Server.Bucket.Delete = BucketDelete;
             _Server.Bucket.DeleteTagging = BucketDeleteTags;
@@ -148,9 +145,7 @@ namespace Test.Server
 
         #region Pre-Post-Default
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<bool> PreRequestHandler(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             // Console.WriteLine(SerializationHelper.SerializeJson(ctx, true));
             return false;
@@ -162,9 +157,7 @@ namespace Test.Server
             await ctx.Response.Send(ErrorCode.InvalidRequest);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task PostRequestHandler(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Logger("Request complete: " + ctx.Http.Request.Method.ToString() + " " + ctx.Http.Request.Url.RawWithQuery + ": " + ctx.Response.StatusCode);
         }
@@ -173,9 +166,7 @@ namespace Test.Server
 
         #region Service-APIs
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<ListAllMyBucketsResult> ListBuckets(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("ListBuckets");
 
@@ -191,34 +182,31 @@ namespace Test.Server
             return result;
         }
 
+        private static async Task<string> ServiceExists(S3Context context)
+        {
+            return "us-west-1";
+        }
+
         #endregion
 
         #region Bucket-APIs
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task BucketDelete(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketDelete: " + ctx.Request.Bucket);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task BucketDeleteTags(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketDeleteTags: " + ctx.Request.Bucket);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task BucketDeleteWebsite(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketDeleteWebsite: " + ctx.Request.Bucket);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<bool> BucketExists(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketExists: " + ctx.Request.Bucket);
 
@@ -229,9 +217,7 @@ namespace Test.Server
             else return false;
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<ListBucketResult> BucketRead(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketRead: " + ctx.Request.Bucket);
 
@@ -256,9 +242,7 @@ namespace Test.Server
             return result;
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<AccessControlPolicy> BucketReadAcl(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketReadAcl: " + ctx.Request.Bucket);
 
@@ -275,18 +259,14 @@ namespace Test.Server
             return policy;
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<LocationConstraint> BucketReadLocation(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketReadLocation: " + ctx.Request.Bucket);
 
             return new LocationConstraint(_Location);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<BucketLoggingStatus> BucketReadLogging(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketReadLogging: " + ctx.Request.Bucket);
 
@@ -294,9 +274,7 @@ namespace Test.Server
             return status;
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<Tagging> BucketReadTags(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketReadTags: " + ctx.Request.Bucket);
 
@@ -305,9 +283,7 @@ namespace Test.Server
             return tagging;
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<VersioningConfiguration> BucketReadVersioning(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketReadVersioning: " + ctx.Request.Bucket);
 
@@ -315,9 +291,7 @@ namespace Test.Server
             return vc;
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<ListVersionsResult> BucketReadVersions(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketReadVersions: " + ctx.Request.Bucket);
 
@@ -349,9 +323,7 @@ namespace Test.Server
             return lvr;
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<WebsiteConfiguration> BucketReadWebsite(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketReadWebsite: " + ctx.Request.Bucket);
 
@@ -368,48 +340,36 @@ namespace Test.Server
             return website;
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task BucketWriteVersioning(S3Context ctx, VersioningConfiguration ver)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketWriteVersioning: " + ctx.Request.Bucket);
             Console.WriteLine(ctx.Request.DataAsString + Environment.NewLine);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task BucketWrite(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketWrite: " + ctx.Request.Bucket);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task BucketWriteAcl(S3Context ctx, AccessControlPolicy acp)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketWriteAcl: " + ctx.Request.Bucket);
             Console.WriteLine(ctx.Request.DataAsString + Environment.NewLine);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task BucketWriteLogging(S3Context ctx, BucketLoggingStatus logging)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketWriteLogging: " + ctx.Request.Bucket);
             Console.WriteLine(ctx.Request.DataAsString + Environment.NewLine);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task BucketWriteWebsite(S3Context ctx, WebsiteConfiguration website)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketWriteWebsite: " + ctx.Request.Bucket);
             Console.WriteLine(ctx.Request.DataAsString + Environment.NewLine);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task BucketWriteTags(S3Context ctx, Tagging tags)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("BucketWriteTags: " + ctx.Request.Bucket);
             Console.WriteLine(ctx.Request.DataAsString + Environment.NewLine);
@@ -419,16 +379,12 @@ namespace Test.Server
 
         #region Object-APIs
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task ObjectDelete(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("ObjectDelete: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<DeleteResult> ObjectDeleteMultiple(S3Context ctx, DeleteMultiple del)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("ObjectDelete: " + ctx.Request.Bucket);
             Console.WriteLine(ctx.Request.DataAsString + Environment.NewLine);
@@ -443,16 +399,12 @@ namespace Test.Server
             return result;
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task ObjectDeleteTags(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("ObjectDeleteTags: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<ObjectMetadata> ObjectExists(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("ObjectExists: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
 
@@ -463,18 +415,14 @@ namespace Test.Server
             else return null;
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<S3Object> ObjectRead(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("ObjectRead: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
 
-            return _S3Object;
+            return new S3Object("hello.txt", "1", true, DateTime.Now, "etag", 13, new Owner("admin", "Administrator"), "Hello, world!", "text/plain");
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<AccessControlPolicy> ObjectReadAcl(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("ObjectReadAcl: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
 
@@ -491,9 +439,7 @@ namespace Test.Server
             return policy;
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<LegalHold> ObjectReadLegalHold(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("ObjectReadLegalHold: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
 
@@ -502,23 +448,21 @@ namespace Test.Server
             return legalHold;
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<S3Object> ObjectReadRange(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("ObjectReadRange: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
 
-            string data = _S3Object.DataString;
+            S3Object s3obj = new S3Object("hello.txt", "1", true, DateTime.Now, "etag", 13, new Owner("admin", "Administrator"), "Hello, world!", "text/plain");
+
+            string data = s3obj.DataString;
             data = data.Substring((int)ctx.Request.RangeStart, (int)((int)ctx.Request.RangeEnd - (int)ctx.Request.RangeStart));
             int len = data.Length;
-            _S3Object.DataString = data;
-            _S3Object.Size = len;
-            return _S3Object;
+            s3obj.DataString = data;
+            s3obj.Size = len;
+            return s3obj;
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<Retention> ObjectReadRetention(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("ObjectReadRetention: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
 
@@ -527,9 +471,7 @@ namespace Test.Server
             return ret;
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task<Tagging> ObjectReadTags(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("ObjectReadTags: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
 
@@ -538,9 +480,7 @@ namespace Test.Server
             return tagging;
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task ObjectWrite(S3Context ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("ObjectWrite      : " + ctx.Request.Bucket + "/" + ctx.Request.Key);
             Console.WriteLine("Content type     : " + ctx.Request.ContentType);
@@ -572,33 +512,25 @@ namespace Test.Server
             }
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task ObjectWriteAcl(S3Context ctx, AccessControlPolicy acp)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("ObjectWriteAcl: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
             Console.WriteLine(ctx.Request.DataAsString + Environment.NewLine);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task ObjectWriteLegalHold(S3Context ctx, LegalHold legalHold)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("ObjectWriteLegalHold: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
             Console.WriteLine(ctx.Request.DataAsString + Environment.NewLine);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task ObjectWriteRetention(S3Context ctx, Retention retention)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("ObjectWriteRetention: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
             Console.WriteLine(ctx.Request.DataAsString + Environment.NewLine);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         static async Task ObjectWriteTags(S3Context ctx, Tagging tags)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Console.WriteLine("ObjectWriteTags: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
             Console.WriteLine(ctx.Request.DataAsString + Environment.NewLine);
@@ -616,5 +548,7 @@ namespace Test.Server
         }
 
         #endregion
+
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     }
 }
