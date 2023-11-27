@@ -1,18 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Runtime.Serialization;
-
-namespace S3ServerLibrary
+﻿namespace S3ServerLibrary
 {
+    using System.Runtime.Serialization;
+    using System.Text.Json.Serialization;
+
     /// <summary>
     /// The type of S3 request, identified by parsing the request.
     /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum S3RequestType
     {
+        #region Service
+
         /// <summary>
         /// Unknown request type.
         /// </summary>
@@ -28,6 +26,11 @@ namespace S3ServerLibrary
         /// </summary>
         [EnumMember(Value = "ServiceExists")]
         ServiceExists,
+
+        #endregion
+
+        #region Bucket
+
         /// <summary>
         /// Delete a bucket.
         /// </summary>
@@ -124,6 +127,31 @@ namespace S3ServerLibrary
         [EnumMember(Value = "BucketWriteWebsite")]
         BucketWriteWebsite,
         /// <summary>
+        /// Retrieve a list of multipart uploads.
+        /// </summary>
+        [EnumMember(Value = "BucketReadMultipartUploads")]
+        BucketReadMultipartUploads,
+
+        #endregion
+
+        #region Object
+
+        /// <summary>
+        /// Abort an object multipart upload.
+        /// </summary>
+        [EnumMember(Value = "ObjectAbortMultipartUpload")]
+        ObjectAbortMultipartUpload,
+        /// <summary>
+        /// Complete an object multipart upload.
+        /// </summary>
+        [EnumMember(Value = "ObjectCompleteMultipartUpload")]
+        ObjectCompleteMultipartUpload,
+        /// <summary>
+        /// Create an object multipart upload.
+        /// </summary>
+        [EnumMember(Value = "ObjectCreateMultipartUpload")]
+        ObjectCreateMultipartUpload,
+        /// <summary>
         /// Delete an object.
         /// </summary>
         [EnumMember(Value = "ObjectDelete")]
@@ -164,6 +192,11 @@ namespace S3ServerLibrary
         [EnumMember(Value = "ObjectReadLegalHold")]
         ObjectReadLegalHold,
         /// <summary>
+        /// Read the parts associated with a multipart upload.
+        /// </summary>
+        [EnumMember(Value = "ObjectReadParts")]
+        ObjectReadParts,
+        /// <summary>
         /// Read a specific range of bytes from an object.
         /// </summary>
         [EnumMember(Value = "ObjectReadRange")]
@@ -178,6 +211,16 @@ namespace S3ServerLibrary
         /// </summary>
         [EnumMember(Value = "ObjectReadTags")]
         ObjectReadTags,
+        /// <summary>
+        /// Select object content.
+        /// </summary>
+        [EnumMember(Value = "ObjectSelectContent")]
+        ObjectSelectContent,
+        /// <summary>
+        /// Upload part.
+        /// </summary>
+        [EnumMember(Value = "ObjectUploadPart")]
+        ObjectUploadPart,
         /// <summary>
         /// Create an object.
         /// </summary>
@@ -202,6 +245,8 @@ namespace S3ServerLibrary
         /// Write tags to an object.
         /// </summary>
         [EnumMember(Value = "ObjectWriteTags")]
-        ObjectWriteTags
+        ObjectWriteTags,
+
+        #endregion
     }
 }

@@ -2,15 +2,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 using GetSomeInput;
-using Newtonsoft.Json;
 using S3ServerLibrary;
 using S3ServerLibrary.S3Objects;
 using WatsonWebserver;
+using WatsonWebserver.Core;
 
 namespace Test.Server
 {
@@ -20,22 +21,26 @@ namespace Test.Server
      *       S3 clients will report failed operation if interacting with this node; it returns a simple 200 to each request.
      */
 
-    public class Program
+    public static class Program
     {
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
-        static string _Hostname = "localhost";
-        static int _Port = 8000;
+        static S3ServerSettings _Settings = new S3ServerSettings();
 
         static S3Server _Server = null;
         static bool _RunForever = true;
         static bool _ForcePathStyle = true;
+        static bool _ValidateSignatures = true;
+        static bool _DebugSignatures = true;
 
         static string _Location = "us-west-1";
         static ObjectMetadata _ObjectMetadata = new ObjectMetadata("hello.txt", DateTime.Now, "etag", 13, new Owner("admin", "Administrator"));
         static Owner _Owner = new Owner("admin", "Administrator");
         static Grantee _Grantee = new Grantee("admin", "Administrator", null, "CanonicalUser", "admin@admin.com");
         static Tag _Tag = new Tag("key", "value");
+
+        static string _AccessKey = "AKIAIOSFODNN7EXAMPLE";
+        static string _SecretKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
 
         static bool _RandomizeHeadResponses = false;
         static Random _Random = new Random(Int32.MaxValue);
@@ -47,18 +52,28 @@ namespace Test.Server
             string baseDomain = Console.ReadLine();
             */
 
-            _Server = new S3Server(_Hostname, _Port, false, DefaultRequestHandler);
-            _Server.Logging.Exceptions = true;
-            _Server.Logging.HttpRequests = false;
-            _Server.Logging.S3Requests = false;
-            _Server.Logger = Logger;
+            Console.WriteLine("");
+            Console.WriteLine("This program must be run as administrator");
+            Console.WriteLine("");
+
+            _Settings.Webserver.Hostname = "*";
+            _Settings.Webserver.Port = 8000;
+            _Settings.Webserver.Ssl.Enable = false;
+
+            _Settings.Logging.Exceptions = true;
+            _Settings.Logging.HttpRequests = false;
+            _Settings.Logging.S3Requests = false;
+            _Settings.Logger = Logger;
+
+            _Settings.DefaultRequestHandler = DefaultRequestHandler;
+            _Settings.PreRequestHandler = PreRequestHandler;
+            _Settings.PostRequestHandler = PostRequestHandler;
+
+            _Server = new S3Server(_Settings);
 
             if (!_ForcePathStyle)
             {
-                _Server.BaseDomains.Add(".localhost");
-                _Server.BaseDomains.Add(".localhost.com");
-                _Server.BaseDomains.Add(".localhost1.com");
-                _Server.BaseDomains.Add(".localhost2.com");
+                _Server.Service.FindMatchingBaseDomain = FindMatchingBaseDomain;
                 Console.WriteLine("Server configured to use virtual hosting URLs; ensure client is configured accordingly");
             }
             else
@@ -66,13 +81,18 @@ namespace Test.Server
                 Console.WriteLine("Server configured to use path-style URLs; ensure client is configured accordingly");
             }
 
-            _Server.PreRequestHandler = PreRequestHandler;
-            _Server.DefaultRequestHandler = DefaultRequestHandler;
-            _Server.PostRequestHandler = PostRequestHandler;
+            if (_ValidateSignatures)
+            {
+                _Server.Service.GetSecretKey = GetSecretKey;
+                _Server.Settings.EnableSignatures = true;
+
+                if (_DebugSignatures)
+                    _Server.Settings.Logging.SignatureV4Validation = true;
+            }
 
             _Server.Service.ListBuckets = ListBuckets;
             _Server.Service.ServiceExists = ServiceExists;
-
+            
             _Server.Bucket.Delete = BucketDelete;
             _Server.Bucket.DeleteTagging = BucketDeleteTags;
             _Server.Bucket.DeleteWebsite = BucketDeleteWebsite;
@@ -111,7 +131,7 @@ namespace Test.Server
             _Server.Object.WriteTagging = ObjectWriteTags;
 
             _Server.Start();
-            Console.WriteLine("Listening on http://" + _Hostname + ":" + _Port);
+            Console.WriteLine("Listening on http://" + _Settings.Webserver.Hostname + ":" + _Settings.Webserver.Port);
 
             while (_RunForever)
             {
@@ -131,6 +151,11 @@ namespace Test.Server
                         break;
                 }
             }
+        }
+
+        private static string GetSecretKey(S3Context context)
+        {
+            return _SecretKey;
         }
 
         static void Menu()
@@ -166,7 +191,7 @@ namespace Test.Server
 
         #region Service-APIs
 
-        static async Task<ListAllMyBucketsResult> ListBuckets(S3Context ctx)
+        private static async Task<ListAllMyBucketsResult> ListBuckets(S3Context ctx)
         {
             Console.WriteLine("ListBuckets");
 
@@ -185,6 +210,29 @@ namespace Test.Server
         private static async Task<string> ServiceExists(S3Context context)
         {
             return "us-west-1";
+        }
+
+        private static string FindMatchingBaseDomain(string hostname)
+        {
+            if (String.IsNullOrEmpty(hostname)) throw new ArgumentNullException(nameof(hostname));
+
+            List<string> matches = new List<string>();
+
+            if (hostname.Equals("s3.local.gd"))
+            {
+                return "s3.local.gd";
+            }
+            else
+            {
+                if (hostname.EndsWith(".s3.local.gd")) matches.Add("s3.local.gd");
+            }
+
+            if (matches.Count > 0)
+            {
+                return matches.Aggregate("", (max, cur) => max.Length > cur.Length ? max : cur);
+            }
+
+            throw new KeyNotFoundException("A base domain could not be found for hostname '" + hostname + "'.");
         }
 
         #endregion
@@ -297,12 +345,12 @@ namespace Test.Server
 
             List<ObjectVersion> versions = new List<ObjectVersion>()
             {
-                new ObjectVersion("version1.key", "1", true, DateTime.Now.ToUniversalTime(), "etag", 500, _Owner)
+                new ObjectVersion("version1.key", "1", true, DateTime.UtcNow, "etag", 500, _Owner)
             };
 
             List<DeleteMarker> deleteMarkers = new List<DeleteMarker>()
             {
-                new DeleteMarker("deleted1.key", "2", true, DateTime.Now.ToUniversalTime(), _Owner)
+                new DeleteMarker("deleted1.key", "2", true, DateTime.UtcNow, _Owner)
             };
 
             List<VersionedEntity> entities = new List<VersionedEntity>();
@@ -497,9 +545,9 @@ namespace Test.Server
 
                     if (chunk.Length > 0)
                     {
-                        Console.WriteLine(chunk.Length + "/" + chunk.IsFinalChunk + ": " + Encoding.UTF8.GetString(chunk.Data));
+                        Console.WriteLine(chunk.Length + "/" + chunk.IsFinal + ": " + Encoding.UTF8.GetString(chunk.Data));
                     }
-                    if (chunk.IsFinalChunk)
+                    if (chunk.IsFinal)
                     {
                         Console.WriteLine("Final chunk encountered");
                         break;

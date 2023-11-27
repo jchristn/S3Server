@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="RestWrapper" Version="3.0.17" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\S3Server\S3Server.csproj" />
+	</ItemGroup>
+
+</Project>

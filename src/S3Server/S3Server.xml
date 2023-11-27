@@ -9,98 +9,103 @@
             Callback methods for bucket operations.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.Delete">
+        <member name="P:S3ServerLibrary.BucketCallbacks.Delete">
             <summary>
             Delete a bucket.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.DeleteAcl">
+        <member name="P:S3ServerLibrary.BucketCallbacks.DeleteAcl">
             <summary>
             Delete a bucket's ACL.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.DeleteTagging">
+        <member name="P:S3ServerLibrary.BucketCallbacks.DeleteTagging">
             <summary>
             Delete a bucket's tags.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.DeleteWebsite">
+        <member name="P:S3ServerLibrary.BucketCallbacks.DeleteWebsite">
             <summary>
             Delete a bucket's website configuration.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.Exists">
+        <member name="P:S3ServerLibrary.BucketCallbacks.Exists">
             <summary>
             Check for the existence of a bucket. 
             Return true if it exists, false if it doesn't.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.Read">
+        <member name="P:S3ServerLibrary.BucketCallbacks.Read">
             <summary>
             Enumerate a bucket.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.ReadAcl">
+        <member name="P:S3ServerLibrary.BucketCallbacks.ReadAcl">
             <summary>
             Read a bucket's access control policy.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.ReadLogging">
+        <member name="P:S3ServerLibrary.BucketCallbacks.ReadLogging">
             <summary>
             Retrieve logging configuration for this bucket.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.ReadLocation">
+        <member name="P:S3ServerLibrary.BucketCallbacks.ReadLocation">
             <summary>
             Retrieve location (region) constraint from the server for this bucket.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.ReadTagging">
+        <member name="P:S3ServerLibrary.BucketCallbacks.ReadMultipartUploads">
+            <summary>
+            Retrieve multipart uploads.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.BucketCallbacks.ReadTagging">
             <summary>
             Read a bucket's tags.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.ReadVersions">
+        <member name="P:S3ServerLibrary.BucketCallbacks.ReadVersions">
             <summary>
             Get a list of object versions in the bucket.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.ReadVersioning">
+        <member name="P:S3ServerLibrary.BucketCallbacks.ReadVersioning">
             <summary>
             Get a bucket's versioning policy. 
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.ReadWebsite">
+        <member name="P:S3ServerLibrary.BucketCallbacks.ReadWebsite">
             <summary>
             Get a bucket's website configuration.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.Write">
+        <member name="P:S3ServerLibrary.BucketCallbacks.Write">
             <summary>
             Write a bucket.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.WriteAcl">
+        <member name="P:S3ServerLibrary.BucketCallbacks.WriteAcl">
             <summary>
             Write an ACL to a bucket, deleting the previous ACL.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.WriteLogging">
+        <member name="P:S3ServerLibrary.BucketCallbacks.WriteLogging">
             <summary>
             Write logging configuration to a bucket, deleting the previous configuration.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.WriteTagging">
+        <member name="P:S3ServerLibrary.BucketCallbacks.WriteTagging">
             <summary>
             Write tags to a bucket, deleting the previous tags.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.WriteVersioning">
+        <member name="P:S3ServerLibrary.BucketCallbacks.WriteVersioning">
             <summary>
             Set a bucket's versioning policy.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.BucketCallbacks.WriteWebsite">
+        <member name="P:S3ServerLibrary.BucketCallbacks.WriteWebsite">
             <summary>
             Set a bucket's website configuration.
             </summary>
@@ -115,85 +120,115 @@
             Callback methods for object operations.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.Exists">
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.AbortMultipartUpload">
+            <summary>
+            Abort a multipart upload.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.CompleteMultipartUpload">
+            <summary>
+            Complete multipart upload.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.CreateMultipartUpload">
+            <summary>
+            Create multipart upload.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.Delete">
+            <summary>
+            Delete an object.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.DeleteAcl">
+            <summary>
+            Delete an object's ACL.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.DeleteTagging">
+            <summary>
+            Delete an object's tags.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.DeleteMultiple">
+            <summary>
+            Delete multiple objects.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.Exists">
             <summary>
             Check for the existence of an object.
             Return the ObjectMetadata if it exists, null if it doesn't.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.Write">
-            <summary>
-            Write an object.
-            </summary>
-        </member>
-        <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.WriteAcl">
-            <summary>
-            Write an object's access control list, replacing the previous ACL.
-            </summary>
-        </member>
-        <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.WriteTagging">
-            <summary>
-            Write tags to an object, replacing the previous tags.
-            </summary>
-        </member>
-        <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.WriteLegalHold">
-            <summary>
-            Write a legal hold status to an object.
-            </summary>
-        </member>
-        <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.WriteRetention">
-            <summary>
-            Write a retention status to an object.
-            </summary>
-        </member>
-        <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.Read">
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.Read">
             <summary>
             Read an object.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.ReadAcl">
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.ReadAcl">
             <summary>
             Read an object's access control list.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.ReadRange">
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.ReadParts">
+            <summary>
+            Read the parts associated with a multipart upload.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.ReadRange">
             <summary>
             Read a range of bytes from an object.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.ReadTagging">
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.ReadTagging">
             <summary>
             Read an object's tags.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.ReadLegalHold">
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.ReadLegalHold">
             <summary>
             Read an object's legal hold status.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.ReadRetention">
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.ReadRetention">
             <summary>
             Read an object's retention status.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.Delete">
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.SelectContent">
             <summary>
-            Delete an object.
+            Select content from an object.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.DeleteAcl">
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.UploadPart">
             <summary>
-            Delete an object's ACL.
+            Upload part.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.DeleteTagging">
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.Write">
             <summary>
-            Delete an object's tags.
+            Write an object.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.Callbacks.ObjectCallbacks.DeleteMultiple">
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.WriteAcl">
             <summary>
-            Delete multiple objects.
+            Write an object's access control list, replacing the previous ACL.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.WriteTagging">
+            <summary>
+            Write tags to an object, replacing the previous tags.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.WriteLegalHold">
+            <summary>
+            Write a legal hold status to an object.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.Callbacks.ObjectCallbacks.WriteRetention">
+            <summary>
+            Write a retention status to an object.
             </summary>
         </member>
         <member name="M:S3ServerLibrary.Callbacks.ObjectCallbacks.#ctor">
@@ -206,14 +241,25 @@
             Callback methods for service operations.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.ServiceCallbacks.ListBuckets">
+        <member name="P:S3ServerLibrary.ServiceCallbacks.ListBuckets">
             <summary>
             List all buckets.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.ServiceCallbacks.ServiceExists">
+        <member name="P:S3ServerLibrary.ServiceCallbacks.ServiceExists">
             <summary>
             Service exists.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.ServiceCallbacks.FindMatchingBaseDomain">
+            <summary>
+            Find matching base domain.  
+            The input string will be the hostname from the HOST header.  
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.ServiceCallbacks.GetSecretKey">
+            <summary>
+            Method to invoke to retrieve the base64-encoded secret key for a given requestor.
             </summary>
         </member>
         <member name="M:S3ServerLibrary.ServiceCallbacks.#ctor">
@@ -223,20 +269,25 @@
         </member>
         <member name="T:S3ServerLibrary.LoggingSettings">
             <summary>
-            Enable or disable logging for various items.
+            Logging settings.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.LoggingSettings.HttpRequests">
+        <member name="P:S3ServerLibrary.LoggingSettings.HttpRequests">
             <summary>
             Enable or disable debugging for HTTP requests.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.LoggingSettings.S3Requests">
+        <member name="P:S3ServerLibrary.LoggingSettings.S3Requests">
             <summary>
             Enable or disable debugging for S3 request construction.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.LoggingSettings.Exceptions">
+        <member name="P:S3ServerLibrary.LoggingSettings.SignatureV4Validation">
+            <summary>
+            Enable or disable debugging for signature validation for version 4 signatures.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.LoggingSettings.Exceptions">
             <summary>
             Enable or disable debugging for exceptions.
             </summary>
@@ -246,18 +297,20 @@
             Instantiates the object.
             </summary>
         </member>
-        <member name="T:S3ServerLibrary.ObjectExtensions">
+        <member name="T:S3ServerLibrary.OperationLimitsSettings">
             <summary>
-            Object extensions.
+            Boundary conditions for certain operations, e.g. PutObject, GetObject, etc.
             </summary>
         </member>
-        <member name="M:S3ServerLibrary.ObjectExtensions.ToJson(System.Object,System.Boolean)">
+        <member name="P:S3ServerLibrary.OperationLimitsSettings.MaxPutObjectSize">
             <summary>
-            Return a JSON string of this object.
+            Maximum content-length for object write (PutObject) before use of multi-part upload is required.
             </summary>
-            <param name="obj">Object.</param>
-            <param name="pretty">Enable or disable pretty print.</param>
-            <returns>JSON string.</returns>
+        </member>
+        <member name="M:S3ServerLibrary.OperationLimitsSettings.#ctor">
+            <summary>
+            Instantiates the object.
+            </summary>
         </member>
         <member name="T:S3ServerLibrary.S3Context">
             <summary>
@@ -294,12 +347,12 @@
             Instantiate.
             </summary>
         </member>
-        <member name="M:S3ServerLibrary.S3Context.#ctor(WatsonWebserver.HttpContext,System.Collections.Generic.List{System.String},System.Object,System.Action{System.String})">
+        <member name="M:S3ServerLibrary.S3Context.#ctor(WatsonWebserver.Core.HttpContextBase,System.Func{System.String,System.String},System.Object,System.Action{System.String})">
             <summary>
             Instantiate.
             </summary>
             <param name="ctx">HTTP context.</param>
-            <param name="baseDomains">List of base domains, if any.</param>
+            <param name="baseDomainFinder">Callback to invoke to find a base domain for a given hostname, used with virtual hosted style URLs.</param> 
             <param name="metadata">User metadata, provided by your application.</param>
             <param name="logger">Method to invoke to send log messages.</param>
         </member>
@@ -573,6 +626,31 @@
             </summary>
             <param name="buckets">Buckets.</param>
         </member>
+        <member name="T:S3ServerLibrary.S3Objects.ChecksumAlgorithmEnum">
+            <summary>
+            Checksum algorithms. 
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.ChecksumAlgorithmEnum.CRC32">
+            <summary>
+            CRC32.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.ChecksumAlgorithmEnum.CRC32C">
+            <summary>
+            CRC32C.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.ChecksumAlgorithmEnum.SHA1">
+            <summary>
+            SHA1.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.ChecksumAlgorithmEnum.SHA256">
+            <summary>
+            SHA256.
+            </summary>
+        </member>
         <member name="T:S3ServerLibrary.S3Objects.CommonPrefixes">
             <summary>
             Common prefixes.
@@ -593,6 +671,91 @@
             Instantiate.
             </summary>
             <param name="prefixes">Prefixes.</param>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.CompleteMultipartUpload">
+            <summary>
+            Complete multipart upload request.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CompleteMultipartUpload.Parts">
+            <summary>
+            Parts.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.CompleteMultipartUpload.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.CompleteMultipartUploadResult">
+            <summary>
+            Complete multipart upload result.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CompleteMultipartUploadResult.Location">
+            <summary>
+            Location.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CompleteMultipartUploadResult.Bucket">
+            <summary>
+            Bucket.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CompleteMultipartUploadResult.Key">
+            <summary>
+            Key.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CompleteMultipartUploadResult.ChecksumCRC32">
+            <summary>
+            Checksum from CRC32.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CompleteMultipartUploadResult.ChecksumCRC32C">
+            <summary>
+            Checksum from CRC32C.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CompleteMultipartUploadResult.ChecksumSHA1">
+            <summary>
+            Checksum from SHA1.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CompleteMultipartUploadResult.ChecksumSHA256">
+            <summary>
+            Checksum from SHA256.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CompleteMultipartUploadResult.ETag">
+            <summary>
+            ETag.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.CompleteMultipartUploadResult.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.CompressionTypeEnum">
+            <summary>
+            Compression type enum. 
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.CompressionTypeEnum.NONE">
+            <summary>
+            NONE.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.CompressionTypeEnum.GZIP">
+            <summary>
+            GZIP.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.CompressionTypeEnum.BZIP2">
+            <summary>
+            BZIP2.
+            </summary>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.Condition">
             <summary>
@@ -620,6 +783,86 @@
             </summary>
             <param name="httpErrorCode">HTTP error code.</param>
             <param name="keyPrefix">Key prefix.</param>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.CsvInputSerialization">
+            <summary>
+            CSV input serialization.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CsvInputSerialization.AllowQuotedRecordDelimiter">
+            <summary>
+            Allow quoted record delimiter.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CsvInputSerialization.Comments">
+            <summary>
+            Comments.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CsvInputSerialization.FieldDelimiter">
+            <summary>
+            Field delimiter.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CsvInputSerialization.FileHeaderInfo">
+            <summary>
+            File header info.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CsvInputSerialization.QuoteCharacter">
+            <summary>
+            Quote character.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CsvInputSerialization.QuoteEscapeCharacter">
+            <summary>
+            Quote escape character.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CsvInputSerialization.RecordDelimiter">
+            <summary>
+            Record delimiter.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.CsvInputSerialization.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.CsvOutputSerialization">
+            <summary>
+            CSV output serialization.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CsvOutputSerialization.FieldDelimiter">
+            <summary>
+            Field delimiter.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CsvOutputSerialization.QuoteCharacter">
+            <summary>
+            Quote character.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CsvOutputSerialization.QuoteEscapeCharacter">
+            <summary>
+            Quote escape character.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CsvOutputSerialization.QuoteFields">
+            <summary>
+            Quote fields.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.CsvOutputSerialization.RecordDelimiter">
+            <summary>
+            Record delimiter.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.CsvOutputSerialization.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.Deleted">
             <summary>
@@ -713,6 +956,36 @@
             </summary>
             <param name="deleted">Delete.</param>
             <param name="error">Error.</param>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.EncodingTypeEnum">
+            <summary>
+            Encoding type enum. 
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.EncodingTypeEnum.Delimiter">
+            <summary>
+            Delimiter.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.EncodingTypeEnum.KeyMarker">
+            <summary>
+            KeyMarker.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.EncodingTypeEnum.Prefix">
+            <summary>
+            Prefix.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.EncodingTypeEnum.NextKeyMarker">
+            <summary>
+            NextKeyMarker.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.EncodingTypeEnum.Key">
+            <summary>
+            Key.
+            </summary>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.Error">
             <summary>
@@ -1200,6 +1473,36 @@
             </summary>
             <param name="key">Key.</param>
         </member>
+        <member name="T:S3ServerLibrary.S3Objects.ExpressionTypeEnum">
+            <summary>
+            Expression type enum. 
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.ExpressionTypeEnum.SQL">
+            <summary>
+            SQL.
+            </summary>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.FileHeaderInfoEnum">
+            <summary>
+            File header info. 
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.FileHeaderInfoEnum.USE">
+            <summary>
+            USE.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.FileHeaderInfoEnum.IGNORE">
+            <summary>
+            IGNORE.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.FileHeaderInfoEnum.NONE">
+            <summary>
+            NONE.
+            </summary>
+        </member>
         <member name="T:S3ServerLibrary.S3Objects.Grant">
             <summary>
             A grant allowing a grantee permissiont to a resource.
@@ -1324,6 +1627,114 @@
             Instantiate.
             </summary>
             <param name="suffix">Suffix.</param>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.InitiateMultipartUploadResult">
+            <summary>
+            Initiate multipart upload result.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.InitiateMultipartUploadResult.Bucket">
+            <summary>
+            Bucket.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.InitiateMultipartUploadResult.Key">
+            <summary>
+            Key.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.InitiateMultipartUploadResult.UploadId">
+            <summary>
+            Upload ID.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.InitiateMultipartUploadResult.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.InitiateMultipartUploadResult.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Instantiate.
+            </summary>
+            <param name="bucket">Bucket.</param>
+            <param name="key">Key.</param>
+            <param name="uploadId">Upload ID.</param>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.InputSerialization">
+            <summary>
+            Input serialization.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.InputSerialization.CompressionType">
+            <summary>
+            Compression type.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.InputSerialization.CSV">
+            <summary>
+            CSV input serialization.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.InputSerialization.JSON">
+            <summary>
+            JSON input serialization.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.InputSerialization.Parquet">
+            <summary>
+            Parquet input serialization.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.InputSerialization.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.JsonInputSerialization">
+            <summary>
+            JSON input serialization.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.JsonInputSerialization.Type">
+            <summary>
+            Allow quoted record delimiter.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.JsonInputSerialization.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.JsonOutputSerialization">
+            <summary>
+            JSON output serialization.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.JsonOutputSerialization.RecordDelimiter">
+            <summary>
+            Record delimiter.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.JsonOutputSerialization.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.JsonTypeEnum">
+            <summary>
+            JSON type enum. 
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.JsonTypeEnum.DOCUMENT">
+            <summary>
+            DOCUMENT.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.JsonTypeEnum.LINES">
+            <summary>
+            LINES.
+            </summary>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.LegalHold">
             <summary>
@@ -1477,6 +1888,154 @@
             Helper method for XML serialization.
             </summary>
             <returns>Boolean</returns>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.ListMultipartUploadsResult">
+            <summary>
+            List multipart uploads.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListMultipartUploadsResult.Bucket">
+            <summary>
+            Bucket.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListMultipartUploadsResult.KeyMarker">
+            <summary>
+            Key marker.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListMultipartUploadsResult.UploadIdMarker">
+            <summary>
+            Upload ID marker.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListMultipartUploadsResult.NextKeyMarker">
+            <summary>
+            Next key marker.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListMultipartUploadsResult.Prefix">
+            <summary>
+            Prefix.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListMultipartUploadsResult.Delimiter">
+            <summary>
+            Delimiter.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListMultipartUploadsResult.NextUploadIdMarker">
+            <summary>
+            Next upload ID marker.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListMultipartUploadsResult.MaxUploads">
+            <summary>
+            Max uploads.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListMultipartUploadsResult.IsTruncated">
+            <summary>
+            Flag indicating if the results are truncated.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListMultipartUploadsResult.Uploads">
+            <summary>
+            Uploads.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListMultipartUploadsResult.CommonPrefixes">
+            <summary>
+            Common prefixes.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListMultipartUploadsResult.EncodingType">
+            <summary>
+            Encoding type.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.ListMultipartUploadsResult.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.ListMultipartUploadsResult.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Instantiate.
+            </summary>
+            <param name="bucket">Bucket.</param>
+            <param name="key">Key.</param>
+            <param name="uploadId">Upload ID.</param>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.ListPartsResult">
+            <summary>
+            List parts result.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListPartsResult.Bucket">
+            <summary>
+            Bucket.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListPartsResult.Key">
+            <summary>
+            Key.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListPartsResult.UploadId">
+            <summary>
+            Upload ID.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListPartsResult.PartNumberMarker">
+            <summary>
+            Part number marker.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListPartsResult.NextPartNumberMarker">
+            <summary>
+            Next part number marker.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListPartsResult.MaxParts">
+            <summary>
+            Max parts.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListPartsResult.IsTruncated">
+            <summary>
+            Flag to indicate if the results were truncated.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListPartsResult.Parts">
+            <summary>
+            Parts.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListPartsResult.Initiator">
+            <summary>
+            Initiator of the upload.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListPartsResult.Owner">
+            <summary>
+            Owner of the object.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListPartsResult.StorageClass">
+            <summary>
+            Storage class.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ListPartsResult.ChecksumAlgorithm">
+            <summary>
+            Checksum algorithm.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.ListPartsResult.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.ListVersionsResult">
             <summary>
@@ -1678,7 +2237,6 @@
         <member name="P:S3ServerLibrary.S3Objects.ObjectMetadata.StorageClass">
             <summary>
             The class of storage where the resource resides.
-            Valid values are STANDARD, REDUCED_REDUNDANCY, GLACIER, STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING, DEEP_ARCHIVE, OUTPOSTS.
             </summary>
         </member>
         <member name="P:S3ServerLibrary.S3Objects.ObjectMetadata.Owner">
@@ -1701,6 +2259,26 @@
             <param name="size">Size.</param>
             <param name="owner">Owner.</param>
             <param name="storageClass">Storage class.</param>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.OutputSerialization">
+            <summary>
+            Output serialization.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.OutputSerialization.CSV">
+            <summary>
+            CSV output serialization.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.OutputSerialization.JSON">
+            <summary>
+            JSON output serialization.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.OutputSerialization.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.Owner">
             <summary>
@@ -1728,6 +2306,66 @@
             </summary>
             <param name="id">ID.</param>
             <param name="displayName">Display name.</param>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.ParquetInputSerialization">
+            <summary>
+            Parquet input serialization.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.ParquetInputSerialization.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.Part">
+            <summary>
+            A part from a multipart upload.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.Part.ChecksumCRC32">
+            <summary>
+            Checksum from CRC32.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.Part.ChecksumCRC32C">
+            <summary>
+            Checksum from CRC32C.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.Part.ChecksumSHA1">
+            <summary>
+            Checksum from SHA1.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.Part.ChecksumSHA256">
+            <summary>
+            Checksum from SHA256.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.Part.ETag">
+            <summary>
+            ETag.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.Part.LastModified">
+            <summary>
+            Timestamp from the last modification of the resource.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.Part.PartNumber">
+            <summary>
+            Part number.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.Part.Size">
+            <summary>
+            Size.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.Part.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.PermissionEnum">
             <summary>
@@ -1773,6 +2411,21 @@
         <member name="F:S3ServerLibrary.S3Objects.ProtocolEnum.Https">
             <summary>
             HTTPS.
+            </summary>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.QuoteFieldsEnum">
+            <summary>
+            Quote fields options. 
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.QuoteFieldsEnum.ALWAYS">
+            <summary>
+            ALWAYS.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3Objects.QuoteFieldsEnum.ASNEEDED">
+            <summary>
+            ASNEEDED.
             </summary>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.Redirect">
@@ -1848,6 +2501,21 @@
             </summary>
             <param name="hostname">Hostname.</param>
             <param name="protocol">Protocol.  Valid values are http, https.</param>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.RequestProgress">
+            <summary>
+            Request progress.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.RequestProgress.Enabled">
+            <summary>
+            Enabled.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.RequestProgress.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.Retention">
             <summary>
@@ -1944,6 +2612,66 @@
             Instantiate.
             </summary>
             <param name="rules">Rules.</param>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.ScanRange">
+            <summary>
+            Scan range.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ScanRange.End">
+            <summary>
+            End.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.ScanRange.Start">
+            <summary>
+            Start.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.ScanRange.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.SelectObjectContentRequest">
+            <summary>
+            Select object content request.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.SelectObjectContentRequest.Expression">
+            <summary>
+            Expression.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.SelectObjectContentRequest.ExpressionType">
+            <summary>
+            Expression type.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.SelectObjectContentRequest.RequestProgress">
+            <summary>
+            Request progress.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.SelectObjectContentRequest.InputSerialization">
+            <summary>
+            Input serialization.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.SelectObjectContentRequest.OutputSerialization">
+            <summary>
+            Output serialization.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.SelectObjectContentRequest.ScanRange">
+            <summary>
+            Scan range.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.SelectObjectContentRequest.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.StorageClassEnum">
             <summary>
@@ -2079,6 +2807,51 @@
             Instantiate.
             </summary>
             <param name="grants">Grants.</param>
+        </member>
+        <member name="T:S3ServerLibrary.S3Objects.Upload">
+            <summary>
+            Upload.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.Upload.ChecksumAlgorithm">
+            <summary>
+            Checksum algorithm.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.Upload.Initiated">
+            <summary>
+            Timestamp from when the upload was initiated.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.Upload.Key">
+            <summary>
+            Key.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.Upload.Initiator">
+            <summary>
+            Initiator of the upload.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.Upload.Owner">
+            <summary>
+            Owner of the object.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.Upload.StorageClass">
+            <summary>
+            Storage class.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Objects.Upload.UploadId">
+            <summary>
+            Upload ID.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3Objects.Upload.#ctor">
+            <summary>
+            Instantiate.
+            </summary>
         </member>
         <member name="T:S3ServerLibrary.S3Objects.VersionedEntity">
             <summary>
@@ -2320,11 +3093,6 @@
             S3 request.
             </summary>
         </member>
-        <member name="P:S3ServerLibrary.S3Request.TimestampUtc">
-            <summary>
-            Time of creation in UTC.
-            </summary>
-        </member>
         <member name="P:S3ServerLibrary.S3Request.RequestId">
             <summary>
             Request ID.
@@ -2395,14 +3163,34 @@
             Marker.
             </summary>
         </member>
+        <member name="P:S3ServerLibrary.S3Request.PartNumber">
+            <summary>
+            Part number from a multipart upload.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Request.PartNumberMarker">
+            <summary>
+            Part number arker.
+            </summary>
+        </member>
         <member name="P:S3ServerLibrary.S3Request.MaxKeys">
             <summary>
             Maximum number of keys to retrieve in an enumeration.
             </summary>
         </member>
+        <member name="P:S3ServerLibrary.S3Request.MaxParts">
+            <summary>
+            Maximum number of parts to retrieve in an enumeration.
+            </summary>
+        </member>
         <member name="P:S3ServerLibrary.S3Request.VersionId">
             <summary>
             Object version ID.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3Request.UploadId">
+            <summary>
+            Upload ID.
             </summary>
         </member>
         <member name="P:S3ServerLibrary.S3Request.Authorization">
@@ -2516,12 +3304,12 @@
             Instantiate.
             </summary>
         </member>
-        <member name="M:S3ServerLibrary.S3Request.#ctor(S3ServerLibrary.S3Context,System.Collections.Generic.List{System.String},System.Action{System.String})">
+        <member name="M:S3ServerLibrary.S3Request.#ctor(S3ServerLibrary.S3Context,System.Func{System.String,System.String},System.Action{System.String})">
             <summary>
             Instantiates the object.
             </summary>
             <param name="ctx">S3 context.</param>
-            <param name="baseDomains">List of base domains against which the hostname should be evaluated to identify the bucket.  For instance, to resolve buckets for *.localhost, specify '.localhost'.</param> 
+            <param name="baseDomainFinder">Callback to invoke to find a base domain for a given hostname, used with virtual hosted style URLs.</param> 
             <param name="logger">Method to invoke to send log messages.</param> 
         </member>
         <member name="M:S3ServerLibrary.S3Request.HeaderExists(System.String)">
@@ -2693,6 +3481,26 @@
             Write a bucket's website configuration.
             </summary>
         </member>
+        <member name="F:S3ServerLibrary.S3RequestType.BucketReadMultipartUploads">
+            <summary>
+            Retrieve a list of multipart uploads.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3RequestType.ObjectAbortMultipartUpload">
+            <summary>
+            Abort an object multipart upload.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3RequestType.ObjectCompleteMultipartUpload">
+            <summary>
+            Complete an object multipart upload.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3RequestType.ObjectCreateMultipartUpload">
+            <summary>
+            Create an object multipart upload.
+            </summary>
+        </member>
         <member name="F:S3ServerLibrary.S3RequestType.ObjectDelete">
             <summary>
             Delete an object.
@@ -2733,6 +3541,11 @@
             Read an object's legal hold status.
             </summary>
         </member>
+        <member name="F:S3ServerLibrary.S3RequestType.ObjectReadParts">
+            <summary>
+            Read the parts associated with a multipart upload.
+            </summary>
+        </member>
         <member name="F:S3ServerLibrary.S3RequestType.ObjectReadRange">
             <summary>
             Read a specific range of bytes from an object.
@@ -2746,6 +3559,16 @@
         <member name="F:S3ServerLibrary.S3RequestType.ObjectReadTags">
             <summary>
             Read an object's tags.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3RequestType.ObjectSelectContent">
+            <summary>
+            Select object content.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3RequestType.ObjectUploadPart">
+            <summary>
+            Upload part.
             </summary>
         </member>
         <member name="F:S3ServerLibrary.S3RequestType.ObjectWrite">
@@ -2900,14 +3723,9 @@
             Determine if the server is listening.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.S3Server.Logger">
+        <member name="P:S3ServerLibrary.S3Server.Settings">
             <summary>
-            Method to invoke when sending a log message.
-            </summary>
-        </member>
-        <member name="F:S3ServerLibrary.S3Server.Logging">
-            <summary>
-            Enable or disable logging for various items.
+            Settings.
             </summary>
         </member>
         <member name="F:S3ServerLibrary.S3Server.Service">
@@ -2925,47 +3743,11 @@
             Callback methods for requests received for object operations.
             </summary>
         </member>
-        <member name="F:S3ServerLibrary.S3Server.PreRequestHandler">
-            <summary>
-            Callback method to use prior to examining requests for AWS S3 APIs.
-            Return true if you wish to terminate the request, otherwise, return false, which will further route the request.
-            </summary>
-        </member>
-        <member name="F:S3ServerLibrary.S3Server.DefaultRequestHandler">
-            <summary>
-            Callback method to call when no matching AWS S3 API callback could be found. 
-            </summary>
-        </member>
-        <member name="F:S3ServerLibrary.S3Server.PostRequestHandler">
-            <summary>
-            Callback method to call after a response has been sent.
-            </summary>
-        </member>
-        <member name="P:S3ServerLibrary.S3Server.BaseDomains">
-            <summary>
-            The list of base domains against which incoming requests should be compared to identify the bucket name.
-            For instance, if you wish to identify the bucket 'bucket' from a request to host 'bucket.mys3server.com', set this value to '.mys3server.com'.
-            If the list is empty, or, a base domain cannot be identified, S3Server will assume that the bucket name is in the URL.
-            </summary>
-        </member>
-        <member name="M:S3ServerLibrary.S3Server.#ctor(System.String,System.Int32,System.Boolean)">
+        <member name="M:S3ServerLibrary.S3Server.#ctor(S3ServerLibrary.S3ServerSettings)">
             <summary>
             Instantiate.
-            Using this constructor results in no pre-request handler (your own API handler), and no custom default request handler (when an S3 API cannot be matched).
             </summary>
-            <param name="hostname">The hostname on which to listen for HTTP requests.  If you listen on a wildcard such as '*', '+', or '0.0.0.0', you must run with elevated/administrative privileges.</param>
-            <param name="port">The TCP port number.</param>
-            <param name="ssl">Enable or disable SSL.</param> 
-        </member>
-        <member name="M:S3ServerLibrary.S3Server.#ctor(System.String,System.Int32,System.Boolean,System.Func{S3ServerLibrary.S3Context,System.Threading.Tasks.Task})">
-            <summary>
-            Instantiate.
-            Using this constructor results in no pre-request handler (your own API handler), but (if not null) allows a custom default request handler (when an S3 API cannot be matched).
-            </summary>
-            <param name="hostname">The hostname on which to listen for HTTP requests.  If you listen on a wildcard such as '*', '+', or '0.0.0.0', you must run with elevated/administrative privileges.</param>
-            <param name="port">The TCP port number.</param>
-            <param name="ssl">Enable or disable SSL.</param> 
-            <param name="defaultRequestHandler">Default request handler used when no other callbacks can be found.</param>
+            <param name="settings">Settings.</param>
         </member>
         <member name="M:S3ServerLibrary.S3Server.Dispose">
             <summary>
@@ -2989,9 +3771,56 @@
             </summary>
             <param name="disposing">Disposing.</param>
         </member>
-        <member name="T:S3ServerLibrary.S3Signatures">
+        <member name="T:S3ServerLibrary.S3ServerSettings">
             <summary>
-            Internal class for validating S3 signatures.
+            S3 server settings.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3ServerSettings.Logger">
+            <summary>
+            Method to invoke when sending a log message.  This value can only be changed before the server has been started.  
+            If you need to change the name after the server has been started, dispose and start again with the correct settings.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3ServerSettings.Logging">
+            <summary>
+            Enable or disable logging for various items.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3ServerSettings.OperationLimits">
+            <summary>
+            Size limits for certain operations.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3ServerSettings.Webserver">
+            <summary>
+            Webserver settings.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3ServerSettings.PreRequestHandler">
+            <summary>
+            Callback method to use prior to examining requests for AWS S3 APIs.
+            Return true if you wish to terminate the request, otherwise, return false, which will further route the request.
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3ServerSettings.DefaultRequestHandler">
+            <summary>
+            Callback method to call when no matching AWS S3 API callback could be found. 
+            </summary>
+        </member>
+        <member name="F:S3ServerLibrary.S3ServerSettings.PostRequestHandler">
+            <summary>
+            Callback method to call after a response has been sent.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3ServerSettings.EnableSignatures">
+            <summary>
+            Enable or disable support for signature V4.  Dependent upon EnableSignatureValidation being set to true and the Service.GetSecretKey being set.
+            </summary>
+        </member>
+        <member name="M:S3ServerLibrary.S3ServerSettings.#ctor">
+            <summary>
+            Instantiate.
             </summary>
         </member>
         <member name="T:S3ServerLibrary.S3SignatureVersion">
@@ -3041,14 +3870,6 @@
             </summary>
             <typeparam name="T">Type.</typeparam>
             <param name="json">JSON string.</param>
-            <returns>Instance.</returns>
-        </member>
-        <member name="M:S3ServerLibrary.SerializationHelper.DeserializeJson``1(System.Byte[])">
-            <summary>
-            Deserialize JSON. 
-            </summary>
-            <typeparam name="T">Type.</typeparam>
-            <param name="data">JSON data.</param>
             <returns>Instance.</returns>
         </member>
         <member name="M:S3ServerLibrary.SerializationHelper.DeserializeXml``1(System.Byte[])">

@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Runtime.Serialization;
-
-namespace S3ServerLibrary
+﻿namespace S3ServerLibrary
 {
+    using System.Runtime.Serialization;
+    using System.Text.Json.Serialization;
+
     /// <summary>
     /// Permission types used by S3. 
     /// See https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html for details.
@@ -42,7 +38,7 @@ namespace S3ServerLibrary
         /// <summary>
         /// Bucket read operations.
         /// </summary>
-        [EnumMember(Value = "ObjectRead")] 
+        [EnumMember(Value = "ObjectRead")]
         ObjectRead,
         /// <summary>
         /// Object write operations.

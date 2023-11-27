@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Numerics;
 using System.Text;
 
 using Amazon;
@@ -9,14 +10,19 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Util;
 
+using GetSomeInput;
+
 namespace Test.Client
 {
     class Program
     {
         static bool _Ssl = false;
         static string _Endpoint = null;
-        static string _AccessKey = null;
-        static string _SecretKey = null;
+
+        static string _AccessKey = "AKIAIOSFODNN7EXAMPLE";
+        static string _SecretKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
+        static string _SignatureVersion = "4";
+
         static bool _ForcePathStyle = true;
         static AmazonS3Config _S3Config = null;
         static IAmazonS3 _S3Client = null;
@@ -25,6 +31,9 @@ namespace Test.Client
         static string _Bucket = null;
 
         static bool _RunForever = true;
+        static bool _UseProxy = false;
+        static string _ProxyHost = "127.0.0.1";
+        static int _ProxyPort = 8888;
 
         static void Main(string[] args)
         {
@@ -32,7 +41,7 @@ namespace Test.Client
 
             while (_RunForever)
             {
-                string userInput = Common.InputString("Command [? for help]:", null, false);
+                string userInput = Inputty.GetString("Command [? for help]:", null, false);
 
                 switch (userInput)
                 {
@@ -150,6 +159,10 @@ namespace Test.Client
                         ReadObject();
                         break;
 
+                    case "read ver":
+                        ReadObjectWithVersion();
+                        break;
+
                     case "read acl":
                         ReadObjectAcl();
                         break;
@@ -234,6 +247,7 @@ namespace Test.Client
             Console.WriteLine("   write tags          Write object tags");
             Console.WriteLine("   write retention     Write object retention");
             Console.WriteLine("   read                Read an object");
+            Console.WriteLine("   read ver            Read a specific object version");
             Console.WriteLine("   read acl            Read an object's ACL");
             Console.WriteLine("   read range          Read a range of bytes from an object");
             Console.WriteLine("   read tags           Read an object's tags");
@@ -251,12 +265,12 @@ namespace Test.Client
 
         static void SetBucket()
         {
-            _Bucket = Common.InputString("Bucket:", "default", false);
+            _Bucket = Inputty.GetString("Bucket:", "default", false);
         }
 
         static void SetRegion()
         {
-            string userInput = Common.InputString("Region:", "USWest1", false);
+            string userInput = Inputty.GetString("Region:", "USWest1", false);
 
             switch (userInput)
             {
@@ -289,22 +303,22 @@ namespace Test.Client
 
         static void SetSsl()
         {
-            _Ssl = Common.InputBoolean("Use SSL:", false);
+            _Ssl = Inputty.GetBoolean("Use SSL:", false);
         }
 
         static void SetEndpoint()
         {
-            _Endpoint = Common.InputString("Endpoint:", "http://localhost:8000/", false);
+            _Endpoint = Inputty.GetString("Endpoint:", "http://s3.local.gd:8000/", false);
         }
 
         static void SetAccessKey()
         {
-            _AccessKey = Common.InputString("Access key:", "default", false);
+            _AccessKey = Inputty.GetString("Access key:", _AccessKey, false);
         }
 
         static void SetSecretKey()
         {
-            _SecretKey = Common.InputString("Secret key:", "default", false);
+            _SecretKey = Inputty.GetString("Secret key:", _SecretKey, false);
         }
 
         static void InitS3Client()
@@ -317,8 +331,15 @@ namespace Test.Client
                 ServiceURL = _Endpoint,
                 ForcePathStyle = _ForcePathStyle,
                 UseHttp = _Ssl,
-                SignatureVersion = "4"
+                SignatureVersion = _SignatureVersion,
+                SignatureMethod = SigningAlgorithm.HmacSHA1
             };
+
+            if (_UseProxy && !String.IsNullOrEmpty(_ProxyHost))
+            {
+                _S3Config.ProxyHost = _ProxyHost;
+                _S3Config.ProxyPort = _ProxyPort;
+            }
 
             _S3Client = new AmazonS3Client(_S3Credentials, _S3Config);
 
@@ -345,7 +366,7 @@ namespace Test.Client
             if (response != null)
             {
                 Console.WriteLine("Success");
-                Console.WriteLine("  Owner   : " + response.Owner.DisplayName);
+                Console.WriteLine("  Owner   : " + (response.Owner != null ? response.Owner.DisplayName : "null"));
                 Console.WriteLine("  Buckets : " + response.Buckets.Count);
                 foreach (S3Bucket bucket in response.Buckets)
                 {
@@ -360,7 +381,7 @@ namespace Test.Client
 
         static void ListBucket()
         {
-            string continuationToken = Common.InputString("Continuation token:", null, true);
+            string continuationToken = Inputty.GetString("Continuation token:", null, true);
 
             ListObjectsV2Request request = new ListObjectsV2Request();
             request.BucketName = _Bucket;
@@ -393,7 +414,7 @@ namespace Test.Client
 
         static void WriteBucket()
         {
-            string id = Common.InputString("Name:", null, false);
+            string id = Inputty.GetString("Name:", null, false);
 
             PutBucketRequest request = new PutBucketRequest();
             request.BucketName = id;
@@ -415,8 +436,8 @@ namespace Test.Client
 
         static void WriteBucketAcl()
         {
-            string id = Common.InputString("Bucket:", null, false);
-            string owner = Common.InputString("Owner:", "default", false);
+            string id = Inputty.GetString("Bucket:", null, false);
+            string owner = Inputty.GetString("Owner:", "default", false);
 
             PutACLRequest request = new PutACLRequest();
             request.BucketName = id;
@@ -450,9 +471,9 @@ namespace Test.Client
 
         static void WriteBucketTags()
         {
-            string bucket = Common.InputString("Bucket:", null, false);
-            string key = Common.InputString("Tag Key:", null, false);
-            string val = Common.InputString("Tag Value:", null, false);
+            string bucket = Inputty.GetString("Bucket:", null, false);
+            string key = Inputty.GetString("Tag Key:", null, false);
+            string val = Inputty.GetString("Tag Value:", null, false);
 
             PutBucketTaggingRequest request = new PutBucketTaggingRequest();
             request.BucketName = bucket;
@@ -475,7 +496,7 @@ namespace Test.Client
 
         static void ReadBucketAcl()
         {
-            string id = Common.InputString("Bucket:", null, false);
+            string id = Inputty.GetString("Bucket:", null, false);
 
             GetACLRequest request = new GetACLRequest();
             request.BucketName = id;
@@ -505,7 +526,7 @@ namespace Test.Client
 
         static void ReadBucketTags()
         {
-            string bucket = Common.InputString("Bucket:", null, false);
+            string bucket = Inputty.GetString("Bucket:", null, false);
 
             GetBucketTaggingRequest request = new GetBucketTaggingRequest();
             request.BucketName = bucket;
@@ -527,8 +548,8 @@ namespace Test.Client
 
         static void WriteBucketVersioning()
         {
-            string bucket = Common.InputString("Bucket:", null, false);
-            bool versioning = Common.InputBoolean("Enable versioning:", true);
+            string bucket = Inputty.GetString("Bucket:", null, false);
+            bool versioning = Inputty.GetBoolean("Enable versioning:", true);
 
             PutBucketVersioningRequest request = new PutBucketVersioningRequest();
             request.BucketName = bucket;
@@ -553,7 +574,7 @@ namespace Test.Client
 
         static void ReadBucketVersioning()
         {
-            string bucket = Common.InputString("Bucket:", null, false);
+            string bucket = Inputty.GetString("Bucket:", null, false);
 
             GetBucketVersioningRequest request = new GetBucketVersioningRequest();
             request.BucketName = bucket;
@@ -573,7 +594,7 @@ namespace Test.Client
 
         static void ReadBucketVersions()
         {
-            string bucket = Common.InputString("Bucket:", null, false);
+            string bucket = Inputty.GetString("Bucket:", null, false);
 
             ListVersionsRequest request = new ListVersionsRequest();
             request.BucketName = bucket;
@@ -617,7 +638,7 @@ namespace Test.Client
 
         static void DeleteBucket()
         {
-            string id = Common.InputString("Bucket:", null, false);
+            string id = Inputty.GetString("Bucket:", null, false);
 
             DeleteBucketRequest request = new DeleteBucketRequest();
             request.BucketName = id;
@@ -637,7 +658,7 @@ namespace Test.Client
 
         static void DeleteBucketTags()
         {
-            string id = Common.InputString("Bucket:", null, false);
+            string id = Inputty.GetString("Bucket:", null, false);
 
             DeleteBucketTaggingRequest request = new DeleteBucketTaggingRequest();
             request.BucketName = id;
@@ -657,7 +678,7 @@ namespace Test.Client
 
         static void BucketExists()
         {
-            string id = Common.InputString("Bucket:", null, false);
+            string id = Inputty.GetString("Bucket:", null, false);
             Console.WriteLine("Exists: " + AmazonS3Util.DoesS3BucketExistV2Async(_S3Client, id).Result);
         }
 
@@ -667,9 +688,9 @@ namespace Test.Client
 
         static void WriteObject()
         {
-            string id = Common.InputString("Key:", null, false);
-            string data = Common.InputString("Data:", null, true);
-            byte[] bytes = new byte[0];
+            string id = Inputty.GetString("Key:", null, false);
+            string data = Inputty.GetString("Data:", null, true);
+            byte[] bytes = Array.Empty<byte>();
             if (!String.IsNullOrEmpty(data)) bytes = Encoding.UTF8.GetBytes(data);
 
             try
@@ -700,14 +721,14 @@ namespace Test.Client
             }
             catch (Exception e)
             {
-                Console.WriteLine(Common.SerializeJson(e, true));
+                Console.WriteLine(e.ToString());
             }
         }
 
         static void WriteObjectAcl()
         {
-            string id = Common.InputString("Key:", null, false);
-            string owner = Common.InputString("Owner:", "default", false);
+            string id = Inputty.GetString("Key:", null, false);
+            string owner = Inputty.GetString("Owner:", "default", false);
 
             try
             {
@@ -749,16 +770,16 @@ namespace Test.Client
             }
             catch (Exception e)
             {
-                Console.WriteLine(Common.SerializeJson(e, true));
+                Console.WriteLine(e.ToString());
             }
         }
 
         static void WriteObjectTags()
         {
-            string id = Common.InputString("Key:", null, false);
-            int ver = Common.InputInteger("Version:", 1, true, false);
-            string key = Common.InputString("Tag Key:", null, false);
-            string val = Common.InputString("Tag Value:", null, false);
+            string id = Inputty.GetString("Key:", null, false);
+            int ver = Inputty.GetInteger("Version:", 1, true, false);
+            string key = Inputty.GetString("Tag Key:", null, false);
+            string val = Inputty.GetString("Tag Value:", null, false);
 
             PutObjectTaggingRequest request = new PutObjectTaggingRequest();
             request.BucketName = _Bucket;
@@ -790,7 +811,7 @@ namespace Test.Client
 
         static void WriteObjectRetention()
         {
-            string id = Common.InputString("Key:", null, false);
+            string id = Inputty.GetString("Key:", null, false);
 
             try
             {
@@ -820,14 +841,60 @@ namespace Test.Client
             }
             catch (Exception e)
             {
-                Console.WriteLine(Common.SerializeJson(e, true));
+                Console.WriteLine(e.ToString());
             }
         }
 
         static void ReadObject()
         {
-            string id = Common.InputString("Key:", null, false);
-            int ver = Common.InputInteger("Version:", 1, true, false);
+            string id = Inputty.GetString("Key:", null, false);
+
+            try
+            {
+                GetObjectRequest request = new GetObjectRequest();
+                request.BucketName = _Bucket;
+                request.Key = id;
+
+                using (GetObjectResponse response = _S3Client.GetObjectAsync(request).Result)
+                using (Stream responseStream = response.ResponseStream)
+                using (StreamReader reader = new StreamReader(responseStream))
+                {
+                    if (response.ContentLength > 0)
+                    {
+                        // first copy the stream
+                        byte[] data = new byte[response.ContentLength];
+
+                        Stream bodyStream = response.ResponseStream;
+                        data = ReadStreamFully(bodyStream);
+
+                        int statusCode = (int)response.HttpStatusCode;
+
+                        if (data != null && data.Length > 0)
+                        {
+                            Console.WriteLine(Encoding.UTF8.GetString(data));
+                            Console.WriteLine(Environment.NewLine + "Success");
+                        }
+                        else
+                        {
+                            Console.WriteLine("No data");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Failed");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Unable to read object");
+            }
+        }
+
+        static void ReadObjectWithVersion()
+        {
+            string id = Inputty.GetString("Key:", null, false);
+            int ver = Inputty.GetInteger("Version:", 1, true, false);
 
             try
             {
@@ -846,7 +913,7 @@ namespace Test.Client
                         byte[] data = new byte[response.ContentLength];
 
                         Stream bodyStream = response.ResponseStream;
-                        data = Common.StreamToBytes(bodyStream);
+                        data = ReadStreamFully(bodyStream);
 
                         int statusCode = (int)response.HttpStatusCode;
 
@@ -874,7 +941,7 @@ namespace Test.Client
 
         static void ReadObjectAcl()
         {
-            string id = Common.InputString("Key:", null, false);
+            string id = Inputty.GetString("Key:", null, false);
 
             GetACLRequest request = new GetACLRequest();
             request.BucketName = _Bucket;
@@ -905,10 +972,10 @@ namespace Test.Client
 
         static void ReadObjectRange()
         {
-            string id = Common.InputString("Key:", null, false);
-            int ver = Common.InputInteger("Version:", 1, true, false);
-            int startPos = Common.InputInteger("Start position:", 0, true, true);
-            int endPos = Common.InputInteger("End position:", 0, true, true);
+            string id = Inputty.GetString("Key:", null, false);
+            int ver = Inputty.GetInteger("Version:", 1, true, false);
+            int startPos = Inputty.GetInteger("Start position:", 0, true, true);
+            int endPos = Inputty.GetInteger("End position:", 0, true, true);
 
             try
             {
@@ -928,7 +995,7 @@ namespace Test.Client
                         byte[] data = new byte[response.ContentLength];
 
                         Stream bodyStream = response.ResponseStream;
-                        data = Common.StreamToBytes(bodyStream);
+                        data = ReadStreamFully(bodyStream);
 
                         int statusCode = (int)response.HttpStatusCode;
 
@@ -956,8 +1023,8 @@ namespace Test.Client
 
         static void ReadObjectTags()
         {
-            string id = Common.InputString("Key:", null, false);
-            int ver = Common.InputInteger("Version:", 1, true, false);
+            string id = Inputty.GetString("Key:", null, false);
+            int ver = Inputty.GetInteger("Version:", 1, true, false);
 
             try
             {
@@ -989,7 +1056,7 @@ namespace Test.Client
 
         static void ReadObjectRetention()
         {
-            string id = Common.InputString("Key:", null, false);
+            string id = Inputty.GetString("Key:", null, false);
 
             GetObjectRetentionRequest request = new GetObjectRetentionRequest();
             request.BucketName = _Bucket;
@@ -1009,8 +1076,8 @@ namespace Test.Client
 
         static void DeleteObject()
         {
-            string id = Common.InputString("Key:", null, false);
-            int ver = Common.InputInteger("Version:", 1, true, false);
+            string id = Inputty.GetString("Key:", null, false);
+            int ver = Inputty.GetInteger("Version:", 1, true, false);
 
             DeleteObjectRequest request = new DeleteObjectRequest();
             request.BucketName = _Bucket;
@@ -1032,8 +1099,8 @@ namespace Test.Client
 
         static void DeleteObjectTags()
         {
-            string id = Common.InputString("Key:", null, false);
-            int ver = Common.InputInteger("Version:", 1, true, false);
+            string id = Inputty.GetString("Key:", null, false);
+            int ver = Inputty.GetInteger("Version:", 1, true, false);
 
             try
             {
@@ -1058,7 +1125,7 @@ namespace Test.Client
             }
             catch (Exception e)
             {
-                Console.WriteLine(Common.SerializeJson(e, true));
+                Console.WriteLine(e.ToString());
             }
         }
 
@@ -1067,9 +1134,9 @@ namespace Test.Client
             List<KeyVersion> versions = new List<KeyVersion>();
             while (true)
             {
-                string key = Common.InputString("Key [null to end]:", null, true);
+                string key = Inputty.GetString("Key [null to end]:", null, true);
                 if (String.IsNullOrEmpty(key)) break;
-                int ver = Common.InputInteger("Version:", 1, true, false);
+                int ver = Inputty.GetInteger("Version:", 1, true, false);
                 KeyVersion version = new KeyVersion();
                 version.Key = key;
                 version.VersionId = ver.ToString();
@@ -1119,8 +1186,8 @@ namespace Test.Client
 
         static void ObjectExists()
         {
-            string id = Common.InputString("Key:", null, false);
-            int ver = Common.InputInteger("Version:", 1, true, false);
+            string id = Inputty.GetString("Key:", null, false);
+            int ver = Inputty.GetInteger("Version:", 1, true, false);
 
             try
             {
@@ -1135,6 +1202,25 @@ namespace Test.Client
             catch (Exception)
             {
                 Console.WriteLine("Does not exist");
+            }
+        }
+
+        private static byte[] ReadStreamFully(Stream input)
+        {
+            if (input == null) throw new ArgumentNullException(nameof(input));
+            if (!input.CanRead) throw new InvalidOperationException("Input stream is not readable");
+
+            byte[] buffer = new byte[16 * 1024];
+            using (MemoryStream ms = new MemoryStream())
+            {
+                int read;
+
+                while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    ms.Write(buffer, 0, read);
+                }
+
+                return ms.ToArray();
             }
         }
 

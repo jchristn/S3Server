@@ -1,59 +1,56 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml.Serialization;
-
-namespace S3ServerLibrary.S3Objects
+﻿namespace S3ServerLibrary.S3Objects
 {
-	/// <summary>
-	/// Tag metadata.
-	/// </summary>
-	[XmlRoot(ElementName = "Tagging")]
-	public class Tagging
-	{
-		// Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
+    using System.Xml.Serialization;
 
-		#region Public-Members
+    /// <summary>
+    /// Tag metadata.
+    /// </summary>
+    [XmlRoot(ElementName = "Tagging")]
+    public class Tagging
+    {
+        // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
 
-		/// <summary>
-		/// Tag set.
-		/// </summary>
-		[XmlElement(ElementName = "TagSet", IsNullable = true)]
-		public TagSet Tags { get; set; } = null;
+        #region Public-Members
 
-		#endregion
+        /// <summary>
+        /// Tag set.
+        /// </summary>
+        [XmlElement(ElementName = "TagSet", IsNullable = true)]
+        public TagSet Tags { get; set; } = null;
 
-		#region Private-Members
+        #endregion
 
-		#endregion
+        #region Private-Members
 
-		#region Constructors-and-Factories
+        #endregion
 
-		/// <summary>
-		/// Instantiate.
-		/// </summary>
-		public Tagging()
+        #region Constructors-and-Factories
+
+        /// <summary>
+        /// Instantiate.
+        /// </summary>
+        public Tagging()
         {
 
         }
 
-		/// <summary>
-		/// Instantiate.
-		/// </summary>
-		/// <param name="tags">Tags.</param>
-		public Tagging(TagSet tags)
+        /// <summary>
+        /// Instantiate.
+        /// </summary>
+        /// <param name="tags">Tags.</param>
+        public Tagging(TagSet tags)
         {
-			if (tags != null) Tags = tags;
+            if (tags != null) Tags = tags;
         }
 
-		#endregion
+        #endregion
 
-		#region Public-Methods
+        #region Public-Methods
 
-		#endregion
+        #endregion
 
-		#region Private-Methods
+        #region Private-Methods
 
-		#endregion
-	}
+        #endregion
+    }
 }

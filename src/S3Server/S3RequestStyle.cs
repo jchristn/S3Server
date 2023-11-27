@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
-namespace S3ServerLibrary
+﻿namespace S3ServerLibrary
 {
+    using System.Runtime.Serialization;
+    using System.Text.Json.Serialization;
+
     /// <summary>
     /// The type of request, specifically whether or not the bucket is included in the hostname.
     /// </summary>

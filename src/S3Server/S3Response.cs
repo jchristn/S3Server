@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.IO;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-using S3ServerLibrary.S3Objects;
-using WatsonWebserver;
-
-namespace S3ServerLibrary
+﻿namespace S3ServerLibrary
 {
+    using S3ServerLibrary.S3Objects;
+    using System;
+    using System.Collections.Specialized;
+    using System.IO;
+    using System.Text;
+    using System.Text.Json.Serialization;
+    using System.Threading.Tasks;
+    using WatsonWebserver.Core;
+
     /// <summary>
     /// S3 response.
     /// </summary>
@@ -37,7 +35,7 @@ namespace S3ServerLibrary
         /// User-supplied headers to include in the response.
         /// </summary>
         public NameValueCollection Headers
-        { 
+        {
             get
             {
                 return _HttpResponse.Headers;
@@ -139,7 +137,7 @@ namespace S3ServerLibrary
 
         #region Private-Members
 
-        private HttpResponse _HttpResponse = null;
+        private HttpResponseBase _HttpResponse = null;
         private S3Request _S3Request = null;
 
         #endregion
@@ -178,6 +176,8 @@ namespace S3ServerLibrary
         {
             if (ChunkedTransfer) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk().");
 
+            if (ContentLength > 0) _HttpResponse.ContentLength = ContentLength;
+
             SetResponseHeaders();
 
             return await _HttpResponse.Send().ConfigureAwait(false);
@@ -192,7 +192,7 @@ namespace S3ServerLibrary
         {
             if (ChunkedTransfer) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk().");
 
-            byte[] bytes = new byte[0];
+            byte[] bytes = Array.Empty<byte>();
             if (!String.IsNullOrEmpty(data))
             {
                 bytes = Encoding.UTF8.GetBytes(data);
@@ -228,7 +228,7 @@ namespace S3ServerLibrary
             }
             else
             {
-                ms = new MemoryStream(new byte[0]);
+                ms = new MemoryStream(Array.Empty<byte>());
             }
 
             ms.Seek(0, SeekOrigin.Begin);
@@ -246,7 +246,7 @@ namespace S3ServerLibrary
         /// <returns>True if successful.</returns>
         public async Task<bool> Send(long contentLength, Stream stream)
         {
-            if (ChunkedTransfer) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk()."); 
+            if (ChunkedTransfer) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk().");
 
             ContentLength = contentLength;
 
@@ -307,7 +307,7 @@ namespace S3ServerLibrary
 
             return await _HttpResponse.Send(ContentLength, ms).ConfigureAwait(false);
         }
-           
+
         /// <summary>
         /// Send a chunk of data using chunked transfer-encoding to the requestor.
         /// </summary>
@@ -319,8 +319,8 @@ namespace S3ServerLibrary
 
             SetResponseHeaders();
 
-            if (data == null) data = new byte[0];
-            return await _HttpResponse.SendChunk(data, data.Length).ConfigureAwait(false);
+            if (data == null) data = Array.Empty<byte>();
+            return await _HttpResponse.SendChunk(data).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -334,8 +334,8 @@ namespace S3ServerLibrary
 
             SetResponseHeaders();
 
-            if (data == null) data = new byte[0];
-            return await _HttpResponse.SendFinalChunk(data, data.Length).ConfigureAwait(false); 
+            if (data == null) data = Array.Empty<byte>();
+            return await _HttpResponse.SendFinalChunk(data).ConfigureAwait(false);
         }
 
         #endregion
@@ -347,7 +347,7 @@ namespace S3ServerLibrary
             if (Headers == null) Headers = new NameValueCollection(StringComparer.InvariantCultureIgnoreCase);
 
             if (Headers.Get("X-Amz-Date") == null)
-                Headers.Add("X-Amz-Date", DateTime.Now.ToUniversalTime().ToString(Constants.AmazonTimestampFormatVerbose));
+                Headers.Add("X-Amz-Date", DateTime.UtcNow.ToString(Constants.AmazonTimestampFormatVerbose));
 
             if (Headers.Get("Host") == null)
                 Headers.Add("Host", _S3Request.Hostname);
@@ -356,7 +356,7 @@ namespace S3ServerLibrary
                 Headers.Add("Server", "S3Server");
 
             if (Headers.Get("Date") != null) Headers.Remove("Date");
-            
+
             Headers.Add("Date", DateTime.UtcNow.ToString(Constants.AmazonTimestampFormatVerbose));
         }
 

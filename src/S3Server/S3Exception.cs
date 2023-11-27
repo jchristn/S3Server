@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using S3ServerLibrary.S3Objects;
-
-namespace S3ServerLibrary
+﻿namespace S3ServerLibrary
 {
+    using S3ServerLibrary.S3Objects;
+    using System;
+
     /// <summary>
     /// S3 exception.  Throw an instance of this object if an S3 error response needs to be returned to the caller.
     /// </summary>

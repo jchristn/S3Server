@@ -1,72 +1,70 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml.Serialization;
-
-namespace S3ServerLibrary.S3Objects
+﻿namespace S3ServerLibrary.S3Objects
 {
-	/// <summary>
-	/// Tag set.
-	/// </summary>
-	[XmlRoot(ElementName = "TagSet")]
-	public class TagSet
-	{
-		// Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
+    using System.Collections.Generic;
+    using System.Xml.Serialization;
 
-		#region Public-Members
+    /// <summary>
+    /// Tag set.
+    /// </summary>
+    [XmlRoot(ElementName = "TagSet")]
+    public class TagSet
+    {
+        // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
 
-		/// <summary>
-		/// Tag.
-		/// </summary>
-		[XmlElement(ElementName = "Tag", IsNullable = true)]
-		public List<Tag> Tags
+        #region Public-Members
+
+        /// <summary>
+        /// Tag.
+        /// </summary>
+        [XmlElement(ElementName = "Tag", IsNullable = true)]
+        public List<Tag> Tags
         {
-			get
+            get
             {
-				return _TagList;
+                return _TagList;
             }
-			set
+            set
             {
-				if (value == null) _TagList = new List<Tag>();
-				else _TagList = value;
+                if (value == null) _TagList = new List<Tag>();
+                else _TagList = value;
             }
         }
 
-		#endregion
+        #endregion
 
-		#region Private-Members
+        #region Private-Members
 
-		private List<Tag> _TagList = new List<Tag>();
+        private List<Tag> _TagList = new List<Tag>();
 
-		#endregion
+        #endregion
 
-		#region Constructors-and-Factories
+        #region Constructors-and-Factories
 
-		/// <summary>
-		/// Instantiate.
-		/// </summary>
-		public TagSet()
+        /// <summary>
+        /// Instantiate.
+        /// </summary>
+        public TagSet()
         {
 
         }
 
-		/// <summary>
-		/// Instantiate.
-		/// </summary>
-		/// <param name="tags">Tags.</param>
-		public TagSet(List<Tag> tags)
+        /// <summary>
+        /// Instantiate.
+        /// </summary>
+        /// <param name="tags">Tags.</param>
+        public TagSet(List<Tag> tags)
         {
-			Tags = tags;
+            Tags = tags;
         }
 
-		#endregion
+        #endregion
 
-		#region Public-Methods
+        #region Public-Methods
 
-		#endregion
+        #endregion
 
-		#region Private-Methods
+        #region Private-Methods
 
-		#endregion
-	}
+        #endregion
+    }
 }

@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Timestamps;
-using WatsonWebserver;
-
-namespace S3ServerLibrary
+﻿namespace S3ServerLibrary
 {
+    using System;
+    using System.Text.Json.Serialization;
+    using Timestamps;
+    using WatsonWebserver.Core;
+
     /// <summary>
     /// S3 context.
     /// </summary>
@@ -50,7 +47,7 @@ namespace S3ServerLibrary
         /// HTTP context from which the S3 context was created.
         /// </summary>
         [JsonPropertyOrder(999)]
-        public HttpContext Http { get; private set; } = null;
+        public HttpContextBase Http { get; private set; } = null;
 
         #endregion
 
@@ -74,16 +71,16 @@ namespace S3ServerLibrary
         /// Instantiate.
         /// </summary>
         /// <param name="ctx">HTTP context.</param>
-        /// <param name="baseDomains">List of base domains, if any.</param>
+        /// <param name="baseDomainFinder">Callback to invoke to find a base domain for a given hostname, used with virtual hosted style URLs.</param> 
         /// <param name="metadata">User metadata, provided by your application.</param>
         /// <param name="logger">Method to invoke to send log messages.</param>
-        public S3Context(HttpContext ctx, List<string> baseDomains = null, object metadata = null, Action<string> logger = null)
+        public S3Context(HttpContextBase ctx, Func<string, string> baseDomainFinder = null, object metadata = null, Action<string> logger = null)
         {
             if (ctx == null) throw new ArgumentNullException(nameof(ctx));
-             
+
             Metadata = metadata;
             Http = ctx;
-            Request = new S3Request(this, baseDomains, logger);
+            Request = new S3Request(this, baseDomainFinder, logger);
             Response = new S3Response(this);
         }
 

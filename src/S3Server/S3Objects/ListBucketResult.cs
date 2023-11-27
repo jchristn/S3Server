@@ -1,14 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml.Serialization;
-
-namespace S3ServerLibrary.S3Objects
+﻿namespace S3ServerLibrary.S3Objects
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Xml.Serialization;
+
+    /*
+     * Removed Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
+     * From each XmlRoot attribute
+     * 
+     */
+
     /// <summary>
     /// Result from a ListBucket operation.
     /// </summary>
-    [XmlRoot(ElementName = "ListBucketResult", IsNullable = true, Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+    [XmlRoot(ElementName = "ListBucketResult", IsNullable = true)]
     public class ListBucketResult
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
@@ -166,15 +171,15 @@ namespace S3ServerLibrary.S3Objects
         /// <param name="prefixes">Prefixes</param>
         /// <param name="bucketRegion">Bucket region.</param>
         public ListBucketResult(
-            string name, 
-            List<ObjectMetadata> contents, 
-            int keyCount, 
-            int maxKeys, 
-            string prefix = null, 
-            string marker = null, 
-            string delimiter = null, 
-            bool isTruncated = false, 
-            string nextToken = null, 
+            string name,
+            List<ObjectMetadata> contents,
+            int keyCount,
+            int maxKeys,
+            string prefix = null,
+            string marker = null,
+            string delimiter = null,
+            bool isTruncated = false,
+            string nextToken = null,
             CommonPrefixes prefixes = null,
             string bucketRegion = "us-west-1")
         {
@@ -201,11 +206,11 @@ namespace S3ServerLibrary.S3Objects
          * and how they are used by XmlSerializer
          */
 
-        /// <summary>
-        /// Helper method for XML serialization.
-        /// </summary>
-        /// <returns>Boolean</returns>
-        public bool ShouldSerializeMarker()
+    /// <summary>
+    /// Helper method for XML serialization.
+    /// </summary>
+    /// <returns>Boolean</returns>
+    public bool ShouldSerializeMarker()
         {
             return !String.IsNullOrEmpty(Marker);
         }

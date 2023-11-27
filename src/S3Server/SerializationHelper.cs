@@ -1,19 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Xml;
-using System.Xml.Serialization;
-
-namespace S3ServerLibrary
+﻿namespace S3ServerLibrary
 {
+    using System;
+    using System.Collections.Specialized;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+    using System.Text.Json;
+    using System.Text.Json.Serialization;
+    using System.Xml;
+    using System.Xml.Serialization;
+
     /// <summary>
     /// Serialization helper.
     /// </summary>
@@ -27,6 +23,7 @@ namespace S3ServerLibrary
 
         private static ExceptionConverter<Exception> _ExceptionConverter = new ExceptionConverter<Exception>();
         private static NameValueCollectionConverter _NameValueCollectionConverter = new NameValueCollectionConverter();
+        private static JsonStringEnumConverter _StringEnumConverter = new JsonStringEnumConverter();
 
         #endregion
 
@@ -59,7 +56,7 @@ namespace S3ServerLibrary
         /// <param name="obj">Object.</param>
         /// <param name="pretty">Pretty print.</param>
         /// <returns>JSON string.</returns>
-        public static string SerializeJson(object obj, bool pretty)
+        public static string SerializeJson(object obj, bool pretty = true)
         {
             if (obj == null) return null;
 
@@ -69,11 +66,18 @@ namespace S3ServerLibrary
             // see https://github.com/dotnet/runtime/issues/43026
             options.Converters.Add(_ExceptionConverter);
             options.Converters.Add(_NameValueCollectionConverter);
+            options.Converters.Add(_StringEnumConverter);
 
-            if (pretty) options.WriteIndented = true;
-            else options.WriteIndented = false;
-
-            return JsonSerializer.Serialize(obj, options);
+            if (!pretty)
+            {
+                options.WriteIndented = false;
+                return JsonSerializer.Serialize(obj, options);
+            }
+            else
+            {
+                options.WriteIndented = true;
+                return JsonSerializer.Serialize(obj, options);
+            }
         }
 
         /// <summary>
@@ -84,20 +88,14 @@ namespace S3ServerLibrary
         /// <returns>Instance.</returns>
         public static T DeserializeJson<T>(string json)
         {
-            if (String.IsNullOrEmpty(json)) throw new ArgumentNullException(nameof(json));
-            return JsonSerializer.Deserialize<T>(json);
-        }
+            JsonSerializerOptions options = new JsonSerializerOptions();
+            options.AllowTrailingCommas = true;
+            options.ReadCommentHandling = JsonCommentHandling.Skip;
 
-        /// <summary>
-        /// Deserialize JSON. 
-        /// </summary>
-        /// <typeparam name="T">Type.</typeparam>
-        /// <param name="data">JSON data.</param>
-        /// <returns>Instance.</returns>
-        public static T DeserializeJson<T>(byte[] data)
-        {
-            if (data == null || data.Length < 1) throw new ArgumentNullException(nameof(data));
-            return JsonSerializer.Deserialize<T>(data);
+            options.Converters.Add(_ExceptionConverter);
+            options.Converters.Add(_NameValueCollectionConverter);
+            options.Converters.Add(_StringEnumConverter);
+            return JsonSerializer.Deserialize<T>(json, options);
         }
 
         /// <summary>

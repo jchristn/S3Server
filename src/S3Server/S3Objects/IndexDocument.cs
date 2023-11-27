@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml.Serialization;
-
-namespace S3ServerLibrary.S3Objects
+﻿namespace S3ServerLibrary.S3Objects
 {
+    using System.Xml.Serialization;
+
     /// <summary>
     /// Parameters for the object that should serve as the index document for the bucket.
     /// </summary>

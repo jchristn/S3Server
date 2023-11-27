@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace S3ServerLibrary
+﻿namespace S3ServerLibrary
 {
     /// <summary>
-    /// Enable or disable logging for various items.
+    /// Logging settings.
     /// </summary>
     public class LoggingSettings
     {
@@ -14,17 +10,22 @@ namespace S3ServerLibrary
         /// <summary>
         /// Enable or disable debugging for HTTP requests.
         /// </summary>
-        public bool HttpRequests = false;
+        public bool HttpRequests { get; set; } = false;
 
         /// <summary>
         /// Enable or disable debugging for S3 request construction.
         /// </summary>
-        public bool S3Requests = false;
-         
+        public bool S3Requests { get; set; } = false;
+
+        /// <summary>
+        /// Enable or disable debugging for signature validation for version 4 signatures.
+        /// </summary>
+        public bool SignatureV4Validation { get; set; } = false;
+
         /// <summary>
         /// Enable or disable debugging for exceptions.
         /// </summary>
-        public bool Exceptions = false;
+        public bool Exceptions { get; set; } = false;
 
         #endregion
 

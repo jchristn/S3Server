@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Runtime.Serialization;
-using System.Xml.Serialization;
-
-namespace S3ServerLibrary.S3Objects
+﻿namespace S3ServerLibrary.S3Objects
 {
+    using System.Runtime.Serialization;
+    using System.Text.Json.Serialization;
+    using System.Xml.Serialization;
+
     /// <summary>
     /// Retention modes used by S3. 
     /// </summary>

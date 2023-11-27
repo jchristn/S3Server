@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml.Serialization;
-
-namespace S3ServerLibrary.S3Objects
+﻿namespace S3ServerLibrary.S3Objects
 {
+    using System;
+    using System.Xml.Serialization;
+
     /// <summary>
     /// Logging status.
     /// </summary>

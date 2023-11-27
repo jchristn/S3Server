@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml.Serialization;
-
-namespace S3ServerLibrary.S3Objects
+﻿namespace S3ServerLibrary.S3Objects
 {
+    using System;
+    using System.Xml.Serialization;
+
     /// <summary>
     /// Object version.
     /// </summary>
@@ -39,7 +37,7 @@ namespace S3ServerLibrary.S3Objects
         /// Timestamp from the last modification of the resource.
         /// </summary>
         [XmlElement(ElementName = "LastModified")]
-        public DateTime LastModified { get; set; } = DateTime.Now.ToUniversalTime();
+        public DateTime LastModified { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// Object ETag.

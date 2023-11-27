@@ -2,6 +2,25 @@
 
 ## Current Version
 
+v6.0.x
+
+- Breaking changes with dependency updates
+- Moved usings inside of namespaces to reduce collisions
+- Moved from ```new byte[0]``` to ```Array.Empty<byte>()```
+- Size limits for ```ObjectWrite``` (e.g. ```PutObject```), returns ```EntityTooLarge``` if exceeded
+- Boolean for enabling or disabling signature validation
+- Added bucket and object callbacks in support of multipart uploads
+- Added object callback for S3 Select API
+
+## Previous Versions
+
+v5.3.x
+
+- Dependency updates and bugfixes
+- Removal of base domains as a property
+- Added callback ```ServiceCallbacks.FindMatchingBaseDomain```
+- Added test project ```Test.RequestStyle```
+
 v5.2.x
 
 - Minor breaking changes
@@ -15,8 +34,6 @@ v5.2.x
 - Fix timestamp formats (impacting ```ObjectExists``` and ```ObjectRead```)
 - No longer using GUID strings for request ID and trace ID
 - ETag now encapsulated in quotes
-
-## Previous Versions
 
 v5.1.x
 

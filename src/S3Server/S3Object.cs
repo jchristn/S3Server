@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using S3ServerLibrary.S3Objects;
-
-namespace S3ServerLibrary
+﻿namespace S3ServerLibrary
 {
+    using S3ServerLibrary.S3Objects;
+    using System;
+    using System.IO;
+    using System.Text;
+
     /// <summary>
     /// S3 object.
     /// </summary>
@@ -31,7 +30,7 @@ namespace S3ServerLibrary
         /// <summary>
         /// Timestamp from the last modification of the resource.
         /// </summary>
-        public DateTime LastModified { get; set; } = DateTime.Now.ToUniversalTime();
+        public DateTime LastModified { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// ETag of the resource.
@@ -80,7 +79,7 @@ namespace S3ServerLibrary
         /// The class of storage where the resource resides.
         /// Valid values are STANDARD, REDUCED_REDUNDANCY, GLACIER, STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING, DEEP_ARCHIVE, OUTPOSTS.
         /// </summary>
-        public StorageClassEnum StorageClass { get; set; } = StorageClassEnum.STANDARD;
+        public StorageClassEnum? StorageClass { get; set; } = StorageClassEnum.STANDARD;
 
         /// <summary>
         /// Object owner.

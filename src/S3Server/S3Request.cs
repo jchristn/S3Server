@@ -1,22 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Runtime.Serialization;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using PrettyId;
-using WatsonWebserver;
-
-namespace S3ServerLibrary
+﻿namespace S3ServerLibrary
 {
+    using PrettyId;
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Net;
+    using System.Text.Json.Serialization;
+    using System.Text.RegularExpressions;
+    using System.Threading.Tasks;
+    using WatsonWebserver.Core;
+
     /// <summary>
     /// S3 request.
     /// </summary>
@@ -25,19 +18,14 @@ namespace S3ServerLibrary
         #region Public-Members
 
         /// <summary>
-        /// Time of creation in UTC.
-        /// </summary>
-        public DateTime TimestampUtc { get; private set; } = DateTime.Now.ToUniversalTime();
-
-        /// <summary>
         /// Request ID.
         /// </summary>
-        public string RequestId { get; set; } = IdGenerator.Generate(32);
+        public string RequestId { get; set; } = IdGenerator.GenerateBase64(null, 32);
 
         /// <summary>
         /// Trace ID.
         /// </summary>
-        public string TraceId { get; set; } = IdGenerator.Generate(32);
+        public string TraceId { get; set; } = IdGenerator.GenerateBase64(null, 32);
 
         /// <summary>
         /// Indicates if the request includes the bucket name in the hostname or not.
@@ -48,7 +36,7 @@ namespace S3ServerLibrary
         /// Indicates the type of S3 request.
         /// </summary>
         public S3RequestType RequestType { get; private set; } = S3RequestType.Unknown;
-         
+
         /// <summary>
         /// Indicates if chunked transfer-encoding is in use.
         /// </summary>
@@ -100,6 +88,38 @@ namespace S3ServerLibrary
         public string Marker { get; set; } = null;
 
         /// <summary>
+        /// Part number from a multipart upload.
+        /// </summary>
+        public int PartNumber
+        {
+            get
+            {
+                return _PartNumber;
+            }
+            set
+            {
+                if (value < 0) throw new ArgumentOutOfRangeException(nameof(PartNumber));
+                _PartNumber = value;
+            }
+        }
+
+        /// <summary>
+        /// Part number arker.
+        /// </summary>
+        public int PartNumberMarker
+        {
+            get
+            {
+                return _PartNumberMarker;
+            }
+            set
+            {
+                if (value < 0) throw new ArgumentOutOfRangeException(nameof(PartNumberMarker));
+                _PartNumberMarker = value;
+            }
+        }
+
+        /// <summary>
         /// Maximum number of keys to retrieve in an enumeration.
         /// </summary>
         public int MaxKeys
@@ -116,9 +136,30 @@ namespace S3ServerLibrary
         }
 
         /// <summary>
+        /// Maximum number of parts to retrieve in an enumeration.
+        /// </summary>
+        public int MaxParts
+        {
+            get
+            {
+                return _MaxParts;
+            }
+            set
+            {
+                if (value < 0) throw new ArgumentOutOfRangeException(nameof(MaxParts));
+                _MaxParts = value;
+            }
+        }
+
+        /// <summary>
         /// Object version ID.
         /// </summary>
         public string VersionId { get; set; } = null;
+
+        /// <summary>
+        /// Upload ID.
+        /// </summary>
+        public string UploadId { get; set; } = null;
 
         /// <summary>
         /// Authorization header string, in full.
@@ -188,7 +229,7 @@ namespace S3ServerLibrary
             }
             set
             {
-                if (value != null && value.Value < 0) 
+                if (value != null && value.Value < 0)
                     throw new ArgumentOutOfRangeException(nameof(RangeStart));
                 _RangeStart = value;
             }
@@ -310,9 +351,9 @@ namespace S3ServerLibrary
             get
             {
                 switch (RequestType)
-                { 
-                    case S3RequestType.BucketDelete: 
-                    case S3RequestType.BucketDeleteTags: 
+                {
+                    case S3RequestType.BucketDelete:
+                    case S3RequestType.BucketDeleteTags:
                     case S3RequestType.BucketDeleteWebsite:
                     case S3RequestType.BucketWrite:
                     case S3RequestType.BucketWriteLogging:
@@ -321,7 +362,7 @@ namespace S3ServerLibrary
                     case S3RequestType.BucketWriteWebsite:
                         return S3PermissionType.BucketWrite;
 
-                    case S3RequestType.BucketExists: 
+                    case S3RequestType.BucketExists:
                     case S3RequestType.BucketRead:
                     case S3RequestType.BucketReadLocation:
                     case S3RequestType.BucketReadLogging:
@@ -336,7 +377,7 @@ namespace S3ServerLibrary
 
                     case S3RequestType.BucketWriteAcl:
                         return S3PermissionType.BucketWriteAcp;
-                         
+
                     case S3RequestType.ObjectExists:
                     case S3RequestType.ObjectRead:
                     case S3RequestType.ObjectReadLegalHold:
@@ -359,7 +400,7 @@ namespace S3ServerLibrary
 
                     case S3RequestType.ObjectWriteAcl:
                         return S3PermissionType.ObjectWriteAcp;
-                
+
                     case S3RequestType.ListBuckets:
                     case S3RequestType.Unknown:
                     default:
@@ -384,7 +425,7 @@ namespace S3ServerLibrary
                 else _SignedHeaders = value;
             }
         }
-         
+
         /// <summary>
         /// Stream containing the request body.
         /// </summary>
@@ -422,16 +463,20 @@ namespace S3ServerLibrary
         #region Private-Members
 
         private string _Header = "[S3Request] ";
-        private HttpRequest _HttpRequest = null;
+        private HttpRequestBase _HttpRequest = null;
         private Action<string> _Logger = null;
-        private List<string> _BaseDomains = new List<string>();
         private List<string> _SignedHeaders = new List<string>();
 
         private Dictionary<object, object> _UserMetadata = new Dictionary<object, object>();
 
         private int _MaxKeys = 1000;
+        private int _MaxParts = 1000;
+        private int _PartNumber = 1;
+        private int _PartNumberMarker = 1;
         private long? _RangeStart = null;
         private long? _RangeEnd = null;
+
+        private Func<string, string> _FindMatchingBaseDomain = null;
 
         #endregion
 
@@ -448,17 +493,16 @@ namespace S3ServerLibrary
         /// Instantiates the object.
         /// </summary>
         /// <param name="ctx">S3 context.</param>
-        /// <param name="baseDomains">List of base domains against which the hostname should be evaluated to identify the bucket.  For instance, to resolve buckets for *.localhost, specify '.localhost'.</param> 
+        /// <param name="baseDomainFinder">Callback to invoke to find a base domain for a given hostname, used with virtual hosted style URLs.</param> 
         /// <param name="logger">Method to invoke to send log messages.</param> 
-        public S3Request(S3Context ctx, List<string> baseDomains = null, Action<string> logger = null)
+        public S3Request(S3Context ctx, Func<string, string> baseDomainFinder = null, Action<string> logger = null)
         {
             if (ctx == null) throw new ArgumentNullException(nameof(ctx));
             if (ctx.Http == null) throw new ArgumentNullException(nameof(ctx.Http));
-            if (baseDomains != null) _BaseDomains = baseDomains;
 
             _HttpRequest = ctx.Http.Request;
             _Logger = logger;
-            _BaseDomains = baseDomains;
+            _FindMatchingBaseDomain = baseDomainFinder;
 
             ParseHttpContext();
         }
@@ -476,7 +520,7 @@ namespace S3ServerLibrary
         {
             if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
 
-            if (_HttpRequest != null )
+            if (_HttpRequest != null)
             {
                 return _HttpRequest.HeaderExists(key);
             }
@@ -554,7 +598,6 @@ namespace S3ServerLibrary
 
             #region Initialize
 
-            TimestampUtc = DateTime.Now.ToUniversalTime();
             Chunked = _HttpRequest.ChunkedTransfer;
             Region = null;
             Hostname = _HttpRequest.Destination.Hostname;
@@ -572,14 +615,15 @@ namespace S3ServerLibrary
 
             if (_HttpRequest.Query.Elements != null && _HttpRequest.Query.Elements.Count > 0)
             {
-                VersionId = RetrieveQueryValue("versionid");
-                Prefix = RetrieveQueryValue("prefix");
-                Delimiter = RetrieveQueryValue("delimiter");
-                Marker = RetrieveQueryValue("marker");
-                ContinuationToken = RetrieveQueryValue("continuation-token");
-                Expires = RetrieveQueryValue("expires");
                 AccessKey = RetrieveQueryValue("awsaccesskeyid");
+                ContinuationToken = RetrieveQueryValue("continuation-token");
+                Delimiter = RetrieveQueryValue("delimiter");
+                Expires = RetrieveQueryValue("expires");
+                Marker = RetrieveQueryValue("marker");
+                Prefix = RetrieveQueryValue("prefix");
                 Signature = RetrieveQueryValue("signature");
+                UploadId = RetrieveQueryValue("uploadid");
+                VersionId = RetrieveQueryValue("versionid");
 
                 if (QuerystringExists("max-keys"))
                 {
@@ -590,6 +634,45 @@ namespace S3ServerLibrary
                         if (Int32.TryParse(_HttpRequest.Query.Elements["max-keys"], out maxKeys))
                         {
                             MaxKeys = maxKeys;
+                        }
+                    }
+                }
+
+                if (QuerystringExists("max-parts"))
+                {
+                    int maxParts = 0;
+                    string maxPartsStr = RetrieveQueryValue("max-parts");
+                    if (!String.IsNullOrEmpty(maxPartsStr))
+                    {
+                        if (Int32.TryParse(_HttpRequest.Query.Elements["max-parts"], out maxParts))
+                        {
+                            MaxParts = maxParts;
+                        }
+                    }
+                }
+
+                if (QuerystringExists("partnumber"))
+                {
+                    int partNum = 0;
+                    string partNumStr = RetrieveQueryValue("partnumber");
+                    if (!String.IsNullOrEmpty(partNumStr))
+                    {
+                        if (Int32.TryParse(_HttpRequest.Query.Elements["partnumber"], out partNum))
+                        {
+                            PartNumber = partNum;
+                        }
+                    }
+                }
+
+                if (QuerystringExists("part-number-marker"))
+                {
+                    int partNumMarker = 0;
+                    string partNumMarkerStr = RetrieveQueryValue("part-number-marker");
+                    if (!String.IsNullOrEmpty(partNumMarkerStr))
+                    {
+                        if (Int32.TryParse(_HttpRequest.Query.Elements["part-number-marker"], out partNumMarker))
+                        {
+                            PartNumberMarker = partNumMarker;
                         }
                     }
                 }
@@ -626,6 +709,7 @@ namespace S3ServerLibrary
                 if (HeaderExists("content-md5")) ContentMd5 = RetrieveHeaderValue("content-md5");
                 if (HeaderExists("content-type")) ContentType = RetrieveHeaderValue("content-type");
                 if (HeaderExists("host")) Host = RetrieveHeaderValue("host");
+
                 if (HeaderExists("x-amz-content-sha256"))
                 {
                     ContentSha256 = RetrieveHeaderValue("x-amz-content-sha256");
@@ -640,34 +724,16 @@ namespace S3ServerLibrary
                 }
 
                 if (HeaderExists("date"))
-                {
                     Date = RetrieveHeaderValue("date");
-                    DateTime dt;
-
-                    if (DateTime.TryParseExact(Date, Constants.AmazonTimestampFormatVerbose, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out dt))
-                    {
-                        TimestampUtc = dt;
-                    }
-                    else if (DateTime.TryParseExact(Date, Constants.AmazonTimestampFormatCompact, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out dt))
-                    {
-                        TimestampUtc = dt;
-                    }
-                }
 
                 if (HeaderExists("x-amz-date"))
-                {
                     Date = RetrieveHeaderValue("x-amz-date");
-                    DateTime dt;
 
-                    if (DateTime.TryParseExact(Date, Constants.AmazonTimestampFormatVerbose, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out dt))
-                    {
-                        TimestampUtc = dt;
-                    }
-                    else if (DateTime.TryParseExact(Date, Constants.AmazonTimestampFormatCompact, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out dt))
-                    {
-                        TimestampUtc = dt;
-                    }
-                }
+                if (HeaderExists("x-amz-request-id"))
+                    RequestId = RetrieveHeaderValue("x-amz-request-id");
+
+                if (HeaderExists("x-amz-id-2"))
+                    TraceId = RetrieveHeaderValue("x-amz-id-2");
             }
 
             #endregion
@@ -702,7 +768,7 @@ namespace S3ServerLibrary
                 // [encryption] [values]
                 string[] valsOuter = Authorization.Split(new[] { ' ' }, 2);
                 if (valsOuter == null || valsOuter.Length < 2) throw new ArgumentException(exceptionMsg);
-                 
+
                 logMessage += _Header + "Authorization header : " + Authorization + Environment.NewLine;
                 logMessage += _Header + "Outer header values  :" + Environment.NewLine;
                 for (int i = 0; i < valsOuter.Length; i++)
@@ -720,11 +786,11 @@ namespace S3ServerLibrary
                     // Authorization: AWS AWSAccessKeyId:Signature
 
                     string[] valsInner = valsOuter[1].Split(':');
-                     
+
                     logMessage += _Header + "Inner header values" + Environment.NewLine;
                     for (int i = 0; i < valsInner.Length; i++)
                     {
-                        logMessage += "  " + i + ": " + valsInner[i].Trim() + Environment.NewLine; 
+                        logMessage += "  " + i + ": " + valsInner[i].Trim() + Environment.NewLine;
                     }
 
                     if (valsInner.Length != 2) throw new ArgumentException(exceptionMsg);
@@ -766,8 +832,8 @@ namespace S3ServerLibrary
 
                         currKey = currKey.Trim();
                         keyValuePairsTrimmed.Add(currKey);
-                         
-                        logMessage += i + ": " + keyValuePairs[i].Trim() + Environment.NewLine; 
+
+                        logMessage += i + ": " + keyValuePairs[i].Trim() + Environment.NewLine;
                     }
 
                     foreach (string currKey in keyValuePairsTrimmed)
@@ -806,7 +872,7 @@ namespace S3ServerLibrary
                         {
                             #region Signature
 
-                            Signature = currKey.Replace("Signature=", "").Trim(); 
+                            Signature = currKey.Replace("Signature=", "").Trim();
 
                             #endregion
                         }
@@ -819,12 +885,12 @@ namespace S3ServerLibrary
                             #endregion
                         }
                     }
-                     
-                    logMessage += 
+
+                    logMessage +=
                         _Header + "Signature version    : " + SignatureVersion.ToString() + Environment.NewLine +
                         _Header + "Access key           : " + AccessKey + Environment.NewLine +
                         _Header + "Region               : " + Region + Environment.NewLine +
-                        _Header + "Signature            : " + Signature; 
+                        _Header + "Signature            : " + Signature;
 
                     return;
 
@@ -855,16 +921,16 @@ namespace S3ServerLibrary
             }
             else
             {
-                if (_BaseDomains == null || _BaseDomains.Count < 1)
+                if (_FindMatchingBaseDomain == null)
                 {
+                    // assume path style
                     RequestStyle = S3RequestStyle.PathStyle;
-                    _Logger?.Invoke(_Header + "no base hostnames, request assumed to have bucket in URL");
+                    _Logger?.Invoke(_Header + "no base domain finder specified, request assumed to have bucket in URL");
                 }
                 else
                 {
-                    // currently looking for exact matches and Hostname has the bucket name in it
-                    // need to look to see if any of the base domains are contained WITHIN the hostname
-                    BaseDomain = GetMatchingBaseDomain(Hostname);
+                    // assume virtual hosted style
+                    BaseDomain = _FindMatchingBaseDomain(Hostname);
                     if (String.IsNullOrEmpty(BaseDomain))
                     {
                         RequestStyle = S3RequestStyle.PathStyle;
@@ -904,8 +970,8 @@ namespace S3ServerLibrary
                     break;
             }
 
-            _Logger?.Invoke(_Header + 
-                "parsed URL:" + Environment.NewLine + 
+            _Logger?.Invoke(_Header +
+                "parsed URL:" + Environment.NewLine +
                 "  Full URL      : " + _HttpRequest.Url.Full + Environment.NewLine +
                 "  Raw URL       : " + _HttpRequest.Url.RawWithoutQuery + Environment.NewLine +
                 "  Hostname      : " + Hostname + Environment.NewLine +
@@ -914,7 +980,7 @@ namespace S3ServerLibrary
                 "  Style         : " + RequestStyle.ToString() + Environment.NewLine +
                 "  Object key    : " + Key + Environment.NewLine +
                 "  Region        : " + Region);
-             
+
             return;
         }
 
@@ -932,7 +998,7 @@ namespace S3ServerLibrary
             if (!String.IsNullOrEmpty(vals[0])) start = Convert.ToInt64(vals[0]);
             if (!String.IsNullOrEmpty(vals[1])) end = Convert.ToInt64(vals[1]);
         }
-         
+
         private void SetRequestType()
         {
             switch (_HttpRequest.Method)
@@ -967,6 +1033,8 @@ namespace S3ServerLibrary
                             RequestType = S3RequestType.BucketReadLogging;
                         else if (QuerystringExists("tagging"))
                             RequestType = S3RequestType.BucketReadTags;
+                        else if (QuerystringExists("uploads"))
+                            RequestType = S3RequestType.BucketReadMultipartUploads;
                         else if (QuerystringExists("versions"))
                             RequestType = S3RequestType.BucketReadVersions;
                         else if (QuerystringExists("versioning"))
@@ -982,12 +1050,14 @@ namespace S3ServerLibrary
                             RequestType = S3RequestType.ObjectReadRange;
                         else if (QuerystringExists("acl"))
                             RequestType = S3RequestType.ObjectReadAcl;
-                        else if (QuerystringExists("tagging"))
-                            RequestType = S3RequestType.ObjectReadTags;
                         else if (QuerystringExists("legal-hold"))
                             RequestType = S3RequestType.ObjectReadLegalHold;
+                        else if (QuerystringExists("uploadid"))
+                            RequestType = S3RequestType.ObjectReadParts;
                         else if (QuerystringExists("retention"))
                             RequestType = S3RequestType.ObjectReadRetention;
+                        else if (QuerystringExists("tagging"))
+                            RequestType = S3RequestType.ObjectReadTags;
                         else
                             RequestType = S3RequestType.ObjectRead;
                     }
@@ -1023,6 +1093,8 @@ namespace S3ServerLibrary
                             RequestType = S3RequestType.ObjectWriteLegalHold;
                         else if (QuerystringExists("retention"))
                             RequestType = S3RequestType.ObjectWriteRetention;
+                        else if (QuerystringExists("partnumber") && QuerystringExists("uploadid"))
+                            RequestType = S3RequestType.ObjectUploadPart;
                         else
                             RequestType = S3RequestType.ObjectWrite;
                     }
@@ -1037,6 +1109,20 @@ namespace S3ServerLibrary
                     {
                         if (QuerystringExists("delete"))
                             RequestType = S3RequestType.ObjectDeleteMultiple;
+
+                        if (!String.IsNullOrEmpty(Key))
+                        {
+                            if (QuerystringExists("select")
+                                && QuerystringExists("select-type")
+                                && RetrieveQueryValue("select-type").Equals("2"))
+                            {
+                                RequestType = S3RequestType.ObjectSelectContent;
+                            }
+                            if (QuerystringExists("uploadid"))
+                                RequestType = S3RequestType.ObjectCompleteMultipartUpload;
+                            if (QuerystringExists("uploads"))
+                                RequestType = S3RequestType.ObjectCreateMultipartUpload;
+                        }
                     }
                     break;
 
@@ -1062,33 +1148,15 @@ namespace S3ServerLibrary
                             RequestType = S3RequestType.ObjectDeleteAcl;
                         else if (QuerystringExists("tagging"))
                             RequestType = S3RequestType.ObjectDeleteTags;
+                        else if (QuerystringExists("uploadid"))
+                            RequestType = S3RequestType.ObjectAbortMultipartUpload;
                         else
                             RequestType = S3RequestType.ObjectDelete;
                     }
                     break;
 
                     #endregion
-            } 
-        }
-
-        private string GetMatchingBaseDomain(string hostname)
-        {
-            string eval = "." + hostname;
-
-            List<string> matches = new List<string>();
-
-            foreach (string baseDomain in _BaseDomains)
-            {
-                if (eval.Equals(baseDomain)) return baseDomain;
-                if (eval.EndsWith(baseDomain)) matches.Add(baseDomain);
             }
-
-            if (matches.Count > 0)
-            {
-                return matches.Aggregate("", (max, cur) => max.Length > cur.Length ? max : cur);
-            }
-
-            return null;
         }
 
         private static bool IsIpv4Address(string val)

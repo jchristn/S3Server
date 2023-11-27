@@ -1,27 +1,29 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;net7.0</TargetFrameworks>
-		<Version>5.2.1</Version>
+		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+		<Version>6.0.1</Version>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Authors>Joel Christner</Authors>
 		<Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
 		<Copyright>(c)2023 Joel Christner</Copyright>
-		<PackageReleaseNotes>Dependency update and minor fixes.</PackageReleaseNotes>
+		<PackageReleaseNotes>Dependency update and change to base domains.</PackageReleaseNotes>
 		<PackageTags>aws s3 storage rest interface server less3 minio</PackageTags>
 		<PackageLicenseUrl></PackageLicenseUrl>
 		<PackageProjectUrl>https://github.com/jchristn/S3Server</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/jchristn/S3Server</RepositoryUrl>
 		<RepositoryType>Github</RepositoryType>
 		<PackageIconUrl></PackageIconUrl>
-		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<PackageIcon>logo.png</PackageIcon>
 		<PackageId>S3Server</PackageId>
 		<RootNamespace>S3ServerLibrary</RootNamespace>
 		<SignAssembly>True</SignAssembly>
 		<AssemblyOriginatorKeyFile>..\..\S3Server.snk</AssemblyOriginatorKeyFile>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+		<IncludeSymbols>True</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
 
 
@@ -42,13 +44,18 @@
 		<DocumentationFile>S3Server.xml</DocumentationFile>
 	</PropertyGroup>
 
-	
+
 	<ItemGroup>
-		<PackageReference Include="PrettyId" Version="1.0.0.4" />
-		<PackageReference Include="Watson" Version="5.1.2" />
+		<PackageReference Include="AWSSignatureGenerator" Version="1.0.1" />
+		<PackageReference Include="PrettyId" Version="1.0.1" />
+		<PackageReference Include="Watson" Version="6.1.1" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Include="..\..\LICENSE.md">
+		  <Pack>True</Pack>
+		  <PackagePath>\</PackagePath>
+		</None>
 		<None Include="..\..\README.md">
 		  <Pack>True</Pack>
 		  <PackagePath>\</PackagePath>
@@ -56,11 +63,6 @@
 		<None Include="assets\logo.png">
 			<Pack>True</Pack>
 			<PackagePath></PackagePath>
-		</None>
-		<None Include="LICENSE.md">
-			<Pack>True</Pack>
-			<PackagePath></PackagePath>
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
 
@@ -72,6 +74,12 @@
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 		<None Include="S3Server.xml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Include="..\..\LICENSE.md">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Include="..\..\README.md">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>

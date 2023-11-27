@@ -1,14 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks; 
-using WatsonWebserver;
-using S3ServerLibrary.Callbacks;
-using S3ServerLibrary.S3Objects;
-
-namespace S3ServerLibrary
+﻿namespace S3ServerLibrary
 {
+    using S3ServerLibrary.Callbacks;
+    using S3ServerLibrary.S3Objects;
+    using System;
+    using System.Text;
+    using System.Threading.Tasks;
+    using AWSSignatureGenerator;
+    using WatsonWebserver;
+    using WatsonWebserver.Core;
+    using System.Net.NetworkInformation;
+
     /// <summary>
     /// S3 server.  
     /// Bucket names must not be in the hostname; they must be in the URL path. 
@@ -24,19 +25,25 @@ namespace S3ServerLibrary
         {
             get
             {
-                return _Server.IsListening;
+                return _Webserver.IsListening;
             }
         }
 
         /// <summary>
-        /// Method to invoke when sending a log message.
+        /// Settings.
         /// </summary>
-        public Action<string> Logger = null;
-
-        /// <summary>
-        /// Enable or disable logging for various items.
-        /// </summary>
-        public LoggingSettings Logging = new LoggingSettings();
+        public S3ServerSettings Settings
+        {
+            get
+            {
+                return _Settings;
+            }
+            set
+            {
+                if (value == null) _Settings = new S3ServerSettings();
+                else _Settings = value;
+            }
+        }
 
         /// <summary>
         /// Callback methods for requests received for service operations.
@@ -53,40 +60,6 @@ namespace S3ServerLibrary
         /// </summary>
         public ObjectCallbacks Object = new ObjectCallbacks();
 
-        /// <summary>
-        /// Callback method to use prior to examining requests for AWS S3 APIs.
-        /// Return true if you wish to terminate the request, otherwise, return false, which will further route the request.
-        /// </summary>
-        public Func<S3Context, Task<bool>> PreRequestHandler = null;
-
-        /// <summary>
-        /// Callback method to call when no matching AWS S3 API callback could be found. 
-        /// </summary>
-        public Func<S3Context, Task> DefaultRequestHandler = null;
-
-        /// <summary>
-        /// Callback method to call after a response has been sent.
-        /// </summary>
-        public Func<S3Context, Task> PostRequestHandler = null;
-
-        /// <summary>
-        /// The list of base domains against which incoming requests should be compared to identify the bucket name.
-        /// For instance, if you wish to identify the bucket 'bucket' from a request to host 'bucket.mys3server.com', set this value to '.mys3server.com'.
-        /// If the list is empty, or, a base domain cannot be identified, S3Server will assume that the bucket name is in the URL.
-        /// </summary>
-        public List<string> BaseDomains
-        {
-            get
-            {
-                return _BaseDomains;
-            }
-            set
-            {
-                if (value == null) _BaseDomains = new List<string>();
-                else _BaseDomains = value;
-            }
-        }
-
         #endregion
 
         #region Private-Members
@@ -94,65 +67,22 @@ namespace S3ServerLibrary
         private string _Header = "[S3Server] ";
         private bool _Disposed = false;
 
-        private string _ListenerHostname = null;
-        private int _ListenerPort = 0;
-        private bool _Ssl = false;
-        private Server _Server = null;
-        private List<string> _BaseDomains = new List<string>();
-         
+        private Webserver _Webserver = null;
+        private S3ServerSettings _Settings = new S3ServerSettings();
+
         #endregion
 
         #region Constructors-and-Factories
 
         /// <summary>
         /// Instantiate.
-        /// Using this constructor results in no pre-request handler (your own API handler), and no custom default request handler (when an S3 API cannot be matched).
         /// </summary>
-        /// <param name="hostname">The hostname on which to listen for HTTP requests.  If you listen on a wildcard such as '*', '+', or '0.0.0.0', you must run with elevated/administrative privileges.</param>
-        /// <param name="port">The TCP port number.</param>
-        /// <param name="ssl">Enable or disable SSL.</param> 
-        public S3Server(
-            string hostname,
-            int port,
-            bool ssl)
+        /// <param name="settings">Settings.</param>
+        public S3Server(S3ServerSettings settings)
         {
-            if (String.IsNullOrEmpty(hostname)) throw new ArgumentNullException(nameof(hostname));
-            if (port < 0 || port > 65535) throw new ArgumentException("Port must be between 0 and 65535.");
-
-            _ListenerHostname = hostname;
-            _ListenerPort = port;
-            _Ssl = ssl;
-
-            PreRequestHandler = null;
-            DefaultRequestHandler = null;
-
-            _Server = new Server(_ListenerHostname, _ListenerPort, _Ssl, RequestHandler); 
-        }
-
-        /// <summary>
-        /// Instantiate.
-        /// Using this constructor results in no pre-request handler (your own API handler), but (if not null) allows a custom default request handler (when an S3 API cannot be matched).
-        /// </summary>
-        /// <param name="hostname">The hostname on which to listen for HTTP requests.  If you listen on a wildcard such as '*', '+', or '0.0.0.0', you must run with elevated/administrative privileges.</param>
-        /// <param name="port">The TCP port number.</param>
-        /// <param name="ssl">Enable or disable SSL.</param> 
-        /// <param name="defaultRequestHandler">Default request handler used when no other callbacks can be found.</param>
-        public S3Server(
-            string hostname,
-            int port,
-            bool ssl,
-            Func<S3Context, Task> defaultRequestHandler)
-        {
-            if (String.IsNullOrEmpty(hostname)) throw new ArgumentNullException(nameof(hostname));
-            if (port < 0 || port > 65535) throw new ArgumentException("Port must be between 0 and 65535.");
-
-            _ListenerHostname = hostname;
-            _ListenerPort = port;
-            _Ssl = ssl;
-            PreRequestHandler = null;
-            DefaultRequestHandler = defaultRequestHandler;
-
-            _Server = new Server(_ListenerHostname, _ListenerPort, _Ssl, RequestHandler); 
+            if (settings == null) settings = new S3ServerSettings();
+            _Settings = settings;
+            _Webserver = new Webserver(_Settings.Webserver, RequestHandler);
         }
 
         #endregion
@@ -168,13 +98,13 @@ namespace S3ServerLibrary
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-         
+
         /// <summary>
         /// Start accepting new connections.
         /// </summary>
         public void Start()
-        { 
-            _Server.Start();
+        {
+            _Webserver.Start();
         }
 
         /// <summary>
@@ -182,7 +112,7 @@ namespace S3ServerLibrary
         /// </summary>
         public void Stop()
         {
-            _Server.Stop();
+            _Webserver.Stop();
         }
 
         #endregion
@@ -202,17 +132,16 @@ namespace S3ServerLibrary
 
             if (disposing)
             {
-                Logger?.Invoke(_Header + "Dispose requested");
+                _Settings.Logger?.Invoke(_Header + "dispose requested");
 
-                if (_Server != null) _Server.Dispose();
+                if (_Webserver != null) _Webserver.Dispose();
             }
 
-            _Server = null;
-
+            _Webserver = null;
             _Disposed = true;
         }
 
-        private async Task RequestHandler(HttpContext ctx)
+        private async Task RequestHandler(HttpContextBase ctx)
         {
             if (ctx == null) throw new ArgumentNullException(nameof(ctx));
 
@@ -235,30 +164,79 @@ namespace S3ServerLibrary
             DeleteMultiple delMultiple = null;
             DeleteResult delResult = null;
             Error error = null;
+            InitiateMultipartUploadResult initiateMultipart = null;
+            ListMultipartUploadsResult listMultipartUploads = null;
+            ListPartsResult listParts = null;
+            CompleteMultipartUpload completeMultipartRequest = null;
+            CompleteMultipartUploadResult completeMultipartResult = null;
+            SelectObjectContentRequest selectRequest = null;
 
             S3Context s3ctx = null;
 
             try
             {
-                using (s3ctx = new S3Context(ctx, _BaseDomains, null, (Logging.S3Requests ? Logger : null)))
+                using (s3ctx = new S3Context(ctx, Service.FindMatchingBaseDomain, null, (_Settings.Logging.S3Requests ? _Settings.Logger : null)))
                 {
                     s3ctx.Response.Headers.Add(Constants.HeaderRequestId, s3ctx.Request.RequestId);
                     s3ctx.Response.Headers.Add(Constants.HeaderTraceId, s3ctx.Request.TraceId);
                     s3ctx.Response.Headers.Add(Constants.HeaderConnection, "close");
 
-                    if (Logging.HttpRequests)
-                        Logger?.Invoke(_Header + "HTTP request: " + Environment.NewLine + s3ctx.Http.ToJson(true));
+                    if (_Settings.Logging.HttpRequests)
+                        _Settings.Logger?.Invoke(_Header + "HTTP request: " + Environment.NewLine + SerializationHelper.SerializeJson(s3ctx.Http, true));
 
-                    if (Logging.S3Requests)
-                        Logger?.Invoke(_Header + "S3 request: " + Environment.NewLine + s3ctx.Request.ToJson(true));
+                    if (_Settings.Logging.S3Requests)
+                        _Settings.Logger?.Invoke(_Header + "S3 request: " + Environment.NewLine + SerializationHelper.SerializeJson(s3ctx.Request, true));
 
-                    if (PreRequestHandler != null)
+                    if (_Settings.PreRequestHandler != null)
                     {
-                        success = await PreRequestHandler(s3ctx).ConfigureAwait(false);
+                        success = await _Settings.PreRequestHandler(s3ctx).ConfigureAwait(false);
                         if (success)
                         {
                             await s3ctx.Response.Send().ConfigureAwait(false);
                             return;
+                        }
+                    }
+
+                    if (_Settings.EnableSignatures)
+                    {
+                        if (Service.GetSecretKey != null)
+                        {
+                            string secretKey = Service.GetSecretKey(s3ctx);
+                            if (String.IsNullOrEmpty(secretKey))
+                            {
+                                _Settings.Logger?.Invoke(_Header + "unable to retrieve secret key for signature " + s3ctx.Request.Signature);
+                                throw new S3Exception(new Error(ErrorCode.AccessDenied));
+                            }
+
+                            if (s3ctx.Request.SignatureVersion == S3SignatureVersion.Version2)
+                            {
+                                _Settings.Logger?.Invoke(_Header + "invalid v2 signature '" + s3ctx.Request.Signature + "'");
+                                throw new S3Exception(new Error(ErrorCode.SignatureDoesNotMatch));
+                            }
+                            else if (s3ctx.Request.SignatureVersion == S3SignatureVersion.Version4)
+                            {
+                                V4SignatureResult result = new V4SignatureResult(
+                                    DateTime.UtcNow.ToString(Constants.AmazonTimestampFormatCompact),
+                                    s3ctx.Http.Request.Method.ToString().ToUpper(),
+                                    s3ctx.Http.Request.Url.Full,
+                                    s3ctx.Request.AccessKey,
+                                    secretKey,
+                                    s3ctx.Request.Region,
+                                    "s3",
+                                    s3ctx.Http.Request.Headers,
+                                    s3ctx.Http.Request.DataAsBytes);
+                                 
+                                if (!result.Signature.Equals(s3ctx.Request.Signature))
+                                {
+                                    _Settings.Logger?.Invoke(_Header + "invalid v4 signature '" + s3ctx.Request.Signature + "'");
+                                    throw new S3Exception(new Error(ErrorCode.SignatureDoesNotMatch));
+                                }
+                            }
+                            else
+                            {
+                                _Settings.Logger?.Invoke(_Header + "unknown signature version");
+                                throw new S3Exception(new Error(ErrorCode.AccessDenied));
+                            }
                         }
                     }
 
@@ -273,8 +251,7 @@ namespace S3ServerLibrary
                                 if (!String.IsNullOrEmpty(region)) s3ctx.Response.Headers.Add(Constants.HeaderBucketRegion, region);
 
                                 s3ctx.Response.StatusCode = 200;
-                                s3ctx.Response.ContentType = Constants.ContentTypeXml;
-                                await s3ctx.Response.Send(SerializationHelper.SerializeXml(buckets)).ConfigureAwait(false);
+                                await s3ctx.Response.Send().ConfigureAwait(false);
                                 return;
                             }
                             break;
@@ -409,6 +386,17 @@ namespace S3ServerLibrary
                             }
                             break;
 
+                        case S3RequestType.BucketReadMultipartUploads:
+                            if (Bucket.ReadMultipartUploads != null)
+                            {
+                                listMultipartUploads = await Bucket.ReadMultipartUploads(s3ctx).ConfigureAwait(false);
+                                s3ctx.Response.StatusCode = 200;
+                                s3ctx.Response.ContentType = Constants.ContentTypeXml;
+                                await s3ctx.Response.Send(SerializationHelper.SerializeXml(listMultipartUploads)).ConfigureAwait(false);
+                                return;
+                            }
+                            break;
+
                         case S3RequestType.BucketReadTags:
                             if (Bucket.ReadTagging != null)
                             {
@@ -475,7 +463,7 @@ namespace S3ServerLibrary
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -499,7 +487,7 @@ namespace S3ServerLibrary
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -523,7 +511,7 @@ namespace S3ServerLibrary
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -547,7 +535,7 @@ namespace S3ServerLibrary
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -571,7 +559,7 @@ namespace S3ServerLibrary
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -587,6 +575,52 @@ namespace S3ServerLibrary
                         #endregion
 
                         #region Object
+
+                        case S3RequestType.ObjectAbortMultipartUpload:
+                            if (Object.AbortMultipartUpload != null)
+                            {
+                                await Object.AbortMultipartUpload(s3ctx).ConfigureAwait(false);
+                                s3ctx.Response.StatusCode = 204;
+                                s3ctx.Response.ContentType = Constants.ContentTypeText;
+                                await s3ctx.Response.Send().ConfigureAwait(false);
+                                return;
+                            }
+                            break;
+
+                        case S3RequestType.ObjectCompleteMultipartUpload:
+                            if (Object.DeleteMultiple != null)
+                            {
+                                try
+                                {
+                                    completeMultipartRequest = SerializationHelper.DeserializeXml<CompleteMultipartUpload>(s3ctx.Request.DataAsString);
+                                }
+                                catch (InvalidOperationException ioe)
+                                {
+                                    ioe.Data.Add("Context", s3ctx);
+                                    ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
+                                    return;
+                                }
+
+                                completeMultipartResult = await Object.CompleteMultipartUpload(s3ctx, completeMultipartRequest).ConfigureAwait(false);
+                                s3ctx.Response.StatusCode = 200;
+                                s3ctx.Response.ContentType = Constants.ContentTypeXml;
+                                await s3ctx.Response.Send(SerializationHelper.SerializeXml(completeMultipartResult)).ConfigureAwait(false);
+                                return;
+                            }
+                            break;
+
+                        case S3RequestType.ObjectCreateMultipartUpload:
+                            if (Object.CreateMultipartUpload != null)
+                            {
+                                initiateMultipart = await Object.CreateMultipartUpload(s3ctx);
+                                s3ctx.Response.StatusCode = 200;
+                                s3ctx.Response.ContentType = Constants.ContentTypeXml;
+                                await s3ctx.Response.Send(SerializationHelper.SerializeXml(initiateMultipart)).ConfigureAwait(false);
+                                return;
+                            }
+                            break;
 
                         case S3RequestType.ObjectDelete:
                             if (Object.Delete != null)
@@ -621,7 +655,7 @@ namespace S3ServerLibrary
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -725,6 +759,17 @@ namespace S3ServerLibrary
                             }
                             break;
 
+                        case S3RequestType.ObjectReadParts:
+                            if (Object.ReadParts != null)
+                            {
+                                listParts = await Object.ReadParts(s3ctx).ConfigureAwait(false);
+                                s3ctx.Response.StatusCode = 200;
+                                s3ctx.Response.ContentType = Constants.ContentTypeXml;
+                                await s3ctx.Response.Send(SerializationHelper.SerializeXml(listParts)).ConfigureAwait(false);
+                                return;
+                            }
+                            break;
+
                         case S3RequestType.ObjectReadRange:
                             if (Object.ReadRange != null)
                             {
@@ -759,9 +804,52 @@ namespace S3ServerLibrary
                             }
                             break;
 
+                        case S3RequestType.ObjectSelectContent:
+                            if (Object.WriteTagging != null)
+                            {
+                                try
+                                {
+                                    selectRequest = SerializationHelper.DeserializeXml<SelectObjectContentRequest>(s3ctx.Request.DataAsString);
+                                }
+                                catch (InvalidOperationException ioe)
+                                {
+                                    ioe.Data.Add("Context", s3ctx);
+                                    ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
+                                    return;
+                                }
+
+                                await Object.SelectContent(s3ctx, selectRequest).ConfigureAwait(false);
+                                s3ctx.Response.StatusCode = 200;
+                                s3ctx.Response.ContentType = Constants.ContentTypeText;
+                                await s3ctx.Response.Send().ConfigureAwait(false);
+                                return;
+                            }
+                            break;
+
+                        case S3RequestType.ObjectUploadPart:
+                            if (Object.UploadPart != null)
+                            {
+                                await Object.UploadPart(s3ctx).ConfigureAwait(false);
+                                s3ctx.Response.StatusCode = 200;
+                                s3ctx.Response.ContentType = Constants.ContentTypeText;
+                                await s3ctx.Response.Send().ConfigureAwait(false);
+                                return;
+                            }
+                            break;
+
                         case S3RequestType.ObjectWrite:
                             if (Object.Write != null)
                             {
+                                if (s3ctx.Request.ContentLength > _Settings.OperationLimits.MaxPutObjectSize)
+                                {
+                                    error = new Error(ErrorCode.EntityTooLarge);
+                                    s3ctx.Response.StatusCode = 400;
+                                    s3ctx.Response.ContentType = Constants.ContentTypeXml;
+                                    await s3ctx.Response.Send(SerializationHelper.SerializeXml(error)).ConfigureAwait(false);
+                                }
+
                                 await Object.Write(s3ctx).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
@@ -781,7 +869,7 @@ namespace S3ServerLibrary
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -805,7 +893,7 @@ namespace S3ServerLibrary
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -829,7 +917,7 @@ namespace S3ServerLibrary
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -853,7 +941,7 @@ namespace S3ServerLibrary
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -869,9 +957,9 @@ namespace S3ServerLibrary
                             #endregion
                     }
 
-                    if (DefaultRequestHandler != null)
+                    if (_Settings.DefaultRequestHandler != null)
                     {
-                        await DefaultRequestHandler(s3ctx).ConfigureAwait(false);
+                        await _Settings.DefaultRequestHandler(s3ctx).ConfigureAwait(false);
                         return;
                     }
 
@@ -881,7 +969,7 @@ namespace S3ServerLibrary
             }
             catch (S3Exception s3e)
             {
-                if (Logging.Exceptions) Logger?.Invoke(_Header + "S3 exception:" + Environment.NewLine + SerializationHelper.SerializeJson(s3e, true));
+                if (_Settings.Logging.Exceptions) _Settings.Logger?.Invoke(_Header + "S3 exception:" + Environment.NewLine + SerializationHelper.SerializeJson(s3e, true));
 
                 if (s3ctx != null)
                 {
@@ -894,7 +982,7 @@ namespace S3ServerLibrary
             }
             catch (Exception e)
             {
-                if (Logging.Exceptions) Logger?.Invoke(_Header + "exception:" + Environment.NewLine + SerializationHelper.SerializeJson(e, true));
+                if (_Settings.Logging.Exceptions) _Settings.Logger?.Invoke(_Header + "exception:" + Environment.NewLine + SerializationHelper.SerializeJson(e, true));
 
                 if (s3ctx != null)
                 {
@@ -908,10 +996,10 @@ namespace S3ServerLibrary
             finally
             {
                 s3ctx.Timestamp.End = DateTime.UtcNow;
-                if (PostRequestHandler != null) await PostRequestHandler(s3ctx).ConfigureAwait(false);
+                if (_Settings.PostRequestHandler != null) await _Settings.PostRequestHandler(s3ctx).ConfigureAwait(false);
             }
         }
-         
+
         #endregion
     }
 }

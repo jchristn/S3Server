@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml;
-using System.Xml.Serialization;
-
-namespace S3ServerLibrary
+﻿namespace S3ServerLibrary
 {
+    using System.Xml;
+
     internal class XmlWriterExtended : XmlWriter
     {
         private XmlWriter baseWriter;

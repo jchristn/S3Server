@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml.Serialization;
-
-namespace S3ServerLibrary.S3Objects
+﻿namespace S3ServerLibrary.S3Objects
 {
+    using System.Xml.Serialization;
+
     /// <summary>
     /// Condition that must be met in order to match a routing rule for a bucket website configuration.
     /// </summary>

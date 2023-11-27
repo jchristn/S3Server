@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml.Serialization;
-
-namespace S3ServerLibrary.S3Objects
+﻿namespace S3ServerLibrary.S3Objects
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Xml.Serialization;
+
     /// <summary>
     /// Result from a ListVersions operation.
     /// </summary>
@@ -122,13 +121,13 @@ namespace S3ServerLibrary.S3Objects
         /// <param name="deleteMarkers">Delete markers.</param>
         /// <param name="bucketRegion">Bucket region.</param>
         public ListVersionsResult(
-            string name, 
-            List<ObjectVersion> versions, 
-            List<DeleteMarker> deleteMarkers, 
-            int maxKeys, 
-            string prefix = null, 
-            string keyMarker = null, 
-            string versionIdMarker = null, 
+            string name,
+            List<ObjectVersion> versions,
+            List<DeleteMarker> deleteMarkers,
+            int maxKeys,
+            string prefix = null,
+            string keyMarker = null,
+            string versionIdMarker = null,
             bool isTruncated = false,
             string bucketRegion = "us-west-1")
         {

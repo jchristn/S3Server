@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace S3ServerLibrary
+﻿namespace S3ServerLibrary
 {
     internal class Constants
     {
-        internal static string AmazonTimestampFormatVerbose = "ddd, dd MMM yyy HH:mm:ss GMT";
+        internal static string AmazonTimestampFormatVerbose = "ddd, dd MMM yyy HH:mm:ss 'GMT'";
         internal static string AmazonTimestampFormatCompact = "yyyyMMddTHHmmssZ";
         internal static string AmazonDatestampFormat = "yyyyMMdd";
 

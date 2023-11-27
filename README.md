@@ -10,19 +10,15 @@ Simple S3 server-side interface, produced using Amazon's public documentation.  
 
 Is there an API you'd like exposed that isn't currently?  Did you identify an issue or have other feedback?  Please file an issue here!
 
-## New in v5.2.x
+## New in v6.0.x
 
-- Minor breaking changes
-- Dependency updates and bugfixes
-- Strong naming
-- Add HEAD service API (```Service.ServiceExists```)
-- ```StorageClassEnum``` replaces the previous string value
-- Remove unnecessary static methods
-- Disable connection keepalive (via dependency updates)
-- Bugfixes in test app
-- Fix timestamp formats (impacting ```ObjectExists``` and ```ObjectRead```)
-- No longer using GUID strings for request ID and trace ID
-- ETag now encapsulated in quotes
+- Breaking changes with dependency updates
+- Moved usings inside of namespaces to reduce collisions
+- Moved from ```new byte[0]``` to ```Array.Empty<byte>()```
+- Size limits for ```ObjectWrite``` (e.g. ```PutObject```), returns ```EntityTooLarge``` if exceeded
+- Boolean for enabling or disabling signature validation
+- Added bucket and object callbacks in support of multipart uploads
+- Added object callback for S3 Select API
 
 ## Examples
 
@@ -32,33 +28,33 @@ Refer to ```Test.Client``` and ```Test.Server``` projects for full examples.
 
 The following notes should be read prior to using S3Server:
 
-- If you use ```*```, ```+```, ```0.0.0.0```, or any other wildcard for the hostname, you *must* run under administrative privileges. 
-
 - **Path-style URLs are default**, i.e. ```http://hostname.com/bucket/key```
-- **Virtual hosting URLs** can be used by setting ```S3Server.BaseDomain``` so that bucket names to appear in the hostname, i.e. ```http://bucket.hostname.com/key```:
-  - Set ```S3Server.BaseDomain``` to the base domain, i.e. ```.hostname.com```
-  - The ```S3Server.BaseDomain``` must start with a ```.``` (period)
+
+- **Virtual hosting URLs** can be used by setting ```S3Server.ServiceCallbacks.FindMatchingBaseDomain``` 
+
+  - You must use a wildcard listener (e.g. ```*``` or ```+```) and *run under administrative privileges*
+  - This callback takes one input parameter, the hostname from the HTTP request
+  - Your implementation should compare the hostname with your list of base domains
+  - The return value from this method should be the base domain to which the hostname matches
+  - If no match is found, throw a ```KeyNotFoundException```
   - You may have to set DNS or your ```hosts``` file to resolve these names accordingly
-- Any request where the base domain is NOT found in incoming hostname will be treated as a **path-style URL request** 
+  - Alternatively, use a hostname that resolves to localhost (e.g. ```[host].local.gd``` or ```[host].fbi.com```)
+  - Any request where the base domain is NOT found in incoming hostname will be treated as a **path-style URL request** 
 
 ## Server
+
+Refer to the ```Test.Server``` project for a more complete example.
 
 ```csharp
 using S3ServerLibrary;
 using S3ServerLibrary.S3Objects;
 
 // Initialize the server
-S3Server server = new S3Server("+", 8000, false, DefaultRequestHandler); // host, port, SSL
+S3Server server = new S3Server("[hostname]", 8000, false, DefaultRequestHandler); // host, port, SSL
 
 // Set callbacks
+server.Service.ListBuckets = ListBuckets;
 server.Bucket.Exists = BucketExists;
-server.Bucket.Read = BucketRead;
-server.Bucket.Delete = BucketDelete;
-server.Bucket.WriteTagging = BucketWriteTagging;
-server.Object.Exists = ObjectExists;
-server.Object.Read = ObjectRead;
-server.Object.Write = ObjectWrite;
-server.Object.Delete = ObjectDelete;
 // etc
 
 // Start the server
@@ -73,6 +69,11 @@ static async Task DefaultRequestHandler(S3Context ctx)
 }
 
 // Callback expecting a response object
+static async Task<ListAllMyBucketsResult> ListBuckets(S3Context ctx)
+{
+  return new ListAllMyBucketsResult();
+}
+
 static async Task<bool> BucketExists(S3Context ctx)
 {
   return true;

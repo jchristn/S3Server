@@ -1,80 +1,78 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml.Serialization;
-
-namespace S3ServerLibrary.S3Objects
+﻿namespace S3ServerLibrary.S3Objects
 {
-	/// <summary>
-	/// Tag.
-	/// </summary>
-	[XmlRoot(ElementName = "Tag")]
-	public class Tag
-	{
-		// Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
+    using System;
+    using System.Xml.Serialization;
 
-		#region Public-Members
+    /// <summary>
+    /// Tag.
+    /// </summary>
+    [XmlRoot(ElementName = "Tag")]
+    public class Tag
+    {
+        // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
 
-		/// <summary>
-		/// Key.
-		/// </summary>
-		[XmlElement(ElementName = "Key", IsNullable = true)]
-		public string Key
+        #region Public-Members
+
+        /// <summary>
+        /// Key.
+        /// </summary>
+        [XmlElement(ElementName = "Key", IsNullable = true)]
+        public string Key
         {
-			get
+            get
             {
-				return _Key;
+                return _Key;
             }
-			set
+            set
             {
-				if (String.IsNullOrEmpty(value)) throw new ArgumentNullException(nameof(Key));
-				_Key = value;
+                if (String.IsNullOrEmpty(value)) throw new ArgumentNullException(nameof(Key));
+                _Key = value;
             }
         }
 
-		/// <summary>
-		/// Value.
-		/// </summary>
-		[XmlElement(ElementName = "Value", IsNullable = true)]
-		public string Value { get; set; } = null;
+        /// <summary>
+        /// Value.
+        /// </summary>
+        [XmlElement(ElementName = "Value", IsNullable = true)]
+        public string Value { get; set; } = null;
 
-		#endregion
+        #endregion
 
-		#region Private-Members
+        #region Private-Members
 
-		private string _Key = null;
+        private string _Key = null;
 
-		#endregion
+        #endregion
 
-		#region Constructors-and-Factories
+        #region Constructors-and-Factories
 
-		/// <summary>
-		/// Instantiate.
-		/// </summary>
-		public Tag()
+        /// <summary>
+        /// Instantiate.
+        /// </summary>
+        public Tag()
         {
 
         }
 
-		/// <summary>
-		/// Instantiate.
-		/// </summary>
-		/// <param name="key">Key.</param>
-		/// <param name="val">Value.</param>
-		public Tag(string key, string val)
+        /// <summary>
+        /// Instantiate.
+        /// </summary>
+        /// <param name="key">Key.</param>
+        /// <param name="val">Value.</param>
+        public Tag(string key, string val)
         {
-			Key = key;
-			Value = val;
+            Key = key;
+            Value = val;
         }
 
-		#endregion
+        #endregion
 
-		#region Public-Methods
+        #region Public-Methods
 
-		#endregion
+        #endregion
 
-		#region Private-Methods
+        #region Private-Methods
 
-		#endregion
-	}
+        #endregion
+    }
 }

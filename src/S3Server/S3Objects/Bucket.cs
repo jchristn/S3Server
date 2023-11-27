@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml.Serialization;
-
-namespace S3ServerLibrary.S3Objects
+﻿namespace S3ServerLibrary.S3Objects
 {
+    using System;
+    using System.Xml.Serialization;
+
     /// <summary>
     /// Amazon S3 bucket.
     /// </summary>
@@ -25,7 +23,7 @@ namespace S3ServerLibrary.S3Objects
         /// The timestamp from bucket creation.
         /// </summary>
         [XmlElement(ElementName = "CreationDate")]
-        public DateTime CreationDate { get; set; } = DateTime.Now.ToUniversalTime();
+        public DateTime CreationDate { get; set; } = DateTime.UtcNow;
 
         #endregion
 

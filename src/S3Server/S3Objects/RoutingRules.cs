@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml.Serialization;
-
-namespace S3ServerLibrary.S3Objects
+﻿namespace S3ServerLibrary.S3Objects
 {
+    using System.Collections.Generic;
+    using System.Xml.Serialization;
+
     /// <summary>
     /// Routing rules for a bucket's website configuration.
     /// </summary>
