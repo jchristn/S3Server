@@ -30,7 +30,7 @@ namespace Test.Server
         static S3Server _Server = null;
         static bool _RunForever = true;
         static bool _ForcePathStyle = true;
-        static bool _ValidateSignatures = true;
+        static bool _ValidateSignatures = false;
         static bool _DebugSignatures = true;
 
         static string _Location = "us-west-1";
@@ -56,7 +56,7 @@ namespace Test.Server
             Console.WriteLine("This program must be run as administrator");
             Console.WriteLine("");
 
-            _Settings.Webserver.Hostname = "*";
+            _Settings.Webserver.Hostname = "localhost";
             _Settings.Webserver.Port = 8000;
             _Settings.Webserver.Ssl.Enable = false;
 
