@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
-		<Version>6.0.2</Version>
+		<Version>6.0.3</Version>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Authors>Joel Christner</Authors>
@@ -48,7 +48,7 @@
 	<ItemGroup>
 		<PackageReference Include="AWSSignatureGenerator" Version="1.0.1" />
 		<PackageReference Include="PrettyId" Version="1.0.1" />
-		<PackageReference Include="Watson" Version="6.1.2" />
+		<PackageReference Include="Watson" Version="6.1.3" />
 	</ItemGroup>
 
 	<ItemGroup>
