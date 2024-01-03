@@ -52,7 +52,7 @@
         /// <summary>
         /// Part number.
         /// </summary>
-        [XmlElement(ElementName = "PartNumber", IsNullable = true)]
+        [XmlElement(ElementName = "PartNumber", IsNullable = false)]
         public int PartNumber
         {
             get
@@ -69,7 +69,7 @@
         /// <summary>
         /// Size.
         /// </summary>
-        [XmlElement(ElementName = "Size", IsNullable = true)]
+        [XmlElement(ElementName = "Size", IsNullable = false)]
         public int Size
         {
             get

@@ -35,7 +35,7 @@
         /// <summary>
         /// Part number marker.
         /// </summary>
-        [XmlElement(ElementName = "PartNumberMarker", IsNullable = true)]
+        [XmlElement(ElementName = "PartNumberMarker", IsNullable = false)]
         public int PartNumberMarker
         {
             get
@@ -52,7 +52,7 @@
         /// <summary>
         /// Next part number marker.
         /// </summary>
-        [XmlElement(ElementName = "NextPartNumberMarker", IsNullable = true)]
+        [XmlElement(ElementName = "NextPartNumberMarker", IsNullable = false)]
         public int NextPartNumberMarker
         {
             get
@@ -69,7 +69,7 @@
         /// <summary>
         /// Max parts.
         /// </summary>
-        [XmlElement(ElementName = "MaxParts", IsNullable = true)]
+        [XmlElement(ElementName = "MaxParts", IsNullable = false)]
         public int MaxParts
         {
             get
@@ -86,7 +86,7 @@
         /// <summary>
         /// Flag to indicate if the results were truncated.
         /// </summary>
-        [XmlElement(ElementName = "IsTruncated", IsNullable = true)]
+        [XmlElement(ElementName = "IsTruncated", IsNullable = false)]
         public bool IsTruncated { get; set; } = false;
 
         /// <summary>
@@ -121,13 +121,13 @@
         /// <summary>
         /// Storage class.
         /// </summary>
-        [XmlElement(ElementName = "StorageClass", IsNullable = true)]
+        [XmlElement(ElementName = "StorageClass", IsNullable = false)]
         public StorageClassEnum StorageClass { get; set; } = StorageClassEnum.STANDARD;
 
         /// <summary>
         /// Checksum algorithm.
         /// </summary>
-        [XmlElement(ElementName = "ChecksumAlgorithm", IsNullable = true)]
+        [XmlElement(ElementName = "ChecksumAlgorithm", IsNullable = false)]
         public ChecksumAlgorithmEnum ChecksumAlgorithm { get; set; } = ChecksumAlgorithmEnum.CRC32;
 
         #endregion

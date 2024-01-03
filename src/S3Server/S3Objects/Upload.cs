@@ -46,7 +46,7 @@
         /// <summary>
         /// Storage class.
         /// </summary>
-        [XmlElement(ElementName = "StorageClass", IsNullable = true)]
+        [XmlElement(ElementName = "StorageClass", IsNullable = false)]
         public StorageClassEnum StorageClass { get; set; } = StorageClassEnum.STANDARD;
 
         /// <summary>

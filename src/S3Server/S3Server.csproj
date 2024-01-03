@@ -2,12 +2,12 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
-		<Version>6.0.3</Version>
+		<Version>6.0.8</Version>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Authors>Joel Christner</Authors>
 		<Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
-		<Copyright>(c)2023 Joel Christner</Copyright>
+		<Copyright>(c)2024 Joel Christner</Copyright>
 		<PackageReleaseNotes>Dependency update and change to base domains.</PackageReleaseNotes>
 		<PackageTags>aws s3 storage rest interface server less3 minio</PackageTags>
 		<PackageLicenseUrl></PackageLicenseUrl>

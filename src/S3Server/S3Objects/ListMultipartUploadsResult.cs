@@ -59,7 +59,7 @@
         /// <summary>
         /// Max uploads.
         /// </summary>
-        [XmlElement(ElementName = "MaxUploads", IsNullable = true)]
+        [XmlElement(ElementName = "MaxUploads", IsNullable = false)]
         public int MaxUploads
         {
             get
@@ -116,7 +116,7 @@
         /// <summary>
         /// Encoding type.
         /// </summary>
-        [XmlElement(ElementName = "EncodingType", IsNullable = true)]
+        [XmlElement(ElementName = "EncodingType", IsNullable = false)]
         public EncodingTypeEnum EncodingType { get; set; } = EncodingTypeEnum.Key;
 
         #endregion
