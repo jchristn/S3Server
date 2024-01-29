@@ -9,6 +9,7 @@
     using WatsonWebserver;
     using WatsonWebserver.Core;
     using System.Net.NetworkInformation;
+    using System.Globalization;
 
     /// <summary>
     /// S3 server.  
@@ -687,7 +688,7 @@
                                 {
                                     if (!String.IsNullOrEmpty(md.ETag)) s3ctx.Response.Headers.Add(Constants.HeaderETag, md.ETag);
 
-                                    s3ctx.Response.Headers.Add(Constants.HeaderLastModified, md.LastModified.ToString(Constants.AmazonTimestampFormatVerbose));
+                                    s3ctx.Response.Headers.Add(Constants.HeaderLastModified, md.LastModified.ToString(Constants.AmazonTimestampFormatVerbose, CultureInfo.InvariantCulture));
                                     s3ctx.Response.Headers.Add(Constants.HeaderStorageClass, md.StorageClass.ToString());
                                     s3ctx.Response.Headers.Add(Constants.HeaderAcceptRanges, "bytes");
 
@@ -716,7 +717,7 @@
                                 {
                                     if (!String.IsNullOrEmpty(s3obj.ETag)) s3ctx.Response.Headers.Add(Constants.HeaderETag, s3obj.ETag);
 
-                                    s3ctx.Response.Headers.Add(Constants.HeaderLastModified, s3obj.LastModified.ToString(Constants.AmazonTimestampFormatVerbose));
+                                    s3ctx.Response.Headers.Add(Constants.HeaderLastModified, s3obj.LastModified.ToString(Constants.AmazonTimestampFormatVerbose, CultureInfo.InvariantCulture));
                                     s3ctx.Response.Headers.Add(Constants.HeaderStorageClass, s3obj.StorageClass.ToString());
                                     s3ctx.Response.Headers.Add(Constants.HeaderAcceptRanges, "bytes");
 
