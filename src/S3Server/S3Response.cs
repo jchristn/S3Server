@@ -3,6 +3,7 @@
     using S3ServerLibrary.S3Objects;
     using System;
     using System.Collections.Specialized;
+    using System.Globalization;
     using System.IO;
     using System.Text;
     using System.Text.Json.Serialization;
@@ -347,7 +348,7 @@
             if (Headers == null) Headers = new NameValueCollection(StringComparer.InvariantCultureIgnoreCase);
 
             if (Headers.Get("X-Amz-Date") == null)
-                Headers.Add("X-Amz-Date", DateTime.UtcNow.ToString(Constants.AmazonTimestampFormatVerbose));
+                Headers.Add("X-Amz-Date", DateTime.UtcNow.ToString(Constants.AmazonTimestampFormatVerbose, CultureInfo.InvariantCulture));
 
             if (Headers.Get("Host") == null)
                 Headers.Add("Host", _S3Request.Hostname);
@@ -357,7 +358,7 @@
 
             if (Headers.Get("Date") != null) Headers.Remove("Date");
 
-            Headers.Add("Date", DateTime.UtcNow.ToString(Constants.AmazonTimestampFormatVerbose));
+            Headers.Add("Date", DateTime.UtcNow.ToString(Constants.AmazonTimestampFormatVerbose, CultureInfo.InvariantCulture));
         }
 
         #endregion
