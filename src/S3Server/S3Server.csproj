@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
-		<Version>6.0.8</Version>
+		<Version>6.0.9</Version>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Authors>Joel Christner</Authors>
@@ -18,8 +18,6 @@
 		<PackageIcon>logo.png</PackageIcon>
 		<PackageId>S3Server</PackageId>
 		<RootNamespace>S3ServerLibrary</RootNamespace>
-		<SignAssembly>True</SignAssembly>
-		<AssemblyOriginatorKeyFile>..\..\S3Server.snk</AssemblyOriginatorKeyFile>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<IncludeSymbols>True</IncludeSymbols>
@@ -47,8 +45,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="AWSSignatureGenerator" Version="1.0.1" />
-		<PackageReference Include="PrettyId" Version="1.0.1" />
-		<PackageReference Include="Watson" Version="6.1.3" />
+		<PackageReference Include="PrettyId" Version="1.0.2" />
+		<PackageReference Include="Watson" Version="6.1.6" />
 	</ItemGroup>
 
 	<ItemGroup>
