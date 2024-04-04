@@ -3743,6 +3743,11 @@
             Callback methods for requests received for object operations.
             </summary>
         </member>
+        <member name="P:S3ServerLibrary.S3Server.Webserver">
+            <summary>
+            Access the underlying webserver.
+            </summary>
+        </member>
         <member name="M:S3ServerLibrary.S3Server.#ctor(S3ServerLibrary.S3ServerSettings)">
             <summary>
             Instantiate.

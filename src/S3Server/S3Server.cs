@@ -61,6 +61,17 @@
         /// </summary>
         public ObjectCallbacks Object = new ObjectCallbacks();
 
+        /// <summary>
+        /// Access the underlying webserver.
+        /// </summary>
+        public Webserver Webserver
+        {
+            get
+            {
+                return _Webserver;
+            }
+        }
+
         #endregion
 
         #region Private-Members
