@@ -1,6 +1,7 @@
 ﻿namespace S3ServerLibrary
 {
     using System;
+    using System.Text.Json.Serialization;
     using System.Threading.Tasks;
     using WatsonWebserver.Core;
 
@@ -15,6 +16,7 @@
         /// Method to invoke when sending a log message.  This value can only be changed before the server has been started.  
         /// If you need to change the name after the server has been started, dispose and start again with the correct settings.
         /// </summary>
+        [JsonIgnore]
         public Action<string> Logger { get; set; } = null;
 
         /// <summary>
@@ -69,16 +71,19 @@
         /// Callback method to use prior to examining requests for AWS S3 APIs.
         /// Return true if you wish to terminate the request, otherwise, return false, which will further route the request.
         /// </summary>
+        [JsonIgnore]
         public Func<S3Context, Task<bool>> PreRequestHandler = null;
 
         /// <summary>
         /// Callback method to call when no matching AWS S3 API callback could be found. 
         /// </summary>
+        [JsonIgnore]
         public Func<S3Context, Task> DefaultRequestHandler = null;
 
         /// <summary>
         /// Callback method to call after a response has been sent.
         /// </summary>
+        [JsonIgnore]
         public Func<S3Context, Task> PostRequestHandler = null;
 
         /// <summary>
