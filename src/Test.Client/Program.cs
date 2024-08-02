@@ -1,19 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Numerics;
-using System.Text;
-
-using Amazon;
-using Amazon.Runtime;
-using Amazon.S3;
-using Amazon.S3.Model;
-using Amazon.S3.Util;
-
-using GetSomeInput;
-
-namespace Test.Client
+﻿namespace Test.Client
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Numerics;
+    using System.Text;
+
+    using Amazon;
+    using Amazon.Runtime;
+    using Amazon.S3;
+    using Amazon.S3.Model;
+    using Amazon.S3.Util;
+
+    using GetSomeInput;
+
     class Program
     {
         static bool _Ssl = false;

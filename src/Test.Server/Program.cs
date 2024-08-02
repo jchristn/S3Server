@@ -1,20 +1,20 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-
-using GetSomeInput;
-using S3ServerLibrary;
-using S3ServerLibrary.S3Objects;
-using WatsonWebserver;
-using WatsonWebserver.Core;
-
-namespace Test.Server
+﻿namespace Test.Server
 {
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+
+    using GetSomeInput;
+    using S3ServerLibrary;
+    using S3ServerLibrary.S3Objects;
+    using WatsonWebserver;
+    using WatsonWebserver.Core;
+
     /*
      * Note: This must be run as administrator if the S3Server constructor uses '*', '+', or '0.0.0.0' as the listener hostname.
      *       Administrator not required if using 'localhost'.
@@ -39,7 +39,6 @@ namespace Test.Server
         static Grantee _Grantee = new Grantee("admin", "Administrator", null, "CanonicalUser", "admin@admin.com");
         static Tag _Tag = new Tag("key", "value");
 
-        static string _AccessKey = "AKIAIOSFODNN7EXAMPLE";
         static string _SecretKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
 
         static bool _RandomizeHeadResponses = false;

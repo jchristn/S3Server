@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Reflection.Metadata;
-using System.Threading.Tasks;
-using S3ServerLibrary;
-using RestWrapper;
-
-namespace Test.RequestStyle
+﻿namespace Test.RequestStyle
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Net.Http;
+    using System.Reflection.Metadata;
+    using System.Threading.Tasks;
+    using S3ServerLibrary;
+    using RestWrapper;
+
     static class Program
     {
         static S3ServerSettings _Settings = new S3ServerSettings();

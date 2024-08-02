@@ -1,19 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Xml;
-using System.Xml.Serialization;
-
-namespace Test.Client
+﻿namespace Test.Client
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Collections.Specialized;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+    using System.Text.Json;
+    using System.Text.Json.Serialization;
+    using System.Text.RegularExpressions;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using System.Xml;
+    using System.Xml.Serialization;
+
     /// <summary>
     /// Serialization helper.
     /// </summary>

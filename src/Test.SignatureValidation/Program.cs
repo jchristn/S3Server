@@ -1,18 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-
-using GetSomeInput;
-using S3ServerLibrary;
-using S3ServerLibrary.S3Objects;
-using WatsonWebserver;
-using WatsonWebserver.Core;
-
-namespace Test.SignatureValidation
+﻿namespace Test.SignatureValidation
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Net.Http;
+    using System.Text;
+    using System.Threading.Tasks;
+    using GetSomeInput;
+    using S3ServerLibrary;
+    using S3ServerLibrary.S3Objects;
+    using WatsonWebserver;
+    using WatsonWebserver.Core;
+
     static class Program
     {
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
