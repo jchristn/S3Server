@@ -3273,6 +3273,11 @@
             Indicates if the request is an object request.
             </summary>
         </member>
+        <member name="P:S3ServerLibrary.S3Request.IsMultipartUploadRequest">
+            <summary>
+            Indicates if the request is a multipart upload request.
+            </summary>
+        </member>
         <member name="P:S3ServerLibrary.S3Request.PermissionsRequired">
             <summary>
             Lists the permission typically required for this type of request.

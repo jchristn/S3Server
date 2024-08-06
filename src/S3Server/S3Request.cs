@@ -343,6 +343,30 @@
         }
 
         /// <summary>
+        /// Indicates if the request is a multipart upload request.
+        /// </summary>
+        public bool IsMultipartUploadRequest
+        {
+            get
+            {
+                if (RequestType == S3RequestType.BucketReadMultipartUploads
+                    || RequestType == S3RequestType.ObjectAbortMultipartUpload
+                    || RequestType == S3RequestType.ObjectCompleteMultipartUpload
+                    || RequestType == S3RequestType.ObjectCreateMultipartUpload
+                    || RequestType == S3RequestType.ObjectDeleteMultiple
+                    || RequestType == S3RequestType.ObjectReadParts
+                    || RequestType == S3RequestType.ObjectUploadPart)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
+        /// <summary>
         /// Lists the permission typically required for this type of request.
         /// See https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html for details.
         /// </summary>
