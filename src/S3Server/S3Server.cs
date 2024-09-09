@@ -157,7 +157,6 @@
         {
             if (ctx == null) throw new ArgumentNullException(nameof(ctx));
 
-            byte[] bytes = null;
             bool success = false;
             bool exists = false;
             S3Object s3obj = null;
@@ -352,15 +351,13 @@
                             if (Bucket.Read != null)
                             {
                                 listBucketResult = await Bucket.Read(s3ctx).ConfigureAwait(false);
-                                bytes = Encoding.UTF8.GetBytes(SerializationHelper.SerializeXml(listBucketResult));
-
+                                
                                 if (!String.IsNullOrEmpty(listBucketResult.BucketRegion))
                                     s3ctx.Response.Headers.Add("x-amz-bucket-region", listBucketResult.BucketRegion);
 
-                                s3ctx.Response.ChunkedTransfer = true;
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
-                                await s3ctx.Response.SendFinalChunk(bytes).ConfigureAwait(false);
+                                await s3ctx.Response.Send(SerializationHelper.SerializeXml(listBucketResult)).ConfigureAwait(false);
                                 return;
                             }
                             break;
