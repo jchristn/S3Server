@@ -22,11 +22,6 @@
         /// </summary>
         public bool SignatureV4Validation { get; set; } = false;
 
-        /// <summary>
-        /// Enable or disable debugging for exceptions.
-        /// </summary>
-        public bool Exceptions { get; set; } = false;
-
         #endregion
 
         #region Private-Members

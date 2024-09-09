@@ -287,11 +287,6 @@
             Enable or disable debugging for signature validation for version 4 signatures.
             </summary>
         </member>
-        <member name="P:S3ServerLibrary.LoggingSettings.Exceptions">
-            <summary>
-            Enable or disable debugging for exceptions.
-            </summary>
-        </member>
         <member name="M:S3ServerLibrary.LoggingSettings.#ctor">
             <summary>
             Instantiates the object.
@@ -374,11 +369,6 @@
         <member name="P:S3ServerLibrary.S3Exception.InnerException">
             <summary>
             Inner exception.
-            </summary>
-        </member>
-        <member name="P:S3ServerLibrary.S3Exception.InnerExceptionJson">
-            <summary>
-            JSON representation of the inner exception.
             </summary>
         </member>
         <member name="P:S3ServerLibrary.S3Exception.HttpStatusCode">

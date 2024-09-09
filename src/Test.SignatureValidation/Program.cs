@@ -14,7 +14,10 @@
 
     static class Program
     {
+#pragma warning disable CS0414
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+#pragma warning disable IDE0044 // Add readonly modifier
+#pragma warning disable IDE0051 // Remove unused private members
 
         static bool _RunForever = true;
         static S3ServerSettings _Settings = new S3ServerSettings();
@@ -38,7 +41,6 @@
 
             _Settings.Webserver.Hostname = "*";
             _Settings.Webserver.Port = 8000;
-            _Settings.Logging.Exceptions = true;
             _Settings.Logging.HttpRequests = false;
             _Settings.Logging.S3Requests = false;
             _Settings.Logging.SignatureV4Validation = true;
@@ -553,6 +555,9 @@
 
         #endregion
 
+#pragma warning restore IDE0051 // Remove unused private members
+#pragma warning restore IDE0044 // Add readonly modifier
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+#pragma warning restore CS0414
     }
 }

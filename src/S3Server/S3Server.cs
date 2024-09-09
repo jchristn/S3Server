@@ -475,7 +475,7 @@
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + ioe.ToString());
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -499,7 +499,7 @@
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + ioe.ToString());
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -523,7 +523,7 @@
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + ioe.ToString());
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -547,7 +547,7 @@
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + ioe.ToString());
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -571,7 +571,7 @@
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + ioe.ToString());
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -610,7 +610,7 @@
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + ioe.ToString());
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -667,7 +667,7 @@
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + ioe.ToString());
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -827,7 +827,7 @@
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + ioe.ToString());
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -881,7 +881,7 @@
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + ioe.ToString());
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -905,7 +905,7 @@
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + ioe.ToString());
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -929,7 +929,7 @@
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + ioe.ToString());
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -953,7 +953,7 @@
                                 {
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
-                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + SerializationHelper.SerializeJson(ioe, true));
+                                    _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + ioe.ToString());
                                     await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
                                     return;
                                 }
@@ -981,7 +981,7 @@
             }
             catch (S3Exception s3e)
             {
-                if (_Settings.Logging.Exceptions) _Settings.Logger?.Invoke(_Header + "S3 exception:" + Environment.NewLine + SerializationHelper.SerializeJson(s3e, true));
+                _Settings.Logger?.Invoke(_Header + "S3 exception:" + Environment.NewLine + s3e.ToString());
 
                 if (s3ctx != null)
                 {
@@ -994,7 +994,7 @@
             }
             catch (Exception e)
             {
-                if (_Settings.Logging.Exceptions) _Settings.Logger?.Invoke(_Header + "exception:" + Environment.NewLine + SerializationHelper.SerializeJson(e, true));
+                _Settings.Logger?.Invoke(_Header + "exception:" + Environment.NewLine + e.ToString());
 
                 if (s3ctx != null)
                 {

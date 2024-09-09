@@ -59,7 +59,6 @@
             _Settings.Webserver.Port = 8000;
             _Settings.Webserver.Ssl.Enable = false;
 
-            _Settings.Logging.Exceptions = true;
             _Settings.Logging.HttpRequests = false;
             _Settings.Logging.S3Requests = false;
             _Settings.Logger = Logger;

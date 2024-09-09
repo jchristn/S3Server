@@ -21,18 +21,6 @@
         public new Exception InnerException { get; set; } = null;
 
         /// <summary>
-        /// JSON representation of the inner exception.
-        /// </summary>
-        public string InnerExceptionJson
-        {
-            get
-            {
-                if (InnerException != null) return SerializationHelper.SerializeJson(InnerException, true);
-                return null;
-            }
-        }
-
-        /// <summary>
         /// Status code for the given exception.
         /// </summary>
         public int HttpStatusCode
