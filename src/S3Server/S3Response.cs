@@ -313,30 +313,16 @@
         /// Send a chunk of data using chunked transfer-encoding to the requestor.
         /// </summary>
         /// <param name="data">Chunk of data.</param>
+        /// <param name="isFinal">Boolean indicating if the chunk is the final chunk.</param>
         /// <returns>True if successful.</returns>
-        public async Task<bool> SendChunk(byte[] data)
+        public async Task<bool> SendChunk(byte[] data, bool isFinal)
         {
             if (!ChunkedTransfer) throw new IOException("Responses with chunked transfer-encoding disabled require use of Send().");
 
             SetResponseHeaders();
 
             if (data == null) data = Array.Empty<byte>();
-            return await _HttpResponse.SendChunk(data).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Send the final chunk of data using chunked transfer-encoding to the requestor and close the connection.
-        /// </summary>
-        /// <param name="data">Final chunk of data.</param>
-        /// <returns>True if successful.</returns>
-        public async Task<bool> SendFinalChunk(byte[] data)
-        {
-            if (!ChunkedTransfer) throw new IOException("Responses with chunked transfer-encoding disabled require use of Send().");
-
-            SetResponseHeaders();
-
-            if (data == null) data = Array.Empty<byte>();
-            return await _HttpResponse.SendFinalChunk(data).ConfigureAwait(false);
+            return await _HttpResponse.SendChunk(data, isFinal).ConfigureAwait(false);
         }
 
         #endregion
