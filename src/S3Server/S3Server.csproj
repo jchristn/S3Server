@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;net8.0</TargetFrameworks>
-		<Version>6.0.21</Version>
+		<TargetFrameworks>netstandard2.0;netstandard2.1;net6.0;net8.0</TargetFrameworks>
+		<Version>6.0.22</Version>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Authors>Joel Christner</Authors>
@@ -25,9 +25,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AWSSignatureGenerator" Version="1.0.8" />
-		<PackageReference Include="PrettyId" Version="1.0.4" />
-		<PackageReference Include="Watson" Version="6.3.5" />
+		<PackageReference Include="AWSSignatureGenerator" Version="1.0.9" />
+		<PackageReference Include="PrettyId" Version="1.0.5" />
+		<PackageReference Include="Watson" Version="6.3.9" />
 	</ItemGroup>
 
 	<ItemGroup>
