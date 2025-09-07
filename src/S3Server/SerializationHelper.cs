@@ -171,7 +171,7 @@
             using (MemoryStream stream = new MemoryStream())
             {
                 XmlWriterSettings settings = new XmlWriterSettings();
-                settings.Encoding = Encoding.GetEncoding("ISO-8859-1");
+                settings.Encoding = Encoding.GetEncoding("UTF-8");
                 settings.NewLineChars = Environment.NewLine;
                 settings.ConformanceLevel = ConformanceLevel.Document;
                 if (pretty) settings.Indent = true;
