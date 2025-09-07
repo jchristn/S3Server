@@ -10,6 +10,7 @@
     using WatsonWebserver.Core;
     using System.Net.NetworkInformation;
     using System.Globalization;
+    using System.Collections.Generic;
 
     /// <summary>
     /// S3 server.  
@@ -93,7 +94,28 @@
         public S3Server(S3ServerSettings settings)
         {
             if (settings == null) settings = new S3ServerSettings();
+            if (settings.Webserver == null) throw new ArgumentNullException(nameof(settings.Webserver));
+
             _Settings = settings;
+
+            if (_Settings.Webserver.Headers != null && _Settings.Webserver.Headers.DefaultHeaders != null)
+            {
+                Dictionary<string, string> updatedHeaders = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+
+                foreach (KeyValuePair<string, string> header in _Settings.Webserver.Headers.DefaultHeaders)
+                {
+                    string key = header.Key;
+                    if (String.IsNullOrEmpty(key)) continue;
+                    if (key.ToLower().Equals("accept-charset")) continue; // not sent by S3, not supported by Minio
+                    else
+                    {
+                        updatedHeaders.Add(header.Key, header.Value);
+                    }
+                }
+
+                _Settings.Webserver.Headers.DefaultHeaders = updatedHeaders;
+            }
+
             _Webserver = new Webserver(_Settings.Webserver, RequestHandler);
         }
 
