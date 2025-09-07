@@ -106,7 +106,10 @@
                 {
                     string key = header.Key;
                     if (String.IsNullOrEmpty(key)) continue;
-                    if (key.ToLower().Equals("accept-charset")) continue; // not sent by S3, not supported by Minio
+                    if (key.ToLower().Equals("accept-charset"))
+                    {
+                        updatedHeaders.Add("Accept-Charset", "utf8"); // Minio support
+                    }
                     else
                     {
                         updatedHeaders.Add(header.Key, header.Value);
