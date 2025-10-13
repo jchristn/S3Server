@@ -23,7 +23,11 @@
         /// Timestamp from when the upload was initiated.
         /// </summary>
         [XmlElement(ElementName = "Initiated", IsNullable = false)]
-        public DateTime Initiated { get; set; } = DateTime.UtcNow;
+        public DateTime Initiated
+        {
+            get => _Initiated;
+            set => _Initiated = DateTime.SpecifyKind(value, DateTimeKind.Utc);
+        }
 
         /// <summary>
         /// Key.
@@ -58,6 +62,8 @@
         #endregion
 
         #region Private-Members
+
+        private DateTime _Initiated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
         #endregion
 

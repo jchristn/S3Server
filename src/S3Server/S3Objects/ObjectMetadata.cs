@@ -23,7 +23,11 @@
         /// Timestamp from the last modification of the resource.
         /// </summary>
         [XmlElement(ElementName = "LastModified")]
-        public DateTime LastModified { get; set; } = DateTime.UtcNow;
+        public DateTime LastModified
+        {
+            get => _LastModified;
+            set => _LastModified = DateTime.SpecifyKind(value, DateTimeKind.Utc);
+        }
 
         /// <summary>
         /// ETag of the resource.
@@ -88,6 +92,7 @@
 
         private long _Size = 0;
         private string _ETag = null;
+        private DateTime _LastModified = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
         #endregion
 

@@ -23,11 +23,17 @@
         /// The timestamp from bucket creation.
         /// </summary>
         [XmlElement(ElementName = "CreationDate")]
-        public DateTime CreationDate { get; set; } = DateTime.UtcNow;
+        public DateTime CreationDate
+        {
+            get => _CreationDate;
+            set => _CreationDate = DateTime.SpecifyKind(value, DateTimeKind.Utc);
+        }
 
         #endregion
 
         #region Private-Members
+
+        private DateTime _CreationDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
         #endregion
 

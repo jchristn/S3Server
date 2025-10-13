@@ -60,11 +60,30 @@
         /// ETag.
         /// </summary>
         [XmlElement(ElementName = "ETag", IsNullable = true)]
-        public string ETag { get; set; } = null;
+        public string ETag
+        {
+            get
+            {
+                return _ETag;
+            }
+            set
+            {
+                if (!String.IsNullOrEmpty(value))
+                {
+                    value = value.Trim();
+                    if (!value.StartsWith("\"")) value = "\"" + value;
+                    if (!value.EndsWith("\"")) value = value + "\"";
+                }
+
+                _ETag = value;
+            }
+        }
 
         #endregion
 
         #region Private-Members
+
+        private string _ETag = null;
 
         #endregion
 

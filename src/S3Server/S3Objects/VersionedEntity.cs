@@ -37,18 +37,39 @@
         /// Timestamp from the last modification of the resource.
         /// </summary>
         [XmlElement(ElementName = "LastModified")]
-        public DateTime LastModified { get; set; } = DateTime.UtcNow;
+        public DateTime LastModified
+        {
+            get => _LastModified;
+            set => _LastModified = DateTime.SpecifyKind(value, DateTimeKind.Utc);
+        }
 
         /// <summary>
         /// Object ETag.
         /// </summary>
         [XmlElement(ElementName = "ETag", IsNullable = true)]
-        public string ETag { get; set; } = null;
+        public string ETag
+        {
+            get
+            {
+                return _ETag;
+            }
+            set
+            {
+                if (!String.IsNullOrEmpty(value))
+                {
+                    value = value.Trim();
+                    if (!value.StartsWith("\"")) value = "\"" + value;
+                    if (!value.EndsWith("\"")) value = value + "\"";
+                }
+
+                _ETag = value;
+            }
+        }
 
         /// <summary>
         /// Content length of the object.
         /// </summary>
-        [XmlElement(ElementName = "Size", IsNullable = true)]
+        [XmlElement(ElementName = "Size")]
         public long? Size
         {
             get
@@ -60,6 +81,14 @@
                 if (value != null && value < 0) throw new ArgumentOutOfRangeException(nameof(Size));
                 _Size = value;
             }
+        }
+
+        /// <summary>
+        /// Determine whether to serialize Size.
+        /// </summary>
+        public bool ShouldSerializeSize()
+        {
+            return Size.HasValue;
         }
 
         /// <summary>
@@ -80,6 +109,8 @@
         #region Private-Members
 
         private long? _Size = null;
+        private string _ETag = null;
+        private DateTime _LastModified = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
         #endregion
 

@@ -24,11 +24,21 @@
         /// Date upon which the resource shall no longer be retained.
         /// </summary>
         [XmlElement(ElementName = "RetainUntilDate", IsNullable = true)]
-        public DateTime? RetainUntilDate { get; set; } = null;
+        public DateTime? RetainUntilDate
+        {
+            get => _RetainUntilDate;
+            set
+            {
+                if (value != null) _RetainUntilDate = DateTime.SpecifyKind(value.Value, DateTimeKind.Utc);
+                else _RetainUntilDate = null;
+            }
+        }
 
         #endregion
 
         #region Private-Members
+
+        private DateTime? _RetainUntilDate = null;
 
         #endregion
 

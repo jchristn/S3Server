@@ -34,7 +34,7 @@
         static bool _DebugSignatures = true;
 
         static string _Location = "us-west-1";
-        static ObjectMetadata _ObjectMetadata = new ObjectMetadata("hello.txt", DateTime.Now, "etag", 13, new Owner("admin", "Administrator"));
+        static ObjectMetadata _ObjectMetadata = new ObjectMetadata("hello.txt", DateTime.Now, "6cd3556deb0da54bca060b4c39479839", 13, new Owner("admin", "Administrator"));
         static Owner _Owner = new Owner("admin", "Administrator");
         static Grantee _Grantee = new Grantee("admin", "Administrator", null, "CanonicalUser", "admin@admin.com");
         static Tag _Tag = new Tag("key", "value");
@@ -92,6 +92,7 @@
             _Server.Service.ServiceExists = ServiceExists;
             
             _Server.Bucket.Delete = BucketDelete;
+            _Server.Bucket.DeleteAcl = BucketDeleteAcl;
             _Server.Bucket.DeleteTagging = BucketDeleteTags;
             _Server.Bucket.DeleteWebsite = BucketDeleteWebsite;
             _Server.Bucket.Exists = BucketExists;
@@ -111,8 +112,10 @@
             _Server.Bucket.WriteTagging = BucketWriteTags;
             _Server.Bucket.WriteVersioning = BucketWriteVersioning;
             _Server.Bucket.WriteWebsite = BucketWriteWebsite;
+            _Server.Bucket.ReadMultipartUploads = BucketReadMultipartUploads;
 
             _Server.Object.Delete = ObjectDelete;
+            _Server.Object.DeleteAcl = ObjectDeleteAcl;
             _Server.Object.DeleteMultiple = ObjectDeleteMultiple;
             _Server.Object.DeleteTagging = ObjectDeleteTags;
             _Server.Object.Exists = ObjectExists;
@@ -127,6 +130,12 @@
             _Server.Object.WriteLegalHold = ObjectWriteLegalHold;
             _Server.Object.WriteRetention = ObjectWriteRetention;
             _Server.Object.WriteTagging = ObjectWriteTags;
+            _Server.Object.CreateMultipartUpload = ObjectCreateMultipartUpload;
+            _Server.Object.UploadPart = ObjectUploadPart;
+            _Server.Object.ReadParts = ObjectReadParts;
+            _Server.Object.CompleteMultipartUpload = ObjectCompleteMultipartUpload;
+            _Server.Object.AbortMultipartUpload = ObjectAbortMultipartUpload;
+            _Server.Object.SelectContent = ObjectSelectContent;
 
             _Server.Start();
             Console.WriteLine("Listening on http://" + _Settings.Webserver.Hostname + ":" + _Settings.Webserver.Port);
@@ -242,6 +251,11 @@
             Console.WriteLine("BucketDelete: " + ctx.Request.Bucket);
         }
 
+        static async Task BucketDeleteAcl(S3Context ctx)
+        {
+            Console.WriteLine("BucketDeleteAcl: " + ctx.Request.Bucket);
+        }
+
         static async Task BucketDeleteTags(S3Context ctx)
         {
             Console.WriteLine("BucketDeleteTags: " + ctx.Request.Bucket);
@@ -343,7 +357,7 @@
 
             List<ObjectVersion> versions = new List<ObjectVersion>()
             {
-                new ObjectVersion("version1.key", "1", true, DateTime.UtcNow, "etag", 500, _Owner)
+                new ObjectVersion("version1.key", "1", true, DateTime.UtcNow, "098f6bcd4621d373cade4e832627b4f6", 500, _Owner)
             };
 
             List<DeleteMarker> deleteMarkers = new List<DeleteMarker>()
@@ -421,6 +435,35 @@
             Console.WriteLine(ctx.Request.DataAsString + Environment.NewLine);
         }
 
+        static async Task<ListMultipartUploadsResult> BucketReadMultipartUploads(S3Context ctx)
+        {
+            Console.WriteLine("BucketReadMultipartUploads: " + ctx.Request.Bucket);
+
+            List<Upload> uploads = new List<Upload>()
+            {
+                new Upload
+                {
+                    Key = "test-key.txt",
+                    UploadId = "upload-id-123",
+                    Owner = _Owner,
+                    Initiator = _Owner,
+                    Initiated = DateTime.UtcNow,
+                    StorageClass = StorageClassEnum.STANDARD
+                }
+            };
+
+            ListMultipartUploadsResult result = new ListMultipartUploadsResult();
+            result.Bucket = ctx.Request.Bucket;
+            result.Uploads = uploads;
+            result.Prefix = ctx.Request.Prefix;
+            result.Delimiter = ctx.Request.Delimiter;
+            result.KeyMarker = ctx.Request.Marker;
+            result.MaxUploads = ctx.Request.MaxKeys;
+            result.IsTruncated = false;
+
+            return result;
+        }
+
         #endregion
 
         #region Object-APIs
@@ -428,6 +471,11 @@
         static async Task ObjectDelete(S3Context ctx)
         {
             Console.WriteLine("ObjectDelete: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
+        }
+
+        static async Task ObjectDeleteAcl(S3Context ctx)
+        {
+            Console.WriteLine("ObjectDeleteAcl: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
         }
 
         static async Task<DeleteResult> ObjectDeleteMultiple(S3Context ctx, DeleteMultiple del)
@@ -465,7 +513,7 @@
         {
             Console.WriteLine("ObjectRead: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
 
-            return new S3Object("hello.txt", "1", true, DateTime.Now, "etag", 13, new Owner("admin", "Administrator"), "Hello, world!", "text/plain");
+            return new S3Object("hello.txt", "1", true, DateTime.Now, "6cd3556deb0da54bca060b4c39479839", 13, new Owner("admin", "Administrator"), "Hello, world!", "text/plain");
         }
 
         static async Task<AccessControlPolicy> ObjectReadAcl(S3Context ctx)
@@ -498,7 +546,7 @@
         {
             Console.WriteLine("ObjectReadRange: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
 
-            S3Object s3obj = new S3Object("hello.txt", "1", true, DateTime.Now, "etag", 13, new Owner("admin", "Administrator"), "Hello, world!", "text/plain");
+            S3Object s3obj = new S3Object("hello.txt", "1", true, DateTime.Now, "6cd3556deb0da54bca060b4c39479839", 13, new Owner("admin", "Administrator"), "Hello, world!", "text/plain");
 
             string data = s3obj.DataString;
             data = data.Substring((int)ctx.Request.RangeStart, (int)((int)ctx.Request.RangeEnd - (int)ctx.Request.RangeStart));
@@ -580,6 +628,93 @@
         {
             Console.WriteLine("ObjectWriteTags: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
             Console.WriteLine(ctx.Request.DataAsString + Environment.NewLine);
+        }
+
+        static async Task<InitiateMultipartUploadResult> ObjectCreateMultipartUpload(S3Context ctx)
+        {
+            Console.WriteLine("ObjectCreateMultipartUpload: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
+
+            string uploadId = Guid.NewGuid().ToString();
+            InitiateMultipartUploadResult result = new InitiateMultipartUploadResult(
+                ctx.Request.Bucket,
+                ctx.Request.Key,
+                uploadId);
+
+            return result;
+        }
+
+        static async Task ObjectUploadPart(S3Context ctx)
+        {
+            Console.WriteLine("ObjectUploadPart: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
+            Console.WriteLine("  Upload ID   : " + ctx.Request.UploadId);
+            Console.WriteLine("  Part Number : " + ctx.Request.PartNumber);
+            Console.WriteLine("  Content Length: " + ctx.Request.ContentLength);
+        }
+
+        static async Task<ListPartsResult> ObjectReadParts(S3Context ctx)
+        {
+            Console.WriteLine("ObjectReadParts: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
+            Console.WriteLine("  Upload ID: " + ctx.Request.UploadId);
+
+            List<Part> parts = new List<Part>()
+            {
+                new Part
+                {
+                    PartNumber = 1,
+                    LastModified = DateTime.UtcNow,
+                    ETag = "5d41402abc4b2a76b9719d911017c592",
+                    Size = 1024
+                },
+                new Part
+                {
+                    PartNumber = 2,
+                    LastModified = DateTime.UtcNow,
+                    ETag = "7d793037a0760186574b0282f2f435e7",
+                    Size = 2048
+                }
+            };
+
+            ListPartsResult result = new ListPartsResult();
+            result.Bucket = ctx.Request.Bucket;
+            result.Key = ctx.Request.Key;
+            result.UploadId = ctx.Request.UploadId;
+            result.Owner = _Owner;
+            result.Initiator = _Owner;
+            result.StorageClass = StorageClassEnum.STANDARD;
+            result.PartNumberMarker = 1;
+            result.MaxParts = 1000;
+            result.IsTruncated = false;
+            result.Parts = parts;
+
+            return result;
+        }
+
+        static async Task<CompleteMultipartUploadResult> ObjectCompleteMultipartUpload(S3Context ctx, CompleteMultipartUpload complete)
+        {
+            Console.WriteLine("ObjectCompleteMultipartUpload: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
+            Console.WriteLine("  Upload ID: " + ctx.Request.UploadId);
+            Console.WriteLine("  Parts: " + complete.Parts.Count);
+
+            CompleteMultipartUploadResult result = new CompleteMultipartUploadResult();
+            result.Location = "http://localhost:8000/" + ctx.Request.Bucket + "/" + ctx.Request.Key;
+            result.Bucket = ctx.Request.Bucket;
+            result.Key = ctx.Request.Key;
+            result.ETag = "9b2c3e7a8d1f4e6b5c2a1d8f7e4b3c2a";
+
+            return result;
+        }
+
+        static async Task ObjectAbortMultipartUpload(S3Context ctx)
+        {
+            Console.WriteLine("ObjectAbortMultipartUpload: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
+            Console.WriteLine("  Upload ID: " + ctx.Request.UploadId);
+        }
+
+        static async Task ObjectSelectContent(S3Context ctx, SelectObjectContentRequest request)
+        {
+            Console.WriteLine("ObjectSelectContent: " + ctx.Request.Bucket + "/" + ctx.Request.Key);
+            Console.WriteLine("  Expression: " + request.Expression);
+            Console.WriteLine("  Expression Type: " + request.ExpressionType);
         }
 
         #endregion

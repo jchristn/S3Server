@@ -17,8 +17,7 @@
     class Program
     {
         static bool _Ssl = false;
-        static string _Endpoint = null;
-
+        static string _Endpoint = "http://localhost:8000/";
         static string _AccessKey = "AKIAIOSFODNN7EXAMPLE";
         static string _SecretKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
         static string _SignatureVersion = "4";
@@ -135,6 +134,38 @@
                         BucketExists();
                         break;
 
+                    case "read bucket location":
+                        ReadBucketLocation();
+                        break;
+
+                    case "read bucket logging":
+                        ReadBucketLogging();
+                        break;
+
+                    case "write bucket logging":
+                        WriteBucketLogging();
+                        break;
+
+                    case "read bucket website":
+                        ReadBucketWebsite();
+                        break;
+
+                    case "write bucket website":
+                        WriteBucketWebsite();
+                        break;
+
+                    case "delete bucket website":
+                        DeleteBucketWebsite();
+                        break;
+
+                    case "delete bucket acl":
+                        DeleteBucketAcl();
+                        break;
+
+                    case "list multipart uploads":
+                        ListMultipartUploads();
+                        break;
+
                     #endregion
 
                     #region Object-Commands
@@ -195,6 +226,38 @@
                         ObjectExists();
                         break;
 
+                    case "write legal hold":
+                        WriteObjectLegalHold();
+                        break;
+
+                    case "read legal hold":
+                        ReadObjectLegalHold();
+                        break;
+
+                    case "initiate multipart":
+                        InitiateMultipartUpload();
+                        break;
+
+                    case "upload part":
+                        UploadPart();
+                        break;
+
+                    case "list parts":
+                        ListParts();
+                        break;
+
+                    case "complete multipart":
+                        CompleteMultipartUpload();
+                        break;
+
+                    case "abort multipart":
+                        AbortMultipartUpload();
+                        break;
+
+                    case "delete acl":
+                        DeleteObjectAcl();
+                        break;
+
                         #endregion
                 }
             }
@@ -227,19 +290,27 @@
             Console.WriteLine("   init                Initialize client (needed after changing keys or region)");
             Console.WriteLine("");
             Console.WriteLine("-- Bucket Commands --");
-            Console.WriteLine("   list buckets        List buckets");
-            Console.WriteLine("   list bucket         List the contents of a bucket");
-            Console.WriteLine("   write bucket        Create a bucket");
-            Console.WriteLine("   write bucket acl    Write a bucket's ACL");
-            Console.WriteLine("   write bucket tags   Write tags to a bucket");
-            Console.WriteLine("   read bucket acl     Read a bucket's ACL");
-            Console.WriteLine("   read bucket tags    Read tags from a bucket");
-            Console.WriteLine("   write bucket ver    Write bucket versioning");
-            Console.WriteLine("   read bucket ver     Read bucket versioning");
-            Console.WriteLine("   read bucket vers    Read bucket versions");
-            Console.WriteLine("   delete bucket       Delete a bucket");
-            Console.WriteLine("   delete bucket tags  Delete a bucket's tags");
-            Console.WriteLine("   bucket exists       Check if bucket exists");
+            Console.WriteLine("   list buckets            List buckets");
+            Console.WriteLine("   list bucket             List the contents of a bucket");
+            Console.WriteLine("   write bucket            Create a bucket");
+            Console.WriteLine("   write bucket acl        Write a bucket's ACL");
+            Console.WriteLine("   write bucket tags       Write tags to a bucket");
+            Console.WriteLine("   read bucket acl         Read a bucket's ACL");
+            Console.WriteLine("   read bucket tags        Read tags from a bucket");
+            Console.WriteLine("   write bucket ver        Write bucket versioning");
+            Console.WriteLine("   read bucket ver         Read bucket versioning");
+            Console.WriteLine("   read bucket vers        Read bucket versions");
+            Console.WriteLine("   delete bucket           Delete a bucket");
+            Console.WriteLine("   delete bucket tags      Delete a bucket's tags");
+            Console.WriteLine("   delete bucket acl       Delete a bucket's ACL");
+            Console.WriteLine("   bucket exists           Check if bucket exists");
+            Console.WriteLine("   read bucket location    Read bucket location/region");
+            Console.WriteLine("   read bucket logging     Read bucket logging configuration");
+            Console.WriteLine("   write bucket logging    Write bucket logging configuration");
+            Console.WriteLine("   read bucket website     Read bucket website configuration");
+            Console.WriteLine("   write bucket website    Write bucket website configuration");
+            Console.WriteLine("   delete bucket website   Delete bucket website configuration");
+            Console.WriteLine("   list multipart uploads  List multipart uploads in bucket");
             Console.WriteLine("");
             Console.WriteLine("-- Object Commands --");
             Console.WriteLine("   write               Write an object");
@@ -255,7 +326,15 @@
             Console.WriteLine("   delete              Delete an object");
             Console.WriteLine("   delete multiple     Delete multiple objects");
             Console.WriteLine("   delete tags         Delete tags from an object");
+            Console.WriteLine("   delete acl          Delete an object's ACL");
             Console.WriteLine("   exists              Check if object exists");
+            Console.WriteLine("   write legal hold    Write legal hold to an object");
+            Console.WriteLine("   read legal hold     Read legal hold from an object");
+            Console.WriteLine("   initiate multipart  Initiate multipart upload");
+            Console.WriteLine("   upload part         Upload a part in multipart upload");
+            Console.WriteLine("   list parts          List parts of a multipart upload");
+            Console.WriteLine("   complete multipart  Complete a multipart upload");
+            Console.WriteLine("   abort multipart     Abort a multipart upload");
             Console.WriteLine("");
         }
 
@@ -308,7 +387,7 @@
 
         static void SetEndpoint()
         {
-            _Endpoint = Inputty.GetString("Endpoint:", "http://s3.local.gd:8000/", false);
+            _Endpoint = Inputty.GetString("Endpoint:", _Endpoint, false);
         }
 
         static void SetAccessKey()
@@ -680,6 +759,171 @@
         {
             string id = Inputty.GetString("Bucket:", null, false);
             Console.WriteLine("Exists: " + AmazonS3Util.DoesS3BucketExistV2Async(_S3Client, id).Result);
+        }
+
+        static void ReadBucketLocation()
+        {
+            string id = Inputty.GetString("Bucket:", null, false);
+
+            GetBucketLocationRequest request = new GetBucketLocationRequest();
+            request.BucketName = id;
+
+            GetBucketLocationResponse response = _S3Client.GetBucketLocationAsync(request).Result;
+
+            if (response != null)
+            {
+                Console.WriteLine("Success");
+                Console.WriteLine("  Location: " + response.Location);
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+            }
+        }
+
+        static void ReadBucketLogging()
+        {
+            string id = Inputty.GetString("Bucket:", null, false);
+
+            GetBucketLoggingRequest request = new GetBucketLoggingRequest();
+            request.BucketName = id;
+
+            GetBucketLoggingResponse response = _S3Client.GetBucketLoggingAsync(request).Result;
+
+            if (response != null)
+            {
+                Console.WriteLine("Success");
+                if (response.BucketLoggingConfig != null)
+                {
+                    Console.WriteLine("  Target Bucket: " + response.BucketLoggingConfig.TargetBucketName);
+                    Console.WriteLine("  Target Prefix: " + response.BucketLoggingConfig.TargetPrefix);
+                }
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+            }
+        }
+
+        static void WriteBucketLogging()
+        {
+            string id = Inputty.GetString("Bucket:", null, false);
+            string targetBucket = Inputty.GetString("Target Bucket:", id, false);
+            string targetPrefix = Inputty.GetString("Target Prefix:", "logs/", false);
+
+            PutBucketLoggingRequest request = new PutBucketLoggingRequest();
+            request.BucketName = id;
+            request.LoggingConfig = new S3BucketLoggingConfig();
+            request.LoggingConfig.TargetBucketName = targetBucket;
+            request.LoggingConfig.TargetPrefix = targetPrefix;
+
+            PutBucketLoggingResponse response = _S3Client.PutBucketLoggingAsync(request).Result;
+
+            if (response != null)
+            {
+                Console.WriteLine("Success");
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+            }
+        }
+
+        static void ReadBucketWebsite()
+        {
+            string id = Inputty.GetString("Bucket:", null, false);
+
+            GetBucketWebsiteRequest request = new GetBucketWebsiteRequest();
+            request.BucketName = id;
+
+            GetBucketWebsiteResponse response = _S3Client.GetBucketWebsiteAsync(request).Result;
+
+            if (response != null)
+            {
+                Console.WriteLine("Success");
+                if (response.WebsiteConfiguration != null)
+                {
+                    Console.WriteLine("  Index Document: " + response.WebsiteConfiguration.IndexDocumentSuffix);
+                    Console.WriteLine("  Error Document: " + response.WebsiteConfiguration.ErrorDocument);
+                }
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+            }
+        }
+
+        static void WriteBucketWebsite()
+        {
+            string id = Inputty.GetString("Bucket:", null, false);
+            string indexDoc = Inputty.GetString("Index Document:", "index.html", false);
+            string errorDoc = Inputty.GetString("Error Document:", "error.html", false);
+
+            PutBucketWebsiteRequest request = new PutBucketWebsiteRequest();
+            request.BucketName = id;
+            request.WebsiteConfiguration = new WebsiteConfiguration();
+            request.WebsiteConfiguration.IndexDocumentSuffix = indexDoc;
+            request.WebsiteConfiguration.ErrorDocument = errorDoc;
+
+            PutBucketWebsiteResponse response = _S3Client.PutBucketWebsiteAsync(request).Result;
+
+            if (response != null)
+            {
+                Console.WriteLine("Success");
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+            }
+        }
+
+        static void DeleteBucketWebsite()
+        {
+            string id = Inputty.GetString("Bucket:", null, false);
+
+            DeleteBucketWebsiteRequest request = new DeleteBucketWebsiteRequest();
+            request.BucketName = id;
+
+            DeleteBucketWebsiteResponse response = _S3Client.DeleteBucketWebsiteAsync(request).Result;
+
+            if (response != null)
+            {
+                Console.WriteLine("Success");
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+            }
+        }
+
+        static void DeleteBucketAcl()
+        {
+            Console.WriteLine("Note: AWS S3 does not support deleting bucket ACLs directly.");
+            Console.WriteLine("You must set a new ACL using 'write bucket acl' instead.");
+        }
+
+        static void ListMultipartUploads()
+        {
+            string id = Inputty.GetString("Bucket:", null, false);
+
+            ListMultipartUploadsRequest request = new ListMultipartUploadsRequest();
+            request.BucketName = id;
+
+            ListMultipartUploadsResponse response = _S3Client.ListMultipartUploadsAsync(request).Result;
+
+            if (response != null)
+            {
+                Console.WriteLine("Success");
+                Console.WriteLine("Uploads: " + response.MultipartUploads.Count);
+                foreach (MultipartUpload upload in response.MultipartUploads)
+                {
+                    Console.WriteLine("  " + upload.Key + " [" + upload.UploadId + "] initiated " + upload.Initiated);
+                }
+            }
+            else
+            {
+                Console.WriteLine("Failed");
+            }
         }
 
         #endregion
@@ -1205,6 +1449,262 @@
             }
         }
 
+        static void WriteObjectLegalHold()
+        {
+            string id = Inputty.GetString("Key:", null, false);
+            bool enabled = Inputty.GetBoolean("Enable legal hold:", true);
+
+            try
+            {
+                PutObjectLegalHoldRequest request = new PutObjectLegalHoldRequest
+                {
+                    BucketName = _Bucket,
+                    Key = id,
+                    LegalHold = new ObjectLockLegalHold
+                    {
+                        Status = enabled ? "ON" : "OFF"
+                    }
+                };
+
+                PutObjectLegalHoldResponse response = _S3Client.PutObjectLegalHoldAsync(request).Result;
+                int statusCode = (int)response.HttpStatusCode;
+
+                if (response != null)
+                {
+                    Console.WriteLine("Success");
+                    return;
+                }
+                else
+                {
+                    Console.WriteLine("Failed");
+                    return;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+        }
+
+        static void ReadObjectLegalHold()
+        {
+            string id = Inputty.GetString("Key:", null, false);
+
+            try
+            {
+                GetObjectLegalHoldRequest request = new GetObjectLegalHoldRequest
+                {
+                    BucketName = _Bucket,
+                    Key = id
+                };
+
+                GetObjectLegalHoldResponse response = _S3Client.GetObjectLegalHoldAsync(request).Result;
+
+                if (response != null)
+                {
+                    Console.WriteLine("Success");
+                    Console.WriteLine("  Status: " + response.LegalHold.Status);
+                }
+                else
+                {
+                    Console.WriteLine("Failed");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+        }
+
+        static void InitiateMultipartUpload()
+        {
+            string key = Inputty.GetString("Key:", null, false);
+            string contentType = Inputty.GetString("Content Type:", "application/octet-stream", false);
+
+            try
+            {
+                InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest
+                {
+                    BucketName = _Bucket,
+                    Key = key,
+                    ContentType = contentType
+                };
+
+                InitiateMultipartUploadResponse response = _S3Client.InitiateMultipartUploadAsync(request).Result;
+
+                if (response != null)
+                {
+                    Console.WriteLine("Success");
+                    Console.WriteLine("  Upload ID: " + response.UploadId);
+                }
+                else
+                {
+                    Console.WriteLine("Failed");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+        }
+
+        static void UploadPart()
+        {
+            string key = Inputty.GetString("Key:", null, false);
+            string uploadId = Inputty.GetString("Upload ID:", null, false);
+            int partNumber = Inputty.GetInteger("Part Number:", 1, true, false);
+            string data = Inputty.GetString("Data:", "Sample part data", false);
+
+            try
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes(data);
+                Stream stream = new MemoryStream(bytes);
+
+                UploadPartRequest request = new UploadPartRequest
+                {
+                    BucketName = _Bucket,
+                    Key = key,
+                    UploadId = uploadId,
+                    PartNumber = partNumber,
+                    InputStream = stream
+                };
+
+                UploadPartResponse response = _S3Client.UploadPartAsync(request).Result;
+
+                if (response != null)
+                {
+                    Console.WriteLine("Success");
+                    Console.WriteLine("  ETag: " + response.ETag);
+                }
+                else
+                {
+                    Console.WriteLine("Failed");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+        }
+
+        static void ListParts()
+        {
+            string key = Inputty.GetString("Key:", null, false);
+            string uploadId = Inputty.GetString("Upload ID:", null, false);
+
+            try
+            {
+                ListPartsRequest request = new ListPartsRequest
+                {
+                    BucketName = _Bucket,
+                    Key = key,
+                    UploadId = uploadId
+                };
+
+                ListPartsResponse response = _S3Client.ListPartsAsync(request).Result;
+
+                if (response != null)
+                {
+                    Console.WriteLine("Success");
+                    Console.WriteLine("Parts: " + response.Parts.Count);
+                    foreach (PartDetail part in response.Parts)
+                    {
+                        Console.WriteLine("  Part " + part.PartNumber + ": " + part.Size + " bytes, ETag " + part.ETag);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Failed");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+        }
+
+        static void CompleteMultipartUpload()
+        {
+            string key = Inputty.GetString("Key:", null, false);
+            string uploadId = Inputty.GetString("Upload ID:", null, false);
+
+            try
+            {
+                List<PartETag> parts = new List<PartETag>();
+
+                while (true)
+                {
+                    int partNum = Inputty.GetInteger("Part Number [0 to end]:", 0, true, true);
+                    if (partNum == 0) break;
+
+                    string etag = Inputty.GetString("ETag:", null, false);
+                    parts.Add(new PartETag(partNum, etag));
+                }
+
+                CompleteMultipartUploadRequest request = new CompleteMultipartUploadRequest
+                {
+                    BucketName = _Bucket,
+                    Key = key,
+                    UploadId = uploadId,
+                    PartETags = parts
+                };
+
+                CompleteMultipartUploadResponse response = _S3Client.CompleteMultipartUploadAsync(request).Result;
+
+                if (response != null)
+                {
+                    Console.WriteLine("Success");
+                    Console.WriteLine("  ETag: " + response.ETag);
+                    Console.WriteLine("  Location: " + response.Location);
+                }
+                else
+                {
+                    Console.WriteLine("Failed");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+        }
+
+        static void AbortMultipartUpload()
+        {
+            string key = Inputty.GetString("Key:", null, false);
+            string uploadId = Inputty.GetString("Upload ID:", null, false);
+
+            try
+            {
+                AbortMultipartUploadRequest request = new AbortMultipartUploadRequest
+                {
+                    BucketName = _Bucket,
+                    Key = key,
+                    UploadId = uploadId
+                };
+
+                AbortMultipartUploadResponse response = _S3Client.AbortMultipartUploadAsync(request).Result;
+
+                if (response != null)
+                {
+                    Console.WriteLine("Success");
+                }
+                else
+                {
+                    Console.WriteLine("Failed");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+        }
+
+        static void DeleteObjectAcl()
+        {
+            Console.WriteLine("Note: AWS S3 does not support deleting object ACLs directly.");
+            Console.WriteLine("You must set a new ACL using 'write acl' instead.");
+        }
+
         private static byte[] ReadStreamFully(Stream input)
         {
             if (input == null) throw new ArgumentNullException(nameof(input));
@@ -1224,6 +1724,6 @@
             }
         }
 
-        #endregion 
+        #endregion
     }
 }
