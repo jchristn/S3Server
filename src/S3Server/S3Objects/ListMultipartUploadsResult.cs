@@ -114,10 +114,11 @@
         }
 
         /// <summary>
-        /// Encoding type.
+        /// Encoding type used to encode object key names in the XML response.
+        /// Valid value is "url" for URL encoding.
         /// </summary>
-        [XmlElement(ElementName = "EncodingType", IsNullable = false)]
-        public EncodingTypeEnum EncodingType { get; set; } = EncodingTypeEnum.Key;
+        [XmlElement(ElementName = "EncodingType", IsNullable = true)]
+        public string EncodingType { get; set; } = null;
 
         #endregion
 

@@ -133,6 +133,7 @@
         /// <summary>
         /// Bucket region string.  Not included in the XML, but rather as the HTTP header x-amz-bucket-region.
         /// </summary>
+        [XmlIgnore]
         public string BucketRegion { get; set; } = "us-west-1";
 
         #endregion

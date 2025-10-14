@@ -36,6 +36,11 @@ dotnet run --project src/Test.Server/Test.Server.csproj
 dotnet run --project src/Test.Client/Test.Client.csproj
 ```
 
+### Run automated tests
+```bash
+dotnet run --project src/Test.Automated/Test.Automated.csproj
+```
+
 ### Pack NuGet package
 ```bash
 dotnet pack src/S3Server/S3Server.csproj -c Release
@@ -187,6 +192,7 @@ src/
   Test.Client/           - Example S3 client
   Test.RequestStyle/     - Request style testing
   Test.SignatureValidation/ - Signature validation testing
+  Test.Automated/        - Automated test suite
 ```
 
 ## Important Notes
@@ -210,6 +216,21 @@ Request/response bodies use XML serialization via SerializationHelper:
 ## Size Limits
 
 OperationLimitsSettings.MaxPutObjectSize controls maximum object size for PutObject. Exceeding this returns EntityTooLarge error. Multipart uploads are not subject to this limit on a per-part basis.
+
+## Chunked Transfer Encoding
+
+When handling chunked uploads (detected via `ctx.Request.Chunked` property), use `ctx.Request.ReadChunk()` to read chunks iteratively. Each chunk has a `Length`, `Data`, and `IsFinal` property. Continue reading until `IsFinal` is true. This is commonly used by AWS CLI for streaming uploads.
+
+## Recent Changes in v6.0.x
+
+- Moved usings inside namespaces to reduce collisions
+- Moved from `new byte[0]` to `Array.Empty<byte>()`
+- Added size limits for ObjectWrite operations (MaxPutObjectSize)
+- Boolean control for enabling/disabling signature validation
+- Multipart upload support (CreateMultipartUpload, UploadPart, CompleteMultipartUpload, AbortMultipartUpload, ReadParts)
+- S3 Select API support (SelectContent)
+- BucketReadMultipartUploads callback
+- ObjectDeleteAcl callback
 
 ## Coding Standards and Style Rules
 

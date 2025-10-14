@@ -85,8 +85,39 @@
         public List<DeleteMarker> DeleteMarkers { get; set; } = new List<DeleteMarker>();
 
         /// <summary>
+        /// Next key marker for pagination when results are truncated.
+        /// </summary>
+        [XmlElement(ElementName = "NextKeyMarker", IsNullable = true)]
+        public string NextKeyMarker { get; set; } = null;
+
+        /// <summary>
+        /// Next version ID marker for pagination when results are truncated.
+        /// </summary>
+        [XmlElement(ElementName = "NextVersionIdMarker", IsNullable = true)]
+        public string NextVersionIdMarker { get; set; } = null;
+
+        /// <summary>
+        /// Delimiter used to group keys.
+        /// </summary>
+        [XmlElement(ElementName = "Delimiter", IsNullable = true)]
+        public string Delimiter { get; set; } = null;
+
+        /// <summary>
+        /// Common prefixes for grouped keys when using a delimiter.
+        /// </summary>
+        [XmlElement(ElementName = "CommonPrefixes", IsNullable = true)]
+        public CommonPrefixes CommonPrefixes { get; set; } = new CommonPrefixes();
+
+        /// <summary>
+        /// Encoding type for object keys in the response.
+        /// </summary>
+        [XmlElement(ElementName = "EncodingType", IsNullable = true)]
+        public string EncodingType { get; set; } = null;
+
+        /// <summary>
         /// Bucket region string.  Not included in the XML, but rather as the HTTP header x-amz-bucket-region.
         /// </summary>
+        [XmlIgnore]
         public string BucketRegion { get; set; } = "us-west-1";
 
         #endregion
@@ -119,6 +150,11 @@
         /// <param name="versionIdMarker">Version ID marker.</param>
         /// <param name="isTruncated">Is truncated.</param>
         /// <param name="deleteMarkers">Delete markers.</param>
+        /// <param name="nextKeyMarker">Next key marker for pagination.</param>
+        /// <param name="nextVersionIdMarker">Next version ID marker for pagination.</param>
+        /// <param name="delimiter">Delimiter for grouping keys.</param>
+        /// <param name="commonPrefixes">Common prefixes.</param>
+        /// <param name="encodingType">Encoding type.</param>
         /// <param name="bucketRegion">Bucket region.</param>
         public ListVersionsResult(
             string name,
@@ -129,6 +165,11 @@
             string keyMarker = null,
             string versionIdMarker = null,
             bool isTruncated = false,
+            string nextKeyMarker = null,
+            string nextVersionIdMarker = null,
+            string delimiter = null,
+            CommonPrefixes commonPrefixes = null,
+            string encodingType = null,
             string bucketRegion = "us-west-1")
         {
             if (String.IsNullOrEmpty(name)) throw new ArgumentNullException(nameof(name));
@@ -140,6 +181,11 @@
             IsTruncated = isTruncated;
             if (versions != null) Versions = versions;
             if (deleteMarkers != null) DeleteMarkers = deleteMarkers;
+            NextKeyMarker = nextKeyMarker;
+            NextVersionIdMarker = nextVersionIdMarker;
+            Delimiter = delimiter;
+            if (commonPrefixes != null) CommonPrefixes = commonPrefixes;
+            EncodingType = encodingType;
             BucketRegion = bucketRegion;
         }
 
