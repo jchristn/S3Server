@@ -20,12 +20,12 @@
         /// <summary>
         /// Request ID.
         /// </summary>
-        public string RequestId { get; set; } = IdGenerator.GenerateBase64(null, 32);
+        public string RequestId { get; set; } = _IdGenerator.GenerateUrlSafe("req_", 32);
 
         /// <summary>
         /// Trace ID.
         /// </summary>
-        public string TraceId { get; set; } = IdGenerator.GenerateBase64(null, 32);
+        public string TraceId { get; set; } = _IdGenerator.GenerateUrlSafe("trace_", 32);
 
         /// <summary>
         /// Indicates if the request includes the bucket name in the hostname or not.
@@ -485,6 +485,8 @@
         #endregion
 
         #region Private-Members
+
+        private static IdGenerator _IdGenerator = new IdGenerator();
 
         private string _Header = "[S3Request] ";
         private HttpRequestBase _HttpRequest = null;
