@@ -14,10 +14,34 @@
         #region Public-Members
 
         /// <summary>
-        /// Checksum algorithm.
+        /// Key.
         /// </summary>
-        [XmlElement(ElementName = "ChecksumAlgorithm", IsNullable = false)]
-        public ChecksumAlgorithmEnum ChecksumAlgorithm { get; set; } = ChecksumAlgorithmEnum.CRC32;
+        [XmlElement(ElementName = "Key", IsNullable = false)]
+        public string Key { get; set; } = null;
+
+        /// <summary>
+        /// Upload ID.
+        /// </summary>
+        [XmlElement(ElementName = "UploadId", IsNullable = false)]
+        public string UploadId { get; set; } = null;
+
+        /// <summary>
+        /// Initiator of the upload.
+        /// </summary>
+        [XmlElement(ElementName = "Initiator")]
+        public Owner Initiator { get; set; } = new Owner();
+
+        /// <summary>
+        /// Owner of the object.
+        /// </summary>
+        [XmlElement(ElementName = "Owner")]
+        public Owner Owner { get; set; } = new Owner();
+
+        /// <summary>
+        /// Storage class.
+        /// </summary>
+        [XmlElement(ElementName = "StorageClass", IsNullable = false)]
+        public StorageClassEnum StorageClass { get; set; } = StorageClassEnum.STANDARD;
 
         /// <summary>
         /// Timestamp from when the upload was initiated.
@@ -30,34 +54,17 @@
         }
 
         /// <summary>
-        /// Key.
+        /// Checksum algorithm.
         /// </summary>
-        [XmlElement(ElementName = "Key", IsNullable = false)]
-        public string Key { get; set; } = null;
+        [XmlElement(ElementName = "ChecksumAlgorithm", IsNullable = false)]
+        public ChecksumAlgorithmEnum ChecksumAlgorithm { get; set; } = ChecksumAlgorithmEnum.CRC32;
 
         /// <summary>
-        /// Initiator of the upload.
+        /// Flag to control whether ChecksumAlgorithm is serialized.
+        /// Default value is false.
         /// </summary>
-        [XmlElement(ElementName = "Initiator", IsNullable = true)]
-        public Owner Initiator { get; set; } = new Owner();
-
-        /// <summary>
-        /// Owner of the object.
-        /// </summary>
-        [XmlElement(ElementName = "Owner", IsNullable = true)]
-        public Owner Owner { get; set; } = new Owner();
-
-        /// <summary>
-        /// Storage class.
-        /// </summary>
-        [XmlElement(ElementName = "StorageClass", IsNullable = false)]
-        public StorageClassEnum StorageClass { get; set; } = StorageClassEnum.STANDARD;
-
-        /// <summary>
-        /// Upload ID.
-        /// </summary>
-        [XmlElement(ElementName = "UploadId", IsNullable = false)]
-        public string UploadId { get; set; } = null;
+        [XmlIgnore]
+        public bool IncludeChecksumAlgorithm { get; set; } = false;
 
         #endregion
 
@@ -80,6 +87,15 @@
         #endregion
 
         #region Public-Methods
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeChecksumAlgorithm()
+        {
+            return IncludeChecksumAlgorithm;
+        }
 
         #endregion
 

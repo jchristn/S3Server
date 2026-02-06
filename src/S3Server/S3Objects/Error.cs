@@ -1,40 +1,17 @@
 ﻿namespace S3ServerLibrary.S3Objects
 {
+    using System;
     using System.Xml.Serialization;
 
     /// <summary>
     /// Amazon S3 error.
     /// </summary>
-    [XmlRoot(ElementName = "Error", IsNullable = true)]
+    [XmlRoot(ElementName = "Error", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
     public class Error
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
 
         #region Public-Members
-
-        /// <summary>
-        /// Object key.
-        /// </summary>
-        [XmlElement(ElementName = "Key", IsNullable = true)]
-        public string Key { get; set; } = null;
-
-        /// <summary>
-        /// The version identifier for the resource.
-        /// </summary>
-        [XmlElement(ElementName = "VersionId", IsNullable = true)]
-        public string VersionId { get; set; } = null;
-
-        /// <summary>
-        /// Unique identifier for the request.
-        /// </summary>
-        [XmlElement(ElementName = "RequestId", IsNullable = true)]
-        public string RequestId { get; set; } = null;
-
-        /// <summary>
-        /// The resource incident to the request.
-        /// </summary>
-        [XmlElement(ElementName = "Resource", IsNullable = true)]
-        public string Resource { get; set; } = null;
 
         /// <summary>
         /// Error code.
@@ -45,11 +22,12 @@
         /// <summary>
         /// Message associated with the error.
         /// </summary>
-        [XmlElement(ElementName = "Message", IsNullable = true)]
+        [XmlElement(ElementName = "Message")]
         public string Message
         {
             get
             {
+                if (_Message != null) return _Message;
                 switch (Code)
                 {
                     case ErrorCode.AccessDenied:
@@ -168,6 +146,8 @@
                         return "The specified key does not exist.";
                     case ErrorCode.NoSuchLifecycleConfiguration:
                         return "The lifecycle configuration does not exist.";
+                    case ErrorCode.NoSuchTagSetError:
+                        return "The TagSet does not exist.";
                     case ErrorCode.NoSuchUpload:
                         return "The specified multipart upload does not exist. The upload ID might be invalid, or the multipart upload might have been aborted or completed.";
                     case ErrorCode.NoSuchVersion:
@@ -218,7 +198,41 @@
                         return "An error of an unknown type was encountered.";
                 }
             }
+            set
+            {
+                _Message = value;
+            }
         }
+
+        /// <summary>
+        /// Object key.
+        /// </summary>
+        [XmlElement(ElementName = "Key")]
+        public string Key { get; set; } = null;
+
+        /// <summary>
+        /// The version identifier for the resource.
+        /// </summary>
+        [XmlElement(ElementName = "VersionId")]
+        public string VersionId { get; set; } = null;
+
+        /// <summary>
+        /// Unique identifier for the request.
+        /// </summary>
+        [XmlElement(ElementName = "RequestId")]
+        public string RequestId { get; set; } = null;
+
+        /// <summary>
+        /// The resource incident to the request.
+        /// </summary>
+        [XmlElement(ElementName = "Resource")]
+        public string Resource { get; set; } = null;
+
+        /// <summary>
+        /// Host identifier.
+        /// </summary>
+        [XmlElement(ElementName = "HostId")]
+        public string HostId { get; set; } = null;
 
         /// <summary>
         /// HTTP status code.
@@ -346,6 +360,8 @@
                         return 404;
                     case ErrorCode.NoSuchLifecycleConfiguration:
                         return 404;
+                    case ErrorCode.NoSuchTagSetError:
+                        return 404;
                     case ErrorCode.NoSuchUpload:
                         return 404;
                     case ErrorCode.NoSuchVersion:
@@ -402,6 +418,8 @@
 
         #region Private-Members
 
+        private string _Message = null;
+
         #endregion
 
         #region Constructors-and-Factories
@@ -434,6 +452,51 @@
         #endregion
 
         #region Public-Methods
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeKey()
+        {
+            return !String.IsNullOrEmpty(Key);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeVersionId()
+        {
+            return !String.IsNullOrEmpty(VersionId);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeRequestId()
+        {
+            return !String.IsNullOrEmpty(RequestId);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeResource()
+        {
+            return !String.IsNullOrEmpty(Resource);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeHostId()
+        {
+            return !String.IsNullOrEmpty(HostId);
+        }
 
         #endregion
 

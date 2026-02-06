@@ -5,7 +5,7 @@
     /// <summary>
     /// Result from a ListAllMyBuckets request.
     /// </summary>
-    [XmlRoot(ElementName = "ListAllMyBucketsResult", IsNullable = true)]
+    [XmlRoot(ElementName = "ListAllMyBucketsResult", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
     public class ListAllMyBucketsResult
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
@@ -15,13 +15,13 @@
         /// <summary>
         /// Bucket owner.
         /// </summary>
-        [XmlElement(ElementName = "Owner", IsNullable = true)]
+        [XmlElement(ElementName = "Owner")]
         public Owner Owner { get; set; } = new Owner();
 
         /// <summary>
         /// Buckets owned by the user.
         /// </summary>
-        [XmlElement(ElementName = "Buckets", IsNullable = true)]
+        [XmlElement(ElementName = "Buckets")]
         public Buckets Buckets { get; set; } = new Buckets();
 
         #endregion

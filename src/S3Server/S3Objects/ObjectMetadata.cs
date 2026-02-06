@@ -6,7 +6,7 @@
     /// <summary>
     /// Object metadata.
     /// </summary>
-    [XmlRoot(ElementName = "Contents", IsNullable = true)]
+    [XmlRoot(ElementName = "Contents")]
     public class ObjectMetadata
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
@@ -16,7 +16,7 @@
         /// <summary>
         /// Object key.
         /// </summary>
-        [XmlElement(ElementName = "Key", IsNullable = true)]
+        [XmlElement(ElementName = "Key")]
         public string Key { get; set; } = null;
 
         /// <summary>
@@ -32,7 +32,7 @@
         /// <summary>
         /// ETag of the resource.
         /// </summary>
-        [XmlElement(ElementName = "ETag", IsNullable = true)]
+        [XmlElement(ElementName = "ETag")]
         public string ETag
         {
             get
@@ -55,6 +55,7 @@
         /// <summary>
         /// Content type.
         /// </summary>
+        [XmlIgnore]
         public string ContentType { get; set; } = "application/octet-stream";
 
         /// <summary>
@@ -77,13 +78,13 @@
         /// <summary>
         /// The class of storage where the resource resides.
         /// </summary>
-        [XmlElement(ElementName = "StorageClass", IsNullable = true)]
+        [XmlElement(ElementName = "StorageClass")]
         public StorageClassEnum? StorageClass { get; set; } = StorageClassEnum.STANDARD;
 
         /// <summary>
         /// Object owner.
         /// </summary>
-        [XmlElement(ElementName = "Owner", IsNullable = true)]
+        [XmlElement(ElementName = "Owner")]
         public Owner Owner { get; set; } = new Owner();
 
         #endregion

@@ -6,7 +6,7 @@
     /// <summary>
     /// Result from a delete operation.
     /// </summary>
-    [XmlRoot(ElementName = "DeleteResult", IsNullable = true)]
+    [XmlRoot(ElementName = "DeleteResult", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
     public class DeleteResult
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"

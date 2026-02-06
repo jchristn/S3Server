@@ -13,7 +13,7 @@
     /// <summary>
     /// Result from a ListBucket operation.
     /// </summary>
-    [XmlRoot(ElementName = "ListBucketResult", IsNullable = true)]
+    [XmlRoot(ElementName = "ListBucketResult", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
     public class ListBucketResult
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
@@ -23,13 +23,13 @@
         /// <summary>
         /// Name of the bucket.
         /// </summary>
-        [XmlElement(ElementName = "Name", IsNullable = true)]
+        [XmlElement(ElementName = "Name")]
         public string Name { get; set; } = null;
 
         /// <summary>
         /// Prefix specified in the request.
         /// </summary>
-        [XmlElement(ElementName = "Prefix", IsNullable = true)]
+        [XmlElement(ElementName = "Prefix")]
         public string Prefix
         {
             get
@@ -46,7 +46,7 @@
         /// <summary>
         /// Marker.
         /// </summary>
-        [XmlElement(ElementName = "Marker", IsNullable = true)]
+        [XmlElement(ElementName = "Marker")]
         public string Marker { get; set; } = null;
 
         /// <summary>
@@ -86,7 +86,7 @@
         /// <summary>
         /// Delimiter.
         /// </summary>
-        [XmlElement(ElementName = "Delimiter", IsNullable = true)]
+        [XmlElement(ElementName = "Delimiter")]
         public string Delimiter
         {
             get
@@ -95,8 +95,7 @@
             }
             set
             {
-                if (String.IsNullOrEmpty(value)) _Delimiter = "/";
-                else _Delimiter = value;
+                _Delimiter = value;
             }
         }
 
@@ -104,7 +103,7 @@
         /// Encoding type.
         /// </summary>
         [XmlElement(ElementName = "EncodingType")]
-        public string EncodingType { get; set; } = "url";
+        public string EncodingType { get; set; } = null;
 
         /// <summary>
         /// Indicates if the response is truncated.
@@ -115,19 +114,19 @@
         /// <summary>
         /// The next continuation token to supply to continue the query.
         /// </summary>
-        [XmlElement(ElementName = "NextContinuationToken", IsNullable = true)]
+        [XmlElement(ElementName = "NextContinuationToken")]
         public string NextContinuationToken { get; set; } = null;
 
         /// <summary>
         /// Bucket contents.
         /// </summary>
-        [XmlElement(ElementName = "Contents", IsNullable = true)]
+        [XmlElement(ElementName = "Contents")]
         public List<ObjectMetadata> Contents { get; set; } = new List<ObjectMetadata>();
 
         /// <summary>
         /// Common prefixes.
         /// </summary>
-        [XmlElement(ElementName = "CommonPrefixes", IsNullable = true)]
+        [XmlElement(ElementName = "CommonPrefixes")]
         public CommonPrefixes CommonPrefixes { get; set; } = new CommonPrefixes();
 
         /// <summary>
@@ -143,7 +142,7 @@
         private int _KeyCount = 0;
         private int _MaxKeys = 1000;
         private string _Prefix = "";
-        private string _Delimiter = "/";
+        private string _Delimiter = null;
 
         #endregion
 
@@ -235,6 +234,24 @@
                 CommonPrefixes != null
                 && CommonPrefixes.Prefixes != null
                 && CommonPrefixes.Prefixes.Count > 0);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean</returns>
+        public bool ShouldSerializeDelimiter()
+        {
+            return !String.IsNullOrEmpty(_Delimiter);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean</returns>
+        public bool ShouldSerializeEncodingType()
+        {
+            return !String.IsNullOrEmpty(EncodingType);
         }
 
         #endregion

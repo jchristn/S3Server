@@ -419,6 +419,13 @@
         NoSuchLifecycleConfiguration,
 
         /// <summary>
+        /// The TagSet does not exist.
+        /// </summary>
+        [EnumMember(Value = "NoSuchTagSetError")]
+        [XmlEnum(Name = "NoSuchTagSetError")]
+        NoSuchTagSetError,
+
+        /// <summary>
         /// The specified multipart upload does not exist. The upload ID might be invalid, or the multipart upload might have been aborted or completed.
         /// </summary>
         [EnumMember(Value = "NoSuchUpload")]

@@ -19,26 +19,26 @@
         /// <summary>
         /// ID of the grantee.
         /// </summary>
-        [XmlElement(ElementName = "ID", IsNullable = true)]
+        [XmlElement(ElementName = "ID")]
         public string ID { get; set; } = null;
 
         /// <summary>
         /// Display name.
         /// </summary>
-        [XmlElement(ElementName = "DisplayName", IsNullable = true)]
+        [XmlElement(ElementName = "DisplayName")]
         public string DisplayName { get; set; } = null;
 
         /// <summary>
         /// For a group, the URI of the group.
         /// </summary>
-        [XmlElement(ElementName = "URI", IsNullable = true)]
+        [XmlElement(ElementName = "URI")]
         public string URI { get; set; } = null;
 
         /// <summary>
         /// Type of grantee.
         /// Valid values are CanonicalUser, AmazonCustomerByEmail, Group.
         /// </summary>
-        [XmlElement(ElementName = "Type", IsNullable = true)]
+        [XmlIgnore]
         public string GranteeType
         {
             get
@@ -56,7 +56,7 @@
         /// <summary>
         /// Email address of the grantee.
         /// </summary>
-        [XmlElement(ElementName = "EmailAddress", IsNullable = true)]
+        [XmlElement(ElementName = "EmailAddress")]
         public string EmailAddress { get; set; } = null;
 
         #endregion
@@ -103,6 +103,42 @@
         #endregion
 
         #region Public-Methods
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeID()
+        {
+            return !String.IsNullOrEmpty(ID);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeDisplayName()
+        {
+            return !String.IsNullOrEmpty(DisplayName);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeURI()
+        {
+            return !String.IsNullOrEmpty(URI);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeEmailAddress()
+        {
+            return !String.IsNullOrEmpty(EmailAddress);
+        }
 
         #endregion
 

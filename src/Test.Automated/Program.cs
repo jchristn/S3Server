@@ -15,6 +15,7 @@ namespace Test.Automated
         private static int _Passed = 0;
         private static int _Failed = 0;
         private static int _Skipped = 0;
+        private static string _CurrentTestClass = null;
         private static ManualResetEvent _Finished = new ManualResetEvent(false);
 
         /// <summary>
@@ -95,6 +96,16 @@ namespace Test.Automated
 
         private static void OnTestStarting(TestStartingInfo info)
         {
+            string testClass = info.TestDisplayName;
+            int lastDot = testClass.LastIndexOf('.');
+            if (lastDot > 0) testClass = testClass.Substring(0, lastDot);
+
+            if (_CurrentTestClass != null && _CurrentTestClass != testClass)
+            {
+                Console.WriteLine("");
+            }
+
+            _CurrentTestClass = testClass;
             Console.Write($"Running: {info.TestDisplayName}... ");
         }
 

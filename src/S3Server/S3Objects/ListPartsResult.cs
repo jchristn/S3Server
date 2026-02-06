@@ -7,7 +7,7 @@
     /// <summary>
     /// List parts result.
     /// </summary>
-    [XmlRoot(ElementName = "ListPartsResult")]
+    [XmlRoot(ElementName = "ListPartsResult", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
     public class ListPartsResult
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
@@ -90,32 +90,15 @@
         public bool IsTruncated { get; set; } = false;
 
         /// <summary>
-        /// Parts.
-        /// </summary>
-        [XmlElement(ElementName = "Part", IsNullable = true)]
-        public List<Part> Parts
-        {
-            get
-            {
-                return _Parts;
-            }
-            set
-            {
-                if (value == null) _Parts = new List<Part>();
-                else _Parts = value;
-            }
-        }
-
-        /// <summary>
         /// Initiator of the upload.
         /// </summary>
-        [XmlElement(ElementName = "Initiator", IsNullable = true)]
+        [XmlElement(ElementName = "Initiator")]
         public Owner Initiator { get; set; } = new Owner();
 
         /// <summary>
         /// Owner of the object.
         /// </summary>
-        [XmlElement(ElementName = "Owner", IsNullable = true)]
+        [XmlElement(ElementName = "Owner")]
         public Owner Owner { get; set; } = new Owner();
 
         /// <summary>
@@ -129,6 +112,30 @@
         /// </summary>
         [XmlElement(ElementName = "ChecksumAlgorithm", IsNullable = false)]
         public ChecksumAlgorithmEnum ChecksumAlgorithm { get; set; } = ChecksumAlgorithmEnum.CRC32;
+
+        /// <summary>
+        /// Flag to control whether ChecksumAlgorithm is serialized.
+        /// Default value is false.
+        /// </summary>
+        [XmlIgnore]
+        public bool IncludeChecksumAlgorithm { get; set; } = false;
+
+        /// <summary>
+        /// Parts.
+        /// </summary>
+        [XmlElement(ElementName = "Part")]
+        public List<Part> Parts
+        {
+            get
+            {
+                return _Parts;
+            }
+            set
+            {
+                if (value == null) _Parts = new List<Part>();
+                else _Parts = value;
+            }
+        }
 
         #endregion
 
@@ -154,6 +161,15 @@
         #endregion
 
         #region Public-Methods
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeChecksumAlgorithm()
+        {
+            return IncludeChecksumAlgorithm;
+        }
 
         #endregion
 

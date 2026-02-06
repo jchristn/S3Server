@@ -5,7 +5,7 @@
     /// <summary>
     /// Tag metadata.
     /// </summary>
-    [XmlRoot(ElementName = "Tagging")]
+    [XmlRoot(ElementName = "Tagging", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
     public class Tagging
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"

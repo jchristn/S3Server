@@ -5,7 +5,7 @@
     /// <summary>
     /// Resource owner.
     /// </summary>
-    [XmlRoot(ElementName = "Owner", IsNullable = true)]
+    [XmlRoot(ElementName = "Owner")]
     public class Owner
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
@@ -15,13 +15,13 @@
         /// <summary>
         /// ID of the owner.
         /// </summary>
-        [XmlElement(ElementName = "ID", IsNullable = true)]
+        [XmlElement(ElementName = "ID")]
         public string ID { get; set; } = null;
 
         /// <summary>
         /// Display name of the owner.
         /// </summary>
-        [XmlElement(ElementName = "DisplayName", IsNullable = true)]
+        [XmlElement(ElementName = "DisplayName")]
         public string DisplayName { get; set; } = null;
 
         #endregion

@@ -333,14 +333,8 @@
         {
             if (Headers == null) Headers = new NameValueCollection(StringComparer.InvariantCultureIgnoreCase);
 
-            if (Headers.Get("X-Amz-Date") == null)
-                Headers.Add("X-Amz-Date", DateTime.UtcNow.ToString(Constants.AmazonTimestampFormatVerbose, CultureInfo.InvariantCulture));
-
-            if (Headers.Get("Host") == null)
-                Headers.Add("Host", _S3Request.Hostname);
-
             if (Headers.Get("Server") == null)
-                Headers.Add("Server", "S3Server");
+                Headers.Add("Server", "AmazonS3");
 
             if (Headers.Get("Date") != null) Headers.Remove("Date");
 

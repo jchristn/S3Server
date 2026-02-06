@@ -7,7 +7,7 @@
     /// <summary>
     /// Complete multipart upload result.
     /// </summary>
-    [XmlRoot(ElementName = "CompleteMultipartUploadResult")]
+    [XmlRoot(ElementName = "CompleteMultipartUploadResult", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
     public class CompleteMultipartUploadResult
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
@@ -17,49 +17,49 @@
         /// <summary>
         /// Location.
         /// </summary>
-        [XmlElement(ElementName = "Location", IsNullable = true)]
+        [XmlElement(ElementName = "Location")]
         public string Location { get; set; } = null;
 
         /// <summary>
         /// Bucket.
         /// </summary>
-        [XmlElement(ElementName = "Bucket", IsNullable = true)]
+        [XmlElement(ElementName = "Bucket")]
         public string Bucket { get; set; } = null;
 
         /// <summary>
         /// Key.
         /// </summary>
-        [XmlElement(ElementName = "Key", IsNullable = true)]
+        [XmlElement(ElementName = "Key")]
         public string Key { get; set; } = null;
 
         /// <summary>
         /// Checksum from CRC32.
         /// </summary>
-        [XmlElement(ElementName = "ChecksumCRC32", IsNullable = true)]
+        [XmlElement(ElementName = "ChecksumCRC32")]
         public string ChecksumCRC32 { get; set; } = null;
 
         /// <summary>
         /// Checksum from CRC32C.
         /// </summary>
-        [XmlElement(ElementName = "ChecksumCRC32C", IsNullable = true)]
+        [XmlElement(ElementName = "ChecksumCRC32C")]
         public string ChecksumCRC32C { get; set; } = null;
 
         /// <summary>
         /// Checksum from SHA1.
         /// </summary>
-        [XmlElement(ElementName = "ChecksumSHA1", IsNullable = true)]
+        [XmlElement(ElementName = "ChecksumSHA1")]
         public string ChecksumSHA1 { get; set; } = null;
 
         /// <summary>
         /// Checksum from SHA256.
         /// </summary>
-        [XmlElement(ElementName = "ChecksumSHA256", IsNullable = true)]
+        [XmlElement(ElementName = "ChecksumSHA256")]
         public string ChecksumSHA256 { get; set; } = null;
 
         /// <summary>
         /// ETag.
         /// </summary>
-        [XmlElement(ElementName = "ETag", IsNullable = true)]
+        [XmlElement(ElementName = "ETag")]
         public string ETag
         {
             get
@@ -100,6 +100,42 @@
         #endregion
 
         #region Public-Methods
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeChecksumCRC32()
+        {
+            return !String.IsNullOrEmpty(ChecksumCRC32);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeChecksumCRC32C()
+        {
+            return !String.IsNullOrEmpty(ChecksumCRC32C);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeChecksumSHA1()
+        {
+            return !String.IsNullOrEmpty(ChecksumSHA1);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeChecksumSHA256()
+        {
+            return !String.IsNullOrEmpty(ChecksumSHA256);
+        }
 
         #endregion
 

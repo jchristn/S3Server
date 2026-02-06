@@ -7,7 +7,7 @@
     /// <summary>
     /// List multipart uploads.
     /// </summary>
-    [XmlRoot(ElementName = "ListMultipartUploadsResult")]
+    [XmlRoot(ElementName = "ListMultipartUploadsResult", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
     public class ListMultipartUploadsResult
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
@@ -23,37 +23,37 @@
         /// <summary>
         /// Key marker.
         /// </summary>
-        [XmlElement(ElementName = "KeyMarker", IsNullable = true)]
+        [XmlElement(ElementName = "KeyMarker")]
         public string KeyMarker { get; set; } = null;
 
         /// <summary>
         /// Upload ID marker.
         /// </summary>
-        [XmlElement(ElementName = "UploadIdMarker", IsNullable = true)]
+        [XmlElement(ElementName = "UploadIdMarker")]
         public string UploadIdMarker { get; set; } = null;
 
         /// <summary>
         /// Next key marker.
         /// </summary>
-        [XmlElement(ElementName = "NextKeyMarker", IsNullable = true)]
+        [XmlElement(ElementName = "NextKeyMarker")]
         public string NextKeyMarker { get; set; } = null;
 
         /// <summary>
         /// Prefix.
         /// </summary>
-        [XmlElement(ElementName = "Prefix", IsNullable = true)]
+        [XmlElement(ElementName = "Prefix")]
         public string Prefix { get; set; } = null;
 
         /// <summary>
         /// Delimiter.
         /// </summary>
-        [XmlElement(ElementName = "Delimiter", IsNullable = true)]
+        [XmlElement(ElementName = "Delimiter")]
         public string Delimiter { get; set; } = null;
 
         /// <summary>
         /// Next upload ID marker.
         /// </summary>
-        [XmlElement(ElementName = "NextUploadIdMarker", IsNullable = true)]
+        [XmlElement(ElementName = "NextUploadIdMarker")]
         public string NextUploadIdMarker { get; set; } = null;
 
         /// <summary>
@@ -82,7 +82,7 @@
         /// <summary>
         /// Uploads.
         /// </summary>
-        [XmlElement(ElementName = "Upload", IsNullable = true)]
+        [XmlElement(ElementName = "Upload")]
         public List<Upload> Uploads
         {
             get
@@ -99,7 +99,7 @@
         /// <summary>
         /// Common prefixes.
         /// </summary>
-        [XmlElement(ElementName = "CommonPrefixes", IsNullable = true)]
+        [XmlElement(ElementName = "CommonPrefixes")]
         public CommonPrefixes CommonPrefixes
         {
             get
@@ -108,8 +108,7 @@
             }
             set
             {
-                if (value == null) _CommonPrefixes = new CommonPrefixes();
-                else _CommonPrefixes = value;
+                _CommonPrefixes = value;
             }
         }
 
@@ -117,7 +116,7 @@
         /// Encoding type used to encode object key names in the XML response.
         /// Valid value is "url" for URL encoding.
         /// </summary>
-        [XmlElement(ElementName = "EncodingType", IsNullable = true)]
+        [XmlElement(ElementName = "EncodingType")]
         public string EncodingType { get; set; } = null;
 
         #endregion
@@ -156,6 +155,35 @@
         #endregion
 
         #region Public-Methods
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeUploads()
+        {
+            return _Uploads != null && _Uploads.Count > 0;
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeCommonPrefixes()
+        {
+            return _CommonPrefixes != null
+                && _CommonPrefixes.Prefixes != null
+                && _CommonPrefixes.Prefixes.Count > 0;
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeEncodingType()
+        {
+            return !String.IsNullOrEmpty(EncodingType);
+        }
 
         #endregion
 

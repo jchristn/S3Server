@@ -7,7 +7,7 @@
     /// <summary>
     /// Result from a ListVersions operation.
     /// </summary>
-    [XmlRoot(ElementName = "ListVersionsResult", IsNullable = true)]
+    [XmlRoot(ElementName = "ListVersionsResult", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
     public class ListVersionsResult
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
@@ -17,13 +17,13 @@
         /// <summary>
         /// Name of the bucket.
         /// </summary>
-        [XmlElement(ElementName = "Name", IsNullable = true)]
+        [XmlElement(ElementName = "Name")]
         public string Name { get; set; } = null;
 
         /// <summary>
         /// Prefix specified in the request.
         /// </summary>
-        [XmlElement(ElementName = "Prefix", IsNullable = true)]
+        [XmlElement(ElementName = "Prefix")]
         public string Prefix
         {
             get
@@ -40,13 +40,13 @@
         /// <summary>
         /// Key marker.
         /// </summary>
-        [XmlElement(ElementName = "KeyMarker", IsNullable = true)]
+        [XmlElement(ElementName = "KeyMarker")]
         public string KeyMarker { get; set; } = null;
 
         /// <summary>
         /// Version ID marker.
         /// </summary>
-        [XmlElement(ElementName = "VersionIdMarker", IsNullable = true)]
+        [XmlElement(ElementName = "VersionIdMarker")]
         public string VersionIdMarker { get; set; } = null;
 
         /// <summary>
@@ -75,43 +75,43 @@
         /// <summary>
         /// Object versions.
         /// </summary>
-        [XmlElement(ElementName = "Version", IsNullable = true)]
+        [XmlElement(ElementName = "Version")]
         public List<ObjectVersion> Versions { get; set; } = new List<ObjectVersion>();
 
         /// <summary>
         /// Delete markers.
         /// </summary>
-        [XmlElement(ElementName = "DeleteMarker", IsNullable = true)]
+        [XmlElement(ElementName = "DeleteMarker")]
         public List<DeleteMarker> DeleteMarkers { get; set; } = new List<DeleteMarker>();
 
         /// <summary>
         /// Next key marker for pagination when results are truncated.
         /// </summary>
-        [XmlElement(ElementName = "NextKeyMarker", IsNullable = true)]
+        [XmlElement(ElementName = "NextKeyMarker")]
         public string NextKeyMarker { get; set; } = null;
 
         /// <summary>
         /// Next version ID marker for pagination when results are truncated.
         /// </summary>
-        [XmlElement(ElementName = "NextVersionIdMarker", IsNullable = true)]
+        [XmlElement(ElementName = "NextVersionIdMarker")]
         public string NextVersionIdMarker { get; set; } = null;
 
         /// <summary>
         /// Delimiter used to group keys.
         /// </summary>
-        [XmlElement(ElementName = "Delimiter", IsNullable = true)]
+        [XmlElement(ElementName = "Delimiter")]
         public string Delimiter { get; set; } = null;
 
         /// <summary>
         /// Common prefixes for grouped keys when using a delimiter.
         /// </summary>
-        [XmlElement(ElementName = "CommonPrefixes", IsNullable = true)]
+        [XmlElement(ElementName = "CommonPrefixes")]
         public CommonPrefixes CommonPrefixes { get; set; } = new CommonPrefixes();
 
         /// <summary>
         /// Encoding type for object keys in the response.
         /// </summary>
-        [XmlElement(ElementName = "EncodingType", IsNullable = true)]
+        [XmlElement(ElementName = "EncodingType")]
         public string EncodingType { get; set; } = null;
 
         /// <summary>
@@ -192,6 +192,71 @@
         #endregion
 
         #region Public-Methods
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeVersions()
+        {
+            return Versions != null && Versions.Count > 0;
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeDeleteMarkers()
+        {
+            return DeleteMarkers != null && DeleteMarkers.Count > 0;
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeNextKeyMarker()
+        {
+            return !String.IsNullOrEmpty(NextKeyMarker);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeNextVersionIdMarker()
+        {
+            return !String.IsNullOrEmpty(NextVersionIdMarker);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeDelimiter()
+        {
+            return !String.IsNullOrEmpty(Delimiter);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeCommonPrefixes()
+        {
+            return CommonPrefixes != null
+                && CommonPrefixes.Prefixes != null
+                && CommonPrefixes.Prefixes.Count > 0;
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeEncodingType()
+        {
+            return !String.IsNullOrEmpty(EncodingType);
+        }
 
         #endregion
 

@@ -5,7 +5,7 @@
     /// <summary>
     /// Bucket versioning configuration.
     /// </summary>
-    [XmlRoot(ElementName = "VersioningConfiguration", IsNullable = true)]
+    [XmlRoot(ElementName = "VersioningConfiguration", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
     public class VersioningConfiguration
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
@@ -25,6 +25,20 @@
         /// </summary>
         [XmlElement(ElementName = "MfaDelete")]
         public MfaDeleteStatusEnum MfaDelete { get; set; } = MfaDeleteStatusEnum.Disabled;
+
+        /// <summary>
+        /// Flag to control whether Status is serialized.
+        /// Default value is true.
+        /// </summary>
+        [XmlIgnore]
+        public bool IncludeStatus { get; set; } = true;
+
+        /// <summary>
+        /// Flag to control whether MfaDelete is serialized.
+        /// Default value is false.
+        /// </summary>
+        [XmlIgnore]
+        public bool IncludeMfaDelete { get; set; } = false;
 
         #endregion
 
@@ -56,6 +70,24 @@
         #endregion
 
         #region Public-Methods
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeStatus()
+        {
+            return IncludeStatus;
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeMfaDelete()
+        {
+            return IncludeMfaDelete;
+        }
 
         #endregion
 

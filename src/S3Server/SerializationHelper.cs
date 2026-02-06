@@ -1,6 +1,7 @@
 ﻿namespace S3ServerLibrary
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Specialized;
     using System.IO;
     using System.Linq;
@@ -24,6 +25,7 @@
         private static ExceptionConverter<Exception> _ExceptionConverter = new ExceptionConverter<Exception>();
         private static NameValueCollectionConverter _NameValueCollectionConverter = new NameValueCollectionConverter();
         private static JsonStringEnumConverter _StringEnumConverter = new JsonStringEnumConverter();
+        private static ConcurrentDictionary<Type, XmlSerializer> _DeserializerCache = new ConcurrentDictionary<Type, XmlSerializer>();
 
         #endregion
 
@@ -148,7 +150,7 @@
                 using (XmlTextReader reader = new XmlTextReader(textReader))
                 {
                     reader.Namespaces = false;
-                    XmlSerializer serializer = new XmlSerializer(typeof(T));
+                    XmlSerializer serializer = GetNamespaceAgnosticSerializer(typeof(T));
                     obj = (T)serializer.Deserialize(reader);
                 }
             }
@@ -178,7 +180,9 @@
 
                 using (XmlWriter writer = XmlWriter.Create(stream, settings))
                 {
-                    xml.Serialize(new XmlWriterExtended(writer), obj);
+                    XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
+                    ns.Add("", "http://s3.amazonaws.com/doc/2006-03-01/");
+                    xml.Serialize(new XmlWriterExtended(writer), obj, ns);
                     byte[] bytes = stream.ToArray();
                     string ret = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
 
@@ -243,6 +247,21 @@
 
                 writer.WriteEndObject();
             }
+        }
+
+        private static XmlSerializer GetNamespaceAgnosticSerializer(Type type)
+        {
+            return _DeserializerCache.GetOrAdd(type, t =>
+            {
+                XmlRootAttribute existingRoot = (XmlRootAttribute)Attribute.GetCustomAttribute(t, typeof(XmlRootAttribute));
+                if (existingRoot != null && !String.IsNullOrEmpty(existingRoot.Namespace))
+                {
+                    XmlRootAttribute overrideRoot = new XmlRootAttribute(existingRoot.ElementName);
+                    overrideRoot.IsNullable = existingRoot.IsNullable;
+                    return new XmlSerializer(t, overrideRoot);
+                }
+                return new XmlSerializer(t);
+            });
         }
 
         private class NameValueCollectionConverter : JsonConverter<NameValueCollection>
