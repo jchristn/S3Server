@@ -4,16 +4,10 @@
     using System.Collections.Generic;
     using System.Xml.Serialization;
 
-    /*
-     * Removed Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
-     * From each XmlRoot attribute
-     * 
-     */
-
     /// <summary>
     /// Result from a ListBucket operation.
     /// </summary>
-    [XmlRoot(ElementName = "ListBucketResult", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
+    [XmlRoot(ElementName = "ListBucketResult", IsNullable = true)]
     public class ListBucketResult
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"

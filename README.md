@@ -1,4 +1,4 @@
-![alt tag](https://github.com/jchristn/s3server/blob/master/assets/logo.ico)
+![alt tag](https://github.com/jchristn/s3server/blob/main/assets/logo.ico)
 
 # S3Server
 

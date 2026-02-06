@@ -5,7 +5,7 @@
     /// <summary>
     /// Bucket versioning configuration.
     /// </summary>
-    [XmlRoot(ElementName = "VersioningConfiguration", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
+    [XmlRoot(ElementName = "VersioningConfiguration", IsNullable = true)]
     public class VersioningConfiguration
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"

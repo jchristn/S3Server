@@ -6,7 +6,7 @@
     /// <summary>
     /// Amazon S3 error.
     /// </summary>
-    [XmlRoot(ElementName = "Error", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
+    [XmlRoot(ElementName = "Error", IsNullable = true)]
     public class Error
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"

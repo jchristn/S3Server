@@ -7,7 +7,7 @@
     /// <summary>
     /// Result from a ListVersions operation.
     /// </summary>
-    [XmlRoot(ElementName = "ListVersionsResult", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/", IsNullable = true)]
+    [XmlRoot(ElementName = "ListVersionsResult", IsNullable = true)]
     public class ListVersionsResult
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"

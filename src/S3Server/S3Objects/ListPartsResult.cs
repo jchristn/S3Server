@@ -7,7 +7,7 @@
     /// <summary>
     /// List parts result.
     /// </summary>
-    [XmlRoot(ElementName = "ListPartsResult", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+    [XmlRoot(ElementName = "ListPartsResult")]
     public class ListPartsResult
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"

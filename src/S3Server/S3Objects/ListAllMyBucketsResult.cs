@@ -5,7 +5,7 @@
     /// <summary>
     /// Result from a ListAllMyBuckets request.
     /// </summary>
-    [XmlRoot(ElementName = "ListAllMyBucketsResult", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+    [XmlRoot(ElementName = "ListAllMyBucketsResult")]
     public class ListAllMyBucketsResult
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"

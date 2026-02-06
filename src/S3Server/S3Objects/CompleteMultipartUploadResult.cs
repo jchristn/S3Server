@@ -7,7 +7,7 @@
     /// <summary>
     /// Complete multipart upload result.
     /// </summary>
-    [XmlRoot(ElementName = "CompleteMultipartUploadResult", Namespace = "http://s3.amazonaws.com/doc/2006-03-01/")]
+    [XmlRoot(ElementName = "CompleteMultipartUploadResult")]
     public class CompleteMultipartUploadResult
     {
         // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
