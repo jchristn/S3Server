@@ -174,7 +174,10 @@ S3ServerSettings settings = new S3ServerSettings
     },
 
     // Optional: Enable AWS Signature V4 validation
-    EnableSignatures = false
+    EnableSignatures = false,
+
+    // Optional: Use TCP-based server (WatsonWebserver.Lite) instead of http.sys (WatsonWebserver)
+    UseTcpServer = false
 };
 ```
 
@@ -730,7 +733,7 @@ Comprehensive examples are available in the repository:
 - **`Test.Client`**: S3 client examples using AWS SDK
 - **`Test.RequestStyle`**: Path-style vs virtual-hosted-style URL testing
 - **`Test.SignatureValidation`**: AWS Signature V4 validation examples
-- **`Test.Automated`**: Automated test suite
+- **`Test.Automated`**: Automated test suite (runs against both HTTP and TCP server modes)
 
 Run the test server (requires admin on Windows for wildcard listeners):
 
@@ -783,6 +786,7 @@ Refer to [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
 - **Added S3 Select API support** (SelectContent)
 - Added BucketReadMultipartUploads callback
 - Added ObjectDeleteAcl callback
+- Added `UseTcpServer` setting: when true, uses WatsonWebserver.Lite (TCP-based) instead of WatsonWebserver (http.sys-based)
 
 ## License
 

@@ -36,7 +36,7 @@ dotnet run --project src/Test.Server/Test.Server.csproj
 dotnet run --project src/Test.Client/Test.Client.csproj
 ```
 
-### Run automated tests
+### Run automated tests (runs against both HTTP and TCP server modes)
 ```bash
 dotnet run --project src/Test.Automated/Test.Automated.csproj
 ```
@@ -103,6 +103,7 @@ Settings must be configured BEFORE starting the server:
 - `Logger`: Action<string> for logging
 - `Logging`: Toggle logging for HTTP requests, S3 requests, signatures
 - `EnableSignatures`: Enable AWS signature V4 validation
+- `UseTcpServer`: When true, uses WatsonWebserver.Lite (TCP) instead of WatsonWebserver (http.sys). Default false.
 - `OperationLimits`: Size limits (e.g., MaxPutObjectSize)
 - `PreRequestHandler`: Called before routing (return true to terminate)
 - `DefaultRequestHandler`: Called when no callback matches

@@ -3,14 +3,15 @@
     using S3ServerLibrary.Callbacks;
     using S3ServerLibrary.S3Objects;
     using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.Net.NetworkInformation;
     using System.Text;
     using System.Threading.Tasks;
     using AWSSignatureGenerator;
     using WatsonWebserver;
     using WatsonWebserver.Core;
-    using System.Net.NetworkInformation;
-    using System.Globalization;
-    using System.Collections.Generic;
+    using WatsonWebserver.Lite;
 
     /// <summary>
     /// S3 server.  
@@ -65,7 +66,7 @@
         /// <summary>
         /// Access the underlying webserver.
         /// </summary>
-        public Webserver Webserver
+        public WebserverBase Webserver
         {
             get
             {
@@ -80,7 +81,7 @@
         private string _Header = "[S3Server] ";
         private bool _Disposed = false;
 
-        private Webserver _Webserver = null;
+        private WebserverBase _Webserver = null;
         private S3ServerSettings _Settings = new S3ServerSettings();
 
         #endregion
@@ -119,7 +120,14 @@
                 _Settings.Webserver.Headers.DefaultHeaders = updatedHeaders;
             }
 
-            _Webserver = new Webserver(_Settings.Webserver, RequestHandler);
+            if (_Settings.UseTcpServer)
+            {
+                _Webserver = new WebserverLite(_Settings.Webserver, RequestHandler);
+            }
+            else
+            {
+                _Webserver = new Webserver(_Settings.Webserver, RequestHandler);
+            }
         }
 
         #endregion
