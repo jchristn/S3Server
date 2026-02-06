@@ -129,20 +129,24 @@
                 xml = xml.Remove(0, byteOrderMarkUtf8.Length);
             }
 
-            /*
-             * 
-             * This code respects the supplied namespace and validates it vs the model in code
-             * 
-             * 
-            XmlSerializer xmls = new XmlSerializer(typeof(T));
-            using (MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(xml)))
+            // Try standard namespace-aware deserialization first.
+            // This correctly handles AWS SDK XML which includes the S3 namespace
+            // on all elements (root and children).
+            try
             {
-                return (T)xmls.Deserialize(ms);
+                XmlSerializer xmls = new XmlSerializer(typeof(T));
+                using (MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(xml)))
+                {
+                    return (T)xmls.Deserialize(ms);
+                }
             }
-            */
+            catch (InvalidOperationException)
+            {
+                // Fall through to namespace-agnostic deserialization for clients
+                // that send XML without the S3 namespace.
+            }
 
-            // The code that follows ignores namespaces
-
+            // Fallback: namespace-agnostic deserialization
             T obj = null;
 
             using (TextReader textReader = new StringReader(xml))
