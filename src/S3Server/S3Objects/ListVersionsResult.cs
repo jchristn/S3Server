@@ -106,7 +106,7 @@
         /// Common prefixes for grouped keys when using a delimiter.
         /// </summary>
         [XmlElement(ElementName = "CommonPrefixes")]
-        public CommonPrefixes CommonPrefixes { get; set; } = new CommonPrefixes();
+        public List<CommonPrefixes> CommonPrefixes { get; set; } = new List<CommonPrefixes>();
 
         /// <summary>
         /// Encoding type for object keys in the response.
@@ -168,7 +168,7 @@
             string nextKeyMarker = null,
             string nextVersionIdMarker = null,
             string delimiter = null,
-            CommonPrefixes commonPrefixes = null,
+            List<CommonPrefixes> commonPrefixes = null,
             string encodingType = null,
             string bucketRegion = "us-west-1")
         {
@@ -244,9 +244,7 @@
         /// <returns>Boolean.</returns>
         public bool ShouldSerializeCommonPrefixes()
         {
-            return CommonPrefixes != null
-                && CommonPrefixes.Prefixes != null
-                && CommonPrefixes.Prefixes.Count > 0;
+            return CommonPrefixes != null && CommonPrefixes.Count > 0;
         }
 
         /// <summary>

@@ -1,6 +1,5 @@
-﻿namespace S3ServerLibrary.S3Objects
+namespace S3ServerLibrary.S3Objects
 {
-    using System.Collections.Generic;
     using System.Xml.Serialization;
 
     /// <summary>
@@ -17,7 +16,7 @@
         /// Prefix.
         /// </summary>
         [XmlElement(ElementName = "Prefix", IsNullable = true)]
-        public List<string> Prefixes { get; set; } = new List<string>();
+        public string Prefix { get; set; } = null;
 
         #endregion
 
@@ -38,10 +37,10 @@
         /// <summary>
         /// Instantiate.
         /// </summary>
-        /// <param name="prefixes">Prefixes.</param>
-        public CommonPrefixes(List<string> prefixes)
+        /// <param name="prefix">Prefix.</param>
+        public CommonPrefixes(string prefix)
         {
-            if (prefixes != null) Prefixes = prefixes;
+            Prefix = prefix;
         }
 
         #endregion

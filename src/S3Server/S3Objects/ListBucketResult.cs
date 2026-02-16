@@ -121,7 +121,7 @@
         /// Common prefixes.
         /// </summary>
         [XmlElement(ElementName = "CommonPrefixes")]
-        public CommonPrefixes CommonPrefixes { get; set; } = new CommonPrefixes();
+        public List<CommonPrefixes> CommonPrefixes { get; set; } = new List<CommonPrefixes>();
 
         /// <summary>
         /// Bucket region string.  Not included in the XML, but rather as the HTTP header x-amz-bucket-region.
@@ -174,7 +174,7 @@
             string delimiter = null,
             bool isTruncated = false,
             string nextToken = null,
-            CommonPrefixes prefixes = null,
+            List<CommonPrefixes> prefixes = null,
             string bucketRegion = "us-west-1")
         {
             if (String.IsNullOrEmpty(name)) throw new ArgumentNullException(nameof(name));
@@ -224,10 +224,7 @@
         /// <returns>Boolean</returns>
         public bool ShouldSerializeCommonPrefixes()
         {
-            return (
-                CommonPrefixes != null
-                && CommonPrefixes.Prefixes != null
-                && CommonPrefixes.Prefixes.Count > 0);
+            return CommonPrefixes != null && CommonPrefixes.Count > 0;
         }
 
         /// <summary>

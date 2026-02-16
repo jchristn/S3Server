@@ -100,7 +100,7 @@
         /// Common prefixes.
         /// </summary>
         [XmlElement(ElementName = "CommonPrefixes")]
-        public CommonPrefixes CommonPrefixes
+        public List<CommonPrefixes> CommonPrefixes
         {
             get
             {
@@ -125,7 +125,7 @@
 
         private int _MaxUploads = 1000;
         private List<Upload> _Uploads = new List<Upload>();
-        private CommonPrefixes _CommonPrefixes = new CommonPrefixes();
+        private List<CommonPrefixes> _CommonPrefixes = new List<CommonPrefixes>();
 
         #endregion
 
@@ -171,9 +171,7 @@
         /// <returns>Boolean.</returns>
         public bool ShouldSerializeCommonPrefixes()
         {
-            return _CommonPrefixes != null
-                && _CommonPrefixes.Prefixes != null
-                && _CommonPrefixes.Prefixes.Count > 0;
+            return _CommonPrefixes != null && _CommonPrefixes.Count > 0;
         }
 
         /// <summary>
