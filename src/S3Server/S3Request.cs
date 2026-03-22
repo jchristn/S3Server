@@ -6,7 +6,7 @@
     using System.IO;
     using System.Net;
     using System.Text.Json.Serialization;
-    using System.Text.RegularExpressions;
+
     using System.Threading.Tasks;
     using WatsonWebserver.Core;
 
@@ -741,7 +741,7 @@
                     ContentSha256 = RetrieveHeaderValue("x-amz-content-sha256");
                     if (!String.IsNullOrEmpty(ContentSha256))
                     {
-                        if (ContentSha256.ToLower().Contains("streaming"))
+                        if (ContentSha256.IndexOf("streaming", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
                             Chunked = true;
                             _HttpRequest.ChunkedTransfer = true;
@@ -966,11 +966,9 @@
                     {
                         RequestStyle = S3RequestStyle.VirtualHostedStyle;
 
-                        string tempBaseDomain = BaseDomain;
-                        while (tempBaseDomain.StartsWith(".")) tempBaseDomain = tempBaseDomain.Substring(1);
+                        string tempBaseDomain = BaseDomain.TrimStart('.');
 
-                        string temp = ReplaceLastOccurrence(Hostname, tempBaseDomain, "");
-                        while (temp.EndsWith(".")) temp = temp.Substring(0, (temp.Length - 1));
+                        string temp = ReplaceLastOccurrence(Hostname, tempBaseDomain, "").TrimEnd('.');
 
                         Bucket = temp;
 
@@ -981,7 +979,7 @@
 
             string rawUrl = _HttpRequest.Url.RawWithoutQuery;
 
-            while (rawUrl.StartsWith("/")) rawUrl = rawUrl.Substring(1);
+            rawUrl = rawUrl.TrimStart('/');
 
             switch (RequestStyle)
             {
@@ -1185,33 +1183,10 @@
             }
         }
 
-        private static bool IsIpv4Address(string val)
-        {
-            if (String.IsNullOrEmpty(val)) throw new ArgumentNullException(nameof(val));
-
-            string ipv4Pattern = @"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$";
-            Match match = Regex.Match(val, ipv4Pattern);
-            if (match.Success) return true; // IPv4 regular expression match
-
-            IPAddress ip = null;
-            return IPAddress.TryParse(val, out ip);
-        }
-
-        private static bool IsIpv6Address(string val)
-        {
-            if (String.IsNullOrEmpty(val)) throw new ArgumentNullException(nameof(val));
-
-            string ipv6Pattern = @"(?:^|(?<=\s))(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))(?=\s|$)";
-            Match match = Regex.Match(val, ipv6Pattern);
-            if (match.Success) return true; // IPv6 regular expression match
-
-            IPAddress ip = null;
-            return IPAddress.TryParse(val, out ip);
-        }
-
         private static bool IsIpAddress(string val)
         {
-            return IsIpv4Address(val) || IsIpv6Address(val);
+            if (String.IsNullOrEmpty(val)) throw new ArgumentNullException(nameof(val));
+            return IPAddress.TryParse(val, out _);
         }
 
         private static string ReplaceLastOccurrence(string src, string find, string replace)

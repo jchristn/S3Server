@@ -218,25 +218,22 @@
         {
             if (ChunkedTransfer) throw new IOException("Responses with chunked transfer-encoding enabled require use of SendChunk() and SendFinalChunk().");
 
-            MemoryStream ms = null;
             ContentLength = 0;
 
-            if (data != null && data.Length > 0)
+            using (MemoryStream ms = new MemoryStream())
             {
-                ms = new MemoryStream();
-                ms.Write(data, 0, data.Length);
-                ContentLength = data.Length;
+                if (data != null && data.Length > 0)
+                {
+                    ms.Write(data, 0, data.Length);
+                    ContentLength = data.Length;
+                }
+
+                ms.Seek(0, SeekOrigin.Begin);
+
+                SetResponseHeaders();
+
+                return await _HttpResponse.Send(ContentLength, ms).ConfigureAwait(false);
             }
-            else
-            {
-                ms = new MemoryStream(Array.Empty<byte>());
-            }
-
-            ms.Seek(0, SeekOrigin.Begin);
-
-            SetResponseHeaders();
-
-            return await _HttpResponse.Send(ContentLength, ms).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -273,16 +270,19 @@
             ChunkedTransfer = false;
 
             byte[] bytes = Encoding.UTF8.GetBytes(SerializationHelper.SerializeXml(error));
-            MemoryStream ms = new MemoryStream(bytes);
-            ms.Seek(0, SeekOrigin.Begin);
 
-            ContentLength = bytes.Length;
-            StatusCode = error.HttpStatusCode;
-            ContentType = Constants.ContentTypeXml;
+            using (MemoryStream ms = new MemoryStream(bytes))
+            {
+                ms.Seek(0, SeekOrigin.Begin);
 
-            SetResponseHeaders();
+                ContentLength = bytes.Length;
+                StatusCode = error.HttpStatusCode;
+                ContentType = Constants.ContentTypeXml;
 
-            return await _HttpResponse.Send(ContentLength, ms).ConfigureAwait(false);
+                SetResponseHeaders();
+
+                return await _HttpResponse.Send(ContentLength, ms).ConfigureAwait(false);
+            }
         }
 
         /// <summary>
@@ -297,16 +297,19 @@
             Error errorBody = new Error(error);
 
             byte[] bytes = Encoding.UTF8.GetBytes(SerializationHelper.SerializeXml(errorBody));
-            MemoryStream ms = new MemoryStream(bytes);
-            ms.Seek(0, SeekOrigin.Begin);
 
-            ContentLength = bytes.Length;
-            StatusCode = errorBody.HttpStatusCode;
-            ContentType = Constants.ContentTypeXml;
+            using (MemoryStream ms = new MemoryStream(bytes))
+            {
+                ms.Seek(0, SeekOrigin.Begin);
 
-            SetResponseHeaders();
+                ContentLength = bytes.Length;
+                StatusCode = errorBody.HttpStatusCode;
+                ContentType = Constants.ContentTypeXml;
 
-            return await _HttpResponse.Send(ContentLength, ms).ConfigureAwait(false);
+                SetResponseHeaders();
+
+                return await _HttpResponse.Send(ContentLength, ms).ConfigureAwait(false);
+            }
         }
 
         /// <summary>

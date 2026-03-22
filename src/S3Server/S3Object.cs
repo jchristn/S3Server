@@ -8,7 +8,7 @@
     /// <summary>
     /// S3 object.
     /// </summary>
-    public class S3Object
+    public class S3Object : IDisposable
     {
         #region Public-Members
 
@@ -181,6 +181,7 @@
 
         #region Private-Members
 
+        private bool _Disposed = false;
         private Stream _DataStream = null;
         private byte[] _DataBytes = null;
         private long _Size = 0;
@@ -284,9 +285,38 @@
 
         #region Public-Methods
 
+        /// <summary>
+        /// Dispose.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         #endregion
 
         #region Private-Methods
+
+        /// <summary>
+        /// Dispose of resources.
+        /// </summary>
+        /// <param name="disposing">Disposing.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_Disposed) return;
+
+            if (disposing)
+            {
+                if (_DataStream != null)
+                {
+                    _DataStream.Dispose();
+                    _DataStream = null;
+                }
+            }
+
+            _Disposed = true;
+        }
 
         private static byte[] ReadFromStream(Stream stream, long count, int bufferLen)
         {
@@ -296,26 +326,27 @@
 
             int read = 0;
             long bytesRemaining = count;
-            MemoryStream ms = new MemoryStream();
 
-            while (bytesRemaining > 0)
+            using (MemoryStream ms = new MemoryStream())
             {
-                if (bufferLen > bytesRemaining) buffer = new byte[bytesRemaining];
+                while (bytesRemaining > 0)
+                {
+                    if (bufferLen > bytesRemaining) buffer = new byte[bytesRemaining];
 
-                read = stream.Read(buffer, 0, buffer.Length);
-                if (read > 0)
-                {
-                    ms.Write(buffer, 0, read);
-                    bytesRemaining -= read;
+                    read = stream.Read(buffer, 0, buffer.Length);
+                    if (read > 0)
+                    {
+                        ms.Write(buffer, 0, read);
+                        bytesRemaining -= read;
+                    }
+                    else
+                    {
+                        throw new IOException("Could not read from supplied stream.");
+                    }
                 }
-                else
-                {
-                    throw new IOException("Could not read from supplied stream.");
-                }
+
+                return ms.ToArray();
             }
-
-            byte[] data = ms.ToArray();
-            return data;
         }
 
         #endregion

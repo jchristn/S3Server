@@ -225,11 +225,11 @@
                     s3ctx.Response.Headers.Add(Constants.HeaderTraceId, s3ctx.Request.TraceId);
                     s3ctx.Response.Headers.Add(Constants.HeaderConnection, "close");
 
-                    if (_Settings.Logging.HttpRequests)
-                        _Settings.Logger?.Invoke(_Header + "HTTP request: " + Environment.NewLine + SerializationHelper.SerializeJson(s3ctx.Http, true));
+                    if (_Settings.Logging.HttpRequests && _Settings.Logger != null)
+                        _Settings.Logger(_Header + "HTTP request: " + Environment.NewLine + SerializationHelper.SerializeJson(s3ctx.Http, true));
 
-                    if (_Settings.Logging.S3Requests)
-                        _Settings.Logger?.Invoke(_Header + "S3 request: " + Environment.NewLine + SerializationHelper.SerializeJson(s3ctx.Request, true));
+                    if (_Settings.Logging.S3Requests && _Settings.Logger != null)
+                        _Settings.Logger(_Header + "S3 request: " + Environment.NewLine + SerializationHelper.SerializeJson(s3ctx.Request, true));
 
                     if (_Settings.PreRequestHandler != null)
                     {
@@ -630,7 +630,7 @@
                             break;
 
                         case S3RequestType.ObjectCompleteMultipartUpload:
-                            if (Object.DeleteMultiple != null)
+                            if (Object.CompleteMultipartUpload != null)
                             {
                                 try
                                 {
@@ -656,7 +656,7 @@
                         case S3RequestType.ObjectCreateMultipartUpload:
                             if (Object.CreateMultipartUpload != null)
                             {
-                                initiateMultipart = await Object.CreateMultipartUpload(s3ctx);
+                                initiateMultipart = await Object.CreateMultipartUpload(s3ctx).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
                                 await s3ctx.Response.Send(SerializationHelper.SerializeXml(initiateMultipart)).ConfigureAwait(false);
@@ -847,7 +847,7 @@
                             break;
 
                         case S3RequestType.ObjectSelectContent:
-                            if (Object.WriteTagging != null)
+                            if (Object.SelectContent != null)
                             {
                                 try
                                 {
@@ -890,6 +890,7 @@
                                     s3ctx.Response.StatusCode = 400;
                                     s3ctx.Response.ContentType = Constants.ContentTypeXml;
                                     await s3ctx.Response.Send(SerializationHelper.SerializeXml(error)).ConfigureAwait(false);
+                                    return;
                                 }
 
                                 await Object.Write(s3ctx).ConfigureAwait(false);
@@ -1037,8 +1038,22 @@
             }
             finally
             {
-                s3ctx.Timestamp.End = DateTime.UtcNow;
-                if (_Settings.PostRequestHandler != null) await _Settings.PostRequestHandler(s3ctx).ConfigureAwait(false);
+                if (s3ctx != null)
+                {
+                    s3ctx.Timestamp.End = DateTime.UtcNow;
+
+                    if (_Settings.PostRequestHandler != null)
+                    {
+                        try
+                        {
+                            await _Settings.PostRequestHandler(s3ctx).ConfigureAwait(false);
+                        }
+                        catch (Exception e)
+                        {
+                            _Settings.Logger?.Invoke(_Header + "post-request handler exception:" + Environment.NewLine + e.ToString());
+                        }
+                    }
+                }
             }
         }
 

@@ -26,6 +26,8 @@
         private static NameValueCollectionConverter _NameValueCollectionConverter = new NameValueCollectionConverter();
         private static JsonStringEnumConverter _StringEnumConverter = new JsonStringEnumConverter();
         private static ConcurrentDictionary<Type, XmlSerializer> _DeserializerCache = new ConcurrentDictionary<Type, XmlSerializer>();
+        private static ConcurrentDictionary<Type, XmlSerializer> _SerializerCache = new ConcurrentDictionary<Type, XmlSerializer>();
+        private static string _ByteOrderMarkUtf8 = Encoding.UTF8.GetString(Encoding.UTF8.GetPreamble());
 
         #endregion
 
@@ -123,10 +125,9 @@
             if (String.IsNullOrEmpty(xml)) throw new ArgumentNullException(nameof(xml));
 
             // remove preamble if exists
-            string byteOrderMarkUtf8 = Encoding.UTF8.GetString(Encoding.UTF8.GetPreamble());
-            while (xml.StartsWith(byteOrderMarkUtf8, StringComparison.Ordinal))
+            if (xml.StartsWith(_ByteOrderMarkUtf8, StringComparison.Ordinal))
             {
-                xml = xml.Remove(0, byteOrderMarkUtf8.Length);
+                xml = xml.TrimStart(_ByteOrderMarkUtf8.ToCharArray());
             }
 
             // Try standard namespace-aware deserialization first.
@@ -134,7 +135,7 @@
             // on all elements (root and children).
             try
             {
-                XmlSerializer xmls = new XmlSerializer(typeof(T));
+                XmlSerializer xmls = _SerializerCache.GetOrAdd(typeof(T), t => new XmlSerializer(t));
                 using (MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(xml)))
                 {
                     return (T)xmls.Deserialize(ms);
@@ -151,12 +152,15 @@
 
             using (TextReader textReader = new StringReader(xml))
             {
+#pragma warning disable CS0618 // XmlTextReader is needed for Namespaces=false (namespace-agnostic deserialization)
                 using (XmlTextReader reader = new XmlTextReader(textReader))
                 {
                     reader.Namespaces = false;
+                    reader.DtdProcessing = DtdProcessing.Prohibit;
                     XmlSerializer serializer = GetNamespaceAgnosticSerializer(typeof(T));
                     obj = (T)serializer.Deserialize(reader);
                 }
+#pragma warning restore CS0618
             }
 
             return obj;
@@ -172,12 +176,12 @@
         {
             if (obj == null) throw new ArgumentNullException(nameof(obj));
 
-            XmlSerializer xml = new XmlSerializer(obj.GetType());
+            XmlSerializer xmlSerializer = _SerializerCache.GetOrAdd(obj.GetType(), t => new XmlSerializer(t));
 
             using (MemoryStream stream = new MemoryStream())
             {
                 XmlWriterSettings settings = new XmlWriterSettings();
-                settings.Encoding = Encoding.GetEncoding("UTF-8");
+                settings.Encoding = Encoding.UTF8;
                 settings.NewLineChars = Environment.NewLine;
                 settings.ConformanceLevel = ConformanceLevel.Document;
                 if (pretty) settings.Indent = true;
@@ -186,15 +190,14 @@
                 {
                     XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
                     ns.Add("", "http://s3.amazonaws.com/doc/2006-03-01/");
-                    xml.Serialize(new XmlWriterExtended(writer), obj, ns);
+                    xmlSerializer.Serialize(new XmlWriterExtended(writer), obj, ns);
                     byte[] bytes = stream.ToArray();
                     string ret = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
 
                     // remove preamble if exists
-                    string byteOrderMarkUtf8 = Encoding.UTF8.GetString(Encoding.UTF8.GetPreamble());
-                    while (ret.StartsWith(byteOrderMarkUtf8, StringComparison.Ordinal))
+                    if (ret.StartsWith(_ByteOrderMarkUtf8, StringComparison.Ordinal))
                     {
-                        ret = ret.Remove(0, byteOrderMarkUtf8.Length);
+                        ret = ret.TrimStart(_ByteOrderMarkUtf8.ToCharArray());
                     }
 
                     return ret;

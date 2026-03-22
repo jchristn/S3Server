@@ -54,6 +54,7 @@
         #region Private-Members
 
         private S3Response _Response = null;
+        private bool _Disposed = false;
 
         #endregion
 
@@ -93,22 +94,36 @@
         /// </summary>
         public void Dispose()
         {
-            if (Http.Request.Data != null)
-            {
-                Http.Request.Data.Dispose();
-                Http.Request.Data.Close();
-            }
-
-            if (Http.Response.Data != null)
-            {
-                Http.Response.Data.Dispose();
-                Http.Response.Data.Close();
-            }
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         #endregion
 
         #region Private-Methods
+
+        /// <summary>
+        /// Dispose of resources.
+        /// </summary>
+        /// <param name="disposing">Disposing.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_Disposed) return;
+
+            if (disposing)
+            {
+                if (Http != null)
+                {
+                    if (Http.Request.Data != null)
+                        Http.Request.Data.Dispose();
+
+                    if (Http.Response.Data != null)
+                        Http.Response.Data.Dispose();
+                }
+            }
+
+            _Disposed = true;
+        }
 
         #endregion
     }
