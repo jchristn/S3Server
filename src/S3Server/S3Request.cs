@@ -935,7 +935,22 @@
 
         private void ParseHostnameAndUrl()
         {
-            Uri uri = new Uri(_HttpRequest.Url.Full);
+            string fullUrl = _HttpRequest.Url.Full;
+
+            // When the server is bound to a wildcard hostname (*, +, 0.0.0.0),
+            // the URL will contain the wildcard which is not a valid URI hostname.
+            // Replace it with the Host header value from the actual HTTP request.
+            if (!String.IsNullOrEmpty(fullUrl) && !String.IsNullOrEmpty(Host))
+            {
+                Uri tempUri;
+                if (!Uri.TryCreate(fullUrl, UriKind.Absolute, out tempUri))
+                {
+                    string hostValue = Host.Contains(":") ? Host.Split(':')[0] : Host;
+                    fullUrl = ReplaceWildcardHostname(fullUrl, hostValue);
+                }
+            }
+
+            Uri uri = new Uri(fullUrl);
             Hostname = uri.Host;
 
             _Logger?.Invoke(_Header + "parsing URL " + _HttpRequest.Url.Full);
@@ -1187,6 +1202,21 @@
         {
             if (String.IsNullOrEmpty(val)) throw new ArgumentNullException(nameof(val));
             return IPAddress.TryParse(val, out _);
+        }
+
+        internal static string ReplaceWildcardHostname(string url, string replacement)
+        {
+            // Match protocol prefix then wildcard hostname
+            foreach (string wildcard in new[] { "*", "+", "0.0.0.0" })
+            {
+                string pattern = "://" + wildcard;
+                int idx = url.IndexOf(pattern);
+                if (idx >= 0)
+                {
+                    return url.Substring(0, idx + 3) + replacement + url.Substring(idx + 3 + wildcard.Length);
+                }
+            }
+            return url;
         }
 
         private static string ReplaceLastOccurrence(string src, string find, string replace)

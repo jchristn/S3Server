@@ -2,13 +2,13 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>net8.0;net10.0</TargetFrameworks>
-		<Version>7.0.3</Version>
+		<Version>7.0.4</Version>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Authors>Joel Christner</Authors>
 		<Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
 		<Copyright>(c)2026 Joel Christner</Copyright>
-		<PackageReleaseNotes>Signature validation fails closed when GetSecretKey not set, range reads return 206, unwired operations return 501 NotImplemented.</PackageReleaseNotes>
+		<PackageReleaseNotes>Fix UriFormatException when server is bound to wildcard hostname (*, +, 0.0.0.0).</PackageReleaseNotes>
 		<PackageTags>aws s3 storage rest interface server less3 minio ceph view</PackageTags>
 		<PackageLicenseUrl></PackageLicenseUrl>
 		<PackageProjectUrl>https://github.com/jchristn/S3Server</PackageProjectUrl>
@@ -23,6 +23,10 @@
 		<IncludeSymbols>True</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="Test.Xunit" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="AWSSignatureGenerator" Version="1.0.12" />
