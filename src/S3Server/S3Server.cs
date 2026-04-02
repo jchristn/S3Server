@@ -284,10 +284,21 @@
                                 if (payloadHashMode == V4PayloadHashEnum.Signed)
                                     requestBody = s3ctx.Http.Request.DataAsBytes;
 
+                                string sigFullUrl = s3ctx.Http.Request.Url.Full;
+                                if (!String.IsNullOrEmpty(sigFullUrl) && !Uri.TryCreate(sigFullUrl, UriKind.Absolute, out _))
+                                {
+                                    string hostHeader = s3ctx.Request.Host;
+                                    if (!String.IsNullOrEmpty(hostHeader))
+                                    {
+                                        string hostValue = hostHeader.Contains(":") ? hostHeader.Split(':')[0] : hostHeader;
+                                        sigFullUrl = S3Request.ReplaceWildcardHostname(sigFullUrl, hostValue);
+                                    }
+                                }
+
                                 V4SignatureResult result = new V4SignatureResult(
                                     timestamp,
                                     s3ctx.Http.Request.Method.ToString().ToUpper(),
-                                    s3ctx.Http.Request.Url.Full,
+                                    sigFullUrl,
                                     s3ctx.Request.AccessKey,
                                     secretKey,
                                     s3ctx.Request.Region,
