@@ -6,6 +6,7 @@ namespace Test.Shared.Tests
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using S3ServerLibrary;
 
     /// <summary>
     /// Error handling tests (404s, S3Exception, malformed XML, default handler).
@@ -124,6 +125,55 @@ namespace Test.Shared.Tests
                     AssertHelper.StringContains(body, "MalformedXML", "error body");
                 }, token).ConfigureAwait(false);
             }
+
+            await runner.RunTestAsync("Unwired recognized operation returns 501 NotImplemented", async (ct) =>
+            {
+                S3ServerSettings settings = new S3ServerSettings();
+                settings.Webserver.Hostname = "127.0.0.1";
+                settings.Webserver.Port = server.Port + 100;
+                settings.Webserver.Ssl.Enable = false;
+
+                using (S3Server minimalServer = new S3Server(settings))
+                {
+                    minimalServer.Service.ServiceExists = async (ctx) => { return "us-west-1"; };
+                    minimalServer.Bucket.Exists = async (ctx) => { return true; };
+                    // Intentionally do NOT wire Bucket.ReadAcl
+
+                    minimalServer.Start();
+
+                    using (HttpClient client = new HttpClient())
+                    {
+                        client.Timeout = TimeSpan.FromSeconds(5);
+                        client.DefaultRequestHeaders.ConnectionClose = true;
+                        string url = $"http://127.0.0.1:{server.Port + 100}/test-bucket?acl";
+                        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
+                        HttpResponseMessage response = await client.SendAsync(request, ct).ConfigureAwait(false);
+                        AssertHelper.StatusCodeEquals(HttpStatusCode.NotImplemented, response, "unwired BucketReadAcl");
+                        string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        AssertHelper.StringContains(body, "NotImplemented", "error body");
+                    }
+
+                    minimalServer.Stop();
+                }
+            }, token).ConfigureAwait(false);
+
+            await runner.RunTestAsync("EnableSignatures without GetSecretKey throws at startup", async (ct) =>
+            {
+                S3ServerSettings settings = new S3ServerSettings();
+                settings.Webserver.Hostname = "127.0.0.1";
+                settings.Webserver.Port = server.Port + 101;
+                settings.Webserver.Ssl.Enable = false;
+                settings.EnableSignatures = true;
+
+                using (S3Server sigServer = new S3Server(settings))
+                {
+                    // Do NOT set Service.GetSecretKey
+                    await AssertHelper.ThrowsAsync<InvalidOperationException>(async () =>
+                    {
+                        sigServer.Start();
+                    }, "Start() should throw when EnableSignatures is true but GetSecretKey is null").ConfigureAwait(false);
+                }
+            }, token).ConfigureAwait(false);
         }
     }
 }

@@ -140,8 +140,15 @@
         /// <summary>
         /// Start accepting new connections.
         /// </summary>
+        /// <exception cref="InvalidOperationException">Thrown if EnableSignatures is true but Service.GetSecretKey is not set.</exception>
         public void Start()
         {
+            if (_Settings.EnableSignatures && Service.GetSecretKey == null)
+                throw new InvalidOperationException(
+                    "EnableSignatures is true but Service.GetSecretKey callback is not set. "
+                    + "Requests would bypass signature validation. "
+                    + "Please set Service.GetSecretKey before starting the server.");
+
             _Webserver.Start();
         }
 
@@ -844,10 +851,34 @@
                             if (Object.ReadRange != null)
                             {
                                 s3obj = await Object.ReadRange(s3ctx).ConfigureAwait(false);
-                                s3ctx.Response.StatusCode = 200;
-                                s3ctx.Response.ContentType = s3obj.ContentType;
-                                s3ctx.Response.ContentLength = s3obj.Size;
-                                await s3ctx.Response.Send(s3obj.Size, s3obj.Data).ConfigureAwait(false);
+
+                                if (s3obj != null)
+                                {
+                                    if (!String.IsNullOrEmpty(s3obj.ETag)) s3ctx.Response.Headers.Add(Constants.HeaderETag, s3obj.ETag);
+
+                                    s3ctx.Response.Headers.Add(Constants.HeaderLastModified, s3obj.LastModified.ToString(Constants.AmazonTimestampFormatVerbose, CultureInfo.InvariantCulture));
+                                    s3ctx.Response.Headers.Add(Constants.HeaderStorageClass, s3obj.StorageClass.ToString());
+                                    s3ctx.Response.Headers.Add(Constants.HeaderAcceptRanges, "bytes");
+
+                                    if (s3ctx.Request.RangeStart != null)
+                                    {
+                                        long rangeEnd = s3ctx.Request.RangeEnd ?? (s3ctx.Request.RangeStart.Value + s3obj.Size - 1);
+                                        s3ctx.Response.Headers.Add("Content-Range", "bytes " + s3ctx.Request.RangeStart.Value + "-" + rangeEnd + "/*");
+                                    }
+
+                                    s3ctx.Response.StatusCode = 206;
+                                    s3ctx.Response.ContentType = s3obj.ContentType;
+                                    s3ctx.Response.ContentLength = s3obj.Size;
+
+                                    await s3ctx.Response.Send(s3obj.Size, s3obj.Data).ConfigureAwait(false);
+                                }
+                                else
+                                {
+                                    error = new Error(ErrorCode.NoSuchKey);
+                                    s3ctx.Response.StatusCode = 404;
+                                    s3ctx.Response.ContentType = Constants.ContentTypeXml;
+                                    await s3ctx.Response.Send(SerializationHelper.SerializeXml(error)).ConfigureAwait(false);
+                                }
                                 return;
                             }
                             break;
@@ -1039,7 +1070,15 @@
                         return;
                     }
 
-                    await s3ctx.Response.Send(S3Objects.ErrorCode.InvalidRequest).ConfigureAwait(false);
+                    if (s3ctx.Request.RequestType != S3RequestType.Unknown)
+                    {
+                        _Settings.Logger?.Invoke(_Header + "no callback registered for request type " + s3ctx.Request.RequestType.ToString());
+                        await s3ctx.Response.Send(S3Objects.ErrorCode.NotImplemented).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        await s3ctx.Response.Send(S3Objects.ErrorCode.InvalidRequest).ConfigureAwait(false);
+                    }
                     return;
                 }
             }

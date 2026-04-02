@@ -71,16 +71,34 @@ namespace Test.Shared.Tests
                 }
             }, token).ConfigureAwait(false);
 
-            await runner.RunTestAsync("ObjectReadRange downloads partial object", async (ct) =>
+            await runner.RunTestAsync("ObjectReadRange downloads partial object with 206", async (ct) =>
             {
-                GetObjectResponse response = await server.S3Client.GetObjectAsync(new GetObjectRequest
+                string url = $"{server.BaseUrl}/{server.Bucket}/test-object.txt";
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.TryAddWithoutValidation("Range", "bytes=0-4");
+
+                HttpResponseMessage response = await server.HttpClient.SendAsync(request, ct).ConfigureAwait(false);
+                AssertHelper.StatusCodeEquals(HttpStatusCode.PartialContent, response, "ObjectReadRange status");
+
+                string contentRange = null;
+                if (response.Content.Headers.Contains("Content-Range"))
                 {
-                    BucketName = server.Bucket,
-                    Key = "test-object.txt",
-                    ByteRange = new ByteRange(0, 4)
-                }, ct).ConfigureAwait(false);
-                AssertHelper.IsNotNull(response, "response");
-                AssertHelper.StatusCodeEquals(200, (int)response.HttpStatusCode, "GetObject range");
+                    IEnumerable<string> values = response.Content.Headers.GetValues("Content-Range");
+                    foreach (string v in values) { contentRange = v; break; }
+                }
+
+                AssertHelper.IsNotNull(contentRange, "Content-Range header present");
+                AssertHelper.StringContains(contentRange, "bytes", "Content-Range format");
+
+                string acceptRanges = null;
+                if (response.Headers.Contains("Accept-Ranges"))
+                {
+                    IEnumerable<string> values = response.Headers.GetValues("Accept-Ranges");
+                    foreach (string v in values) { acceptRanges = v; break; }
+                }
+
+                AssertHelper.IsNotNull(acceptRanges, "Accept-Ranges header present");
+                AssertHelper.AreEqual("bytes", acceptRanges, "Accept-Ranges value");
             }, token).ConfigureAwait(false);
 
             await runner.RunTestAsync("ObjectWriteAcl sets ACL", async (ct) =>
