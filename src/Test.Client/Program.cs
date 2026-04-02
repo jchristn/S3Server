@@ -20,7 +20,7 @@
         static string _Endpoint = "http://localhost:8000/";
         static string _AccessKey = "AKIAIOSFODNN7EXAMPLE";
         static string _SecretKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
-        static string _SignatureVersion = "4";
+        // static string _SignatureVersion = "4"; // removed in AWSSDK 4.x
 
         static bool _ForcePathStyle = true;
         static AmazonS3Config _S3Config = null;
@@ -409,9 +409,7 @@
                 RegionEndpoint = RegionEndpoint.USWest1,
                 ServiceURL = _Endpoint,
                 ForcePathStyle = _ForcePathStyle,
-                UseHttp = _Ssl,
-                SignatureVersion = _SignatureVersion,
-                SignatureMethod = SigningAlgorithm.HmacSHA1
+                UseHttp = _Ssl
             };
 
             if (_UseProxy && !String.IsNullOrEmpty(_ProxyHost))
@@ -693,7 +691,7 @@
                     foreach (S3ObjectVersion ver in response.Versions)
                     {
                         Console.Write("| " + ver.Key + "[" + ver.VersionId + "] ");
-                        if (ver.IsDeleteMarker) Console.WriteLine("(delete marker)");
+                        if (ver.IsDeleteMarker == true) Console.WriteLine("(delete marker)");
                         else Console.WriteLine(ver.Size + " bytes");
                     }
                 }

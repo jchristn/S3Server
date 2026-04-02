@@ -1,153 +1,81 @@
 namespace Test.Automated
 {
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Reflection;
     using System.Threading;
     using System.Threading.Tasks;
-    using Xunit;
-    using Xunit.Runners;
+    using Test.Shared;
+    using Test.Shared.Tests;
 
     /// <summary>
-    /// Test runner program for automated S3Server tests.
+    /// Automated test runner for S3Server.
     /// </summary>
     public static class Program
     {
-        private static int _Passed = 0;
-        private static int _Failed = 0;
-        private static int _Skipped = 0;
-        private static string _CurrentTestClass = null;
-        private static ManualResetEvent _Finished = new ManualResetEvent(false);
-        private static List<string> _FailedTests = new List<string>();
-        private static Stopwatch _Stopwatch = new Stopwatch();
-
         /// <summary>
         /// Main entry point.
         /// </summary>
         /// <param name="args">Command line arguments.</param>
-        /// <returns>Exit code (0 for success, non-zero for failures).</returns>
-        public static int Main(string[] args)
+        /// <returns>Exit code (0 for success, 1 for failures).</returns>
+        public static async Task<int> Main(string[] args)
         {
-            Console.WriteLine("========================================");
-            Console.WriteLine("S3Server Automated Test Runner");
-            Console.WriteLine("========================================");
-            Console.WriteLine("");
+            Console.WriteLine(new string('=', 80));
+            Console.WriteLine("  S3Server Automated Test Suite");
+            Console.WriteLine(new string('=', 80));
+
+            TestRunner runner = new TestRunner();
+            Stopwatch totalStopwatch = Stopwatch.StartNew();
+            CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
 
             try
             {
-                using (AssemblyRunner runner = AssemblyRunner.WithoutAppDomain(Assembly.GetExecutingAssembly().Location))
+                Console.WriteLine();
+                Console.WriteLine("========================================");
+                Console.WriteLine("  Server Tests");
+                Console.WriteLine("========================================");
+
+                using (S3TestServer server = new S3TestServer(port: 8001, enableSignatures: false))
                 {
-                    runner.OnDiscoveryComplete = OnDiscoveryComplete;
-                    runner.OnExecutionComplete = OnExecutionComplete;
-                    runner.OnTestFailed = OnTestFailed;
-                    runner.OnTestPassed = OnTestPassed;
-                    runner.OnTestSkipped = OnTestSkipped;
-                    runner.OnTestStarting = OnTestStarting;
+                    await ServiceTests.RunAllAsync(runner, server, cts.Token).ConfigureAwait(false);
+                    await BucketTests.RunAllAsync(runner, server, cts.Token).ConfigureAwait(false);
+                    await ObjectTests.RunAllAsync(runner, server, cts.Token).ConfigureAwait(false);
+                    await MultipartUploadTests.RunAllAsync(runner, server, cts.Token).ConfigureAwait(false);
+                    await ErrorHandlingTests.RunAllAsync(runner, server, cts.Token).ConfigureAwait(false);
+                    await S3ComplianceTests.RunAllAsync(runner, server, cts.Token).ConfigureAwait(false);
+                }
 
-                    Console.WriteLine("Discovering tests...");
-                    _Stopwatch.Start();
-                    runner.Start();
+                Console.WriteLine();
+                Console.WriteLine("========================================");
+                Console.WriteLine("  Signature Validation Tests");
+                Console.WriteLine("========================================");
 
-                    // Wait for completion
-                    _Finished.WaitOne();
-                    _Finished.Dispose();
-
-                    _Stopwatch.Stop();
-
-                    Console.WriteLine("");
-                    Console.WriteLine("========================================");
-                    Console.WriteLine("Test Results Summary");
-                    Console.WriteLine("========================================");
-                    Console.WriteLine($"Passed  : {_Passed}");
-                    Console.WriteLine($"Failed  : {_Failed}");
-                    Console.WriteLine($"Skipped : {_Skipped}");
-                    Console.WriteLine($"Total   : {_Passed + _Failed + _Skipped}");
-                    Console.WriteLine($"Runtime : {_Stopwatch.Elapsed.TotalSeconds:F3}s");
-                    Console.WriteLine("========================================");
-
-                    if (_Failed > 0)
-                    {
-                        Console.WriteLine("");
-                        Console.WriteLine("FAILED TESTS:");
-                        foreach (string failedTest in _FailedTests)
-                        {
-                            Console.WriteLine($"  - {failedTest}");
-                        }
-
-                        Console.WriteLine("");
-                        Console.WriteLine($"RESULT: FAIL ({_Failed} failed, {_Stopwatch.Elapsed.TotalSeconds:F3}s)");
-                        return 1;
-                    }
-                    else
-                    {
-                        Console.WriteLine("");
-                        Console.WriteLine($"RESULT: PASS ({_Passed} passed, {_Stopwatch.Elapsed.TotalSeconds:F3}s)");
-                        return 0;
-                    }
+                using (S3TestServer sigServer = new S3TestServer(port: 8002, enableSignatures: true))
+                {
+                    await SignatureValidationTests.RunAllAsync(runner, sigServer, cts.Token).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("");
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("FATAL ERROR:");
+                Console.ResetColor();
                 Console.WriteLine(ex.ToString());
-                return 1;
             }
-        }
-
-        private static void OnDiscoveryComplete(DiscoveryCompleteInfo info)
-        {
-            Console.WriteLine($"Found {info.TestCasesToRun} test(s) to run");
-            Console.WriteLine("");
-        }
-
-        private static void OnExecutionComplete(ExecutionCompleteInfo info)
-        {
-            Console.WriteLine("");
-            Console.WriteLine("Test execution complete");
-            _Finished.Set();
-        }
-
-        private static void OnTestStarting(TestStartingInfo info)
-        {
-            string testClass = info.TestDisplayName;
-            int lastDot = testClass.LastIndexOf('.');
-            if (lastDot > 0) testClass = testClass.Substring(0, lastDot);
-
-            if (_CurrentTestClass != null && _CurrentTestClass != testClass)
+            finally
             {
-                Console.WriteLine("");
+                cts.Dispose();
             }
 
-            _CurrentTestClass = testClass;
-            Console.Write($"  {info.TestDisplayName}... ");
-        }
+            totalStopwatch.Stop();
+            runner.PrintSummary(totalStopwatch.Elapsed.TotalMilliseconds);
 
-        private static void OnTestPassed(TestPassedInfo info)
-        {
-            _Passed++;
-            Console.WriteLine($"PASS ({info.ExecutionTime:F3}s)");
-        }
-
-        private static void OnTestFailed(TestFailedInfo info)
-        {
-            _Failed++;
-            _FailedTests.Add(info.TestDisplayName);
-            Console.WriteLine($"FAIL ({info.ExecutionTime:F3}s)");
-            Console.WriteLine($"    Exception: {info.ExceptionType}");
-            Console.WriteLine($"    Message  : {info.ExceptionMessage}");
-            if (!String.IsNullOrEmpty(info.ExceptionStackTrace))
+            foreach (TestResult r in runner.Results)
             {
-                string[] lines = info.ExceptionStackTrace.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-                if (lines.Length > 0) Console.WriteLine($"    Stack    : {lines[0].Trim()}");
+                if (!r.Passed) return 1;
             }
-        }
 
-        private static void OnTestSkipped(TestSkippedInfo info)
-        {
-            _Skipped++;
-            Console.WriteLine($"SKIP ({info.SkipReason})");
+            return 0;
         }
     }
 }

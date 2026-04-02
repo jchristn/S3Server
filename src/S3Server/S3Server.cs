@@ -11,7 +11,7 @@
     using AWSSignatureGenerator;
     using WatsonWebserver;
     using WatsonWebserver.Core;
-    using WatsonWebserver.Lite;
+
 
     /// <summary>
     /// S3 server.  
@@ -120,14 +120,7 @@
                 _Settings.Webserver.Headers.DefaultHeaders = updatedHeaders;
             }
 
-            if (_Settings.UseTcpServer)
-            {
-                _Webserver = new WebserverLite(_Settings.Webserver, RequestHandler);
-            }
-            else
-            {
-                _Webserver = new Webserver(_Settings.Webserver, RequestHandler);
-            }
+            _Webserver = new Webserver(_Settings.Webserver, RequestHandler);
         }
 
         #endregion
@@ -259,8 +252,33 @@
                             }
                             else if (s3ctx.Request.SignatureVersion == S3SignatureVersion.Version4)
                             {
+                                string contentSha256 = null;
+                                if (s3ctx.Http.Request.Headers != null)
+                                    contentSha256 = s3ctx.Http.Request.Headers["x-amz-content-sha256"];
+                                V4PayloadHashEnum payloadHashMode = V4PayloadHashEnum.Signed;
+
+                                if (!String.IsNullOrEmpty(contentSha256))
+                                {
+                                    if (contentSha256.Equals("STREAMING-AWS4-HMAC-SHA256-PAYLOAD-TRAILER", StringComparison.Ordinal))
+                                        payloadHashMode = V4PayloadHashEnum.StreamingSignedTrailer;
+                                    else if (contentSha256.Equals("STREAMING-AWS4-HMAC-SHA256-PAYLOAD", StringComparison.Ordinal))
+                                        payloadHashMode = V4PayloadHashEnum.StreamingSigned;
+                                    else if (contentSha256.Equals("UNSIGNED-PAYLOAD", StringComparison.Ordinal))
+                                        payloadHashMode = V4PayloadHashEnum.Unsigned;
+                                }
+
+                                string timestamp = null;
+                                if (s3ctx.Http.Request.Headers != null)
+                                    timestamp = s3ctx.Http.Request.Headers["x-amz-date"];
+                                if (String.IsNullOrEmpty(timestamp))
+                                    timestamp = DateTime.UtcNow.ToString(Constants.AmazonTimestampFormatCompact);
+
+                                object requestBody = null;
+                                if (payloadHashMode == V4PayloadHashEnum.Signed)
+                                    requestBody = s3ctx.Http.Request.DataAsBytes;
+
                                 V4SignatureResult result = new V4SignatureResult(
-                                    DateTime.UtcNow.ToString(Constants.AmazonTimestampFormatCompact),
+                                    timestamp,
                                     s3ctx.Http.Request.Method.ToString().ToUpper(),
                                     s3ctx.Http.Request.Url.Full,
                                     s3ctx.Request.AccessKey,
@@ -268,8 +286,18 @@
                                     s3ctx.Request.Region,
                                     "s3",
                                     s3ctx.Http.Request.Headers,
-                                    s3ctx.Http.Request.DataAsBytes);
-                                 
+                                    s3ctx.Request.SignedHeaders,
+                                    requestBody,
+                                    payloadHashMode);
+
+                                if (_Settings.Logging.SignatureV4Validation && _Settings.Logger != null)
+                                {
+                                    _Settings.Logger(_Header + "signature validation:"
+                                        + " mode=" + payloadHashMode
+                                        + " expected=" + result.Signature
+                                        + " provided=" + s3ctx.Request.Signature);
+                                }
+
                                 if (!result.Signature.Equals(s3ctx.Request.Signature))
                                 {
                                     _Settings.Logger?.Invoke(_Header + "invalid v4 signature '" + s3ctx.Request.Signature + "'");
@@ -884,7 +912,12 @@
                         case S3RequestType.ObjectWrite:
                             if (Object.Write != null)
                             {
-                                if (s3ctx.Request.ContentLength > _Settings.OperationLimits.MaxPutObjectSize)
+                                long effectiveContentLength = s3ctx.Request.ContentLength;
+                                string decodedLenStr = s3ctx.Request.RetrieveHeaderValue("x-amz-decoded-content-length");
+                                if (!String.IsNullOrEmpty(decodedLenStr) && Int64.TryParse(decodedLenStr, out long decodedLen))
+                                    effectiveContentLength = decodedLen;
+
+                                if (effectiveContentLength > _Settings.OperationLimits.MaxPutObjectSize)
                                 {
                                     error = new Error(ErrorCode.EntityTooLarge);
                                     s3ctx.Response.StatusCode = 400;

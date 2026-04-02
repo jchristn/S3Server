@@ -32,7 +32,7 @@
             "key2",
         };
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             Console.WriteLine("");
             Console.WriteLine("This test must be run as administrator");
@@ -64,14 +64,14 @@
                     url = "http://" + bucket + "." + hostname + ":" + _Settings.Webserver.Port + "/";
                     Console.WriteLine("");
                     Console.WriteLine("  Using URL " + url);
-                    SendRequest(url);
+                    await SendRequest(url);
 
                     foreach (string key in _Keys)
                     {
                         url = "http://" + bucket + "." + hostname + ":" + _Settings.Webserver.Port + "/" + key;
                         Console.WriteLine("");
                         Console.WriteLine("  Using URL " + url);
-                        SendRequest(url);
+                        await SendRequest(url);
                     }
                 }
             }
@@ -88,23 +88,23 @@
                     url = "http://" + hostname + ":" + _Settings.Webserver.Port + "/" + bucket;
                     Console.WriteLine("");
                     Console.WriteLine("  Using URL " + url);
-                    SendRequest(url);
+                    await SendRequest(url);
 
                     foreach (string key in _Keys)
                     {
                         url = "http://" + hostname + ":" + _Settings.Webserver.Port + "/" + bucket + "/" + key;
                         Console.WriteLine("");
                         Console.WriteLine("  Using URL " + url);
-                        SendRequest(url);
+                        await SendRequest(url);
                     }
                 }
             }
         }
 
-        static void SendRequest(string url)
+        static async Task SendRequest(string url)
         {
             RestRequest req = new RestRequest(url, HttpMethod.Get);
-            req.Send(Array.Empty<byte>());
+            await req.SendAsync(Array.Empty<byte>()).ConfigureAwait(false);
         }
 
         static async Task DefaultRequestHandler(S3Context ctx)

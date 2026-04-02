@@ -639,7 +639,7 @@
 
             #region Set-Parameters-from-Querystring
 
-            if (_HttpRequest.Query.Elements != null && _HttpRequest.Query.Elements.Count > 0)
+            if (_HttpRequest.Query != null && _HttpRequest.Query.Elements != null && _HttpRequest.Query.Elements.Count > 0)
             {
                 AccessKey = RetrieveQueryValue("awsaccesskeyid");
                 ContinuationToken = RetrieveQueryValue("continuation-token");

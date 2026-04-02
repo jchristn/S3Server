@@ -31,7 +31,7 @@ Want a complete S3-compatible storage server built using S3Server? Check out **[
 - **S3 API Compatibility**: Build services that work with existing S3 clients (AWS SDK, CLI, MinIO client, etc.)
 - **Focus on Storage Logic**: Spend your time implementing storage, not parsing HTTP requests
 - **Flexible Architecture**: Complete control over where and how you store data
-- **Multi-Framework Support**: Targets .NET Standard 2.0, 2.1, .NET 6.0, and .NET 8.0
+- **Multi-Framework Support**: Targets .NET 8.0 and .NET 10.0
 - **Production Ready**: Handles path-style and virtual-hosted-style URLs, signature validation, multipart uploads, and more
 
 ## Use Cases
@@ -176,7 +176,7 @@ S3ServerSettings settings = new S3ServerSettings
     // Optional: Enable AWS Signature V4 validation
     EnableSignatures = false,
 
-    // Optional: Use TCP-based server (WatsonWebserver.Lite) instead of http.sys (WatsonWebserver)
+    // Note: UseTcpServer is deprecated in v7.0; Watson now uses TCP natively
     UseTcpServer = false
 };
 ```
@@ -733,7 +733,9 @@ Comprehensive examples are available in the repository:
 - **`Test.Client`**: S3 client examples using AWS SDK
 - **`Test.RequestStyle`**: Path-style vs virtual-hosted-style URL testing
 - **`Test.SignatureValidation`**: AWS Signature V4 validation examples
-- **`Test.Automated`**: Automated test suite (runs against both HTTP and TCP server modes)
+- **`Test.Automated`**: Automated test suite (runs against both HTTP and TCP server modes with signature validation)
+- **`Test.Shared`**: Shared test framework and test logic used by Test.Automated and Test.Xunit
+- **`Test.Xunit`**: xUnit test project for CI/CD integration
 
 Run the test server (requires admin on Windows for wildcard listeners):
 
@@ -756,10 +758,9 @@ dotnet pack src/S3Server/S3Server.csproj -c Release
 
 ## Dependencies
 
-- **WatsonWebserver** (6.3.13): HTTP server framework
-- **AWSSignatureGenerator** (1.0.9): AWS Signature V4 validation
-- **PrettyId** (1.0.5): Request ID generation
-- **Timestamps** (1.0.1): Timestamp tracking
+- **Watson** (7.0.x): HTTP server framework (supports HTTP/1.1, HTTP/2, and HTTP/3)
+- **AWSSignatureGenerator** (1.0.12): AWS Signature V4 validation (including streaming signatures)
+- **PrettyId** (2.0.1): Request ID generation
 
 ## Resources
 
@@ -774,6 +775,20 @@ Have a feature request or found an issue? Please [file an issue on GitHub](https
 ## Version History
 
 Refer to [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
+
+## New in v7.0.x
+
+- Updated to Watson 7.0 (Watson.Lite removed; Watson now handles all transport modes natively)
+- Target frameworks updated to .NET 8.0 and .NET 10.0 (dropped netstandard2.0, netstandard2.1, net6.0)
+- Updated to AWSSignatureGenerator 1.0.12 with streaming signature validation (AWSSDK 4.x compatible)
+- Updated to PrettyId 2.0.1
+- AWS Signature V4 validation now supports streaming signatures (`STREAMING-AWS4-HMAC-SHA256-PAYLOAD-TRAILER`)
+- `MaxPutObjectSize` check uses `X-Amz-Decoded-Content-Length` when aws-chunked encoding is in use
+- Removed `UseTcpServer` setting (Watson 7.0 uses TCP natively)
+- Added comprehensive test infrastructure (Test.Shared, Test.Xunit)
+- Added signature validation test coverage using real AWSSDK 4.x client calls
+- Added signature validation test coverage
+- Added S3 compliance test suite
 
 ## New in v6.0.x
 

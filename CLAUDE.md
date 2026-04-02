@@ -103,7 +103,7 @@ Settings must be configured BEFORE starting the server:
 - `Logger`: Action<string> for logging
 - `Logging`: Toggle logging for HTTP requests, S3 requests, signatures
 - `EnableSignatures`: Enable AWS signature V4 validation
-- `UseTcpServer`: When true, uses WatsonWebserver.Lite (TCP) instead of WatsonWebserver (http.sys). Default false.
+- `UseTcpServer`: Deprecated in v7.0. Watson now uses TCP natively. Retained for backward compatibility but has no effect.
 - `OperationLimits`: Size limits (e.g., MaxPutObjectSize)
 - `PreRequestHandler`: Called before routing (return true to terminate)
 - `DefaultRequestHandler`: Called when no callback matches
@@ -138,10 +138,8 @@ The library supports multipart upload operations through callbacks:
 ### Target Frameworks
 
 The library targets multiple frameworks (S3Server.csproj:4):
-- netstandard2.0
-- netstandard2.1
-- net6.0
 - net8.0
+- net10.0
 
 Use appropriate .NET SDK versions when building.
 
@@ -170,9 +168,9 @@ AWS Signature V4 validation can be enabled:
 
 ## Notable Dependencies
 
-- **Watson** (6.3.13): HTTP server framework
-- **AWSSignatureGenerator** (1.0.9): AWS signature validation
-- **PrettyId** (1.0.5): Request ID generation
+- **Watson** (7.0.x): HTTP server framework (HTTP/1.1, HTTP/2, HTTP/3)
+- **AWSSignatureGenerator** (1.0.10): AWS signature validation
+- **PrettyId** (2.0.1): Request ID generation
 
 ## Project Structure
 
@@ -193,7 +191,9 @@ src/
   Test.Client/           - Example S3 client
   Test.RequestStyle/     - Request style testing
   Test.SignatureValidation/ - Signature validation testing
-  Test.Automated/        - Automated test suite
+  Test.Shared/           - Shared test framework and test logic
+  Test.Automated/        - Console-based automated test runner
+  Test.Xunit/            - xUnit test project for CI/CD
 ```
 
 ## Important Notes
