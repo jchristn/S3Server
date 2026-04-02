@@ -26,12 +26,14 @@ namespace Test.Shared.Tests
 
             await runner.RunTestAsync("ServiceExists returns region", async (ct) =>
             {
+#pragma warning disable S31000
                 GetPreSignedUrlRequest request = new GetPreSignedUrlRequest
                 {
                     BucketName = "",
                     Verb = HttpVerb.HEAD,
                     Expires = DateTime.UtcNow.AddHours(1)
                 };
+#pragma warning restore S31000
 
                 string url = server.S3Client.GetPreSignedURL(request);
                 AssertHelper.IsNotNull(url, "pre-signed URL");
