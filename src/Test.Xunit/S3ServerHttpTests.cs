@@ -21,8 +21,8 @@ namespace Test.Xunit
         /// </summary>
         public S3ServerTests()
         {
-            _Server = new S3TestServer(port: 8011, enableSignatures: false);
-            _SigServer = new S3TestServer(port: 8012, enableSignatures: true);
+            _Server = new S3TestServer(enableSignatures: false);
+            _SigServer = new S3TestServer(enableSignatures: true);
         }
 
         /// <summary>

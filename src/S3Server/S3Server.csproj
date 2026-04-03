@@ -2,13 +2,13 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>net8.0;net10.0</TargetFrameworks>
-		<Version>7.0.4</Version>
+		<Version>7.0.5</Version>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Authors>Joel Christner</Authors>
 		<Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
 		<Copyright>(c)2026 Joel Christner</Copyright>
-		<PackageReleaseNotes>Fix UriFormatException when server is bound to wildcard hostname (*, +, 0.0.0.0).</PackageReleaseNotes>
+		<PackageReleaseNotes>Watson 7.0.9 dependency update.</PackageReleaseNotes>
 		<PackageTags>aws s3 storage rest interface server less3 minio ceph view</PackageTags>
 		<PackageLicenseUrl></PackageLicenseUrl>
 		<PackageProjectUrl>https://github.com/jchristn/S3Server</PackageProjectUrl>
@@ -31,7 +31,7 @@
 	<ItemGroup>
 		<PackageReference Include="AWSSignatureGenerator" Version="1.0.12" />
 		<PackageReference Include="PrettyId" Version="2.0.1" />
-		<PackageReference Include="Watson" Version="7.0.6" />
+		<PackageReference Include="Watson" Version="7.0.9" />
 	</ItemGroup>
 
 	<ItemGroup>

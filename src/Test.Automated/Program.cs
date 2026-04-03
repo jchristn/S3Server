@@ -34,7 +34,7 @@ namespace Test.Automated
                 Console.WriteLine("  Server Tests");
                 Console.WriteLine("========================================");
 
-                using (S3TestServer server = new S3TestServer(port: 8001, enableSignatures: false))
+                using (S3TestServer server = new S3TestServer(enableSignatures: false))
                 {
                     await ServiceTests.RunAllAsync(runner, server, cts.Token).ConfigureAwait(false);
                     await BucketTests.RunAllAsync(runner, server, cts.Token).ConfigureAwait(false);
@@ -49,7 +49,7 @@ namespace Test.Automated
                 Console.WriteLine("  Signature Validation Tests");
                 Console.WriteLine("========================================");
 
-                using (S3TestServer sigServer = new S3TestServer(port: 8002, enableSignatures: true))
+                using (S3TestServer sigServer = new S3TestServer(enableSignatures: true))
                 {
                     await SignatureValidationTests.RunAllAsync(runner, sigServer, cts.Token).ConfigureAwait(false);
                 }

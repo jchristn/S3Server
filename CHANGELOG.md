@@ -2,6 +2,21 @@
 
 ## Current Version
 
+v7.0.x
+
+- Watson 7.0.9 dependency update
+- Updated to Watson 7.0 (Watson.Lite removed; Watson now handles all transport modes natively)
+- Target frameworks updated to .NET 8.0 and .NET 10.0
+- Updated to AWSSignatureGenerator 1.0.12 with streaming signature validation
+- Updated to PrettyId 2.0.1
+- AWS Signature V4 validation now supports streaming signatures
+- Removed ```UseTcpServer``` setting (Watson 7.0 uses TCP natively)
+- Added comprehensive test infrastructure (Test.Shared, Test.Xunit)
+- Fix UriFormatException when server is bound to wildcard hostname (*, +, 0.0.0.0)
+- Signature validation fail-closed, range 206, unwired ops return 501
+
+## Previous Versions
+
 v6.0.x
 
 - Breaking changes with dependency updates
@@ -11,8 +26,6 @@ v6.0.x
 - Boolean for enabling or disabling signature validation
 - Added bucket and object callbacks in support of multipart uploads
 - Added object callback for S3 Select API
-
-## Previous Versions
 
 v5.3.x
 

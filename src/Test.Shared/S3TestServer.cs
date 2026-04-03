@@ -2,7 +2,9 @@ namespace Test.Shared
 {
     using System;
     using System.Collections.Generic;
+    using System.Net;
     using System.Net.Http;
+    using System.Net.Sockets;
     using System.Threading.Tasks;
     using Amazon;
     using Amazon.Runtime;
@@ -83,11 +85,11 @@ namespace Test.Shared
         /// <summary>
         /// Instantiate.
         /// </summary>
-        /// <param name="port">Port number. Default 8001.</param>
+        /// <param name="port">Port number. Default 0 for automatic assignment.</param>
         /// <param name="enableSignatures">True to enable AWS signature validation.</param>
-        public S3TestServer(int port = 8001, bool enableSignatures = false)
+        public S3TestServer(int port = 0, bool enableSignatures = false)
         {
-            Port = port;
+            Port = port == 0 ? GetAvailablePort() : port;
             EnableSignatures = enableSignatures;
 
             InitializeServer();
@@ -194,6 +196,15 @@ namespace Test.Shared
             HttpClient = new HttpClient();
             HttpClient.Timeout = TimeSpan.FromSeconds(5);
             HttpClient.DefaultRequestHeaders.ConnectionClose = true;
+        }
+
+        private static int GetAvailablePort()
+        {
+            TcpListener listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+            listener.Stop();
+            return port;
         }
 
         private void SetupServiceCallbacks()

@@ -776,8 +776,11 @@ Have a feature request or found an issue? Please [file an issue on GitHub](https
 
 Refer to [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
 
-## New in v7.0.x
+## New in v7.0.5
 
+- Watson 7.0.9 dependency update
+- Fix UriFormatException when server is bound to wildcard hostname (`*`, `+`, `0.0.0.0`)
+- Signature validation fail-closed, range 206, unwired ops return 501
 - Updated to Watson 7.0 (Watson.Lite removed; Watson now handles all transport modes natively)
 - Target frameworks updated to .NET 8.0 and .NET 10.0 (dropped netstandard2.0, netstandard2.1, net6.0)
 - Updated to AWSSignatureGenerator 1.0.12 with streaming signature validation (AWSSDK 4.x compatible)
@@ -787,7 +790,6 @@ Refer to [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
 - Removed `UseTcpServer` setting (Watson 7.0 uses TCP natively)
 - Added comprehensive test infrastructure (Test.Shared, Test.Xunit)
 - Added signature validation test coverage using real AWSSDK 4.x client calls
-- Added signature validation test coverage
 - Added S3 compliance test suite
 
 ## New in v6.0.x
