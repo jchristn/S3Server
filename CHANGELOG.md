@@ -2,7 +2,41 @@
 
 ## Current Version
 
-v7.1.x
+v7.2.0
+
+- Added opt-in legacy AWS Signature V2 validation through `S3ServerSettings.EnableSignatureV2`
+- V2 `Authorization: AWS ...` header signatures now validate when `EnableSignatures` and `EnableSignatureV2` are both true
+- V2 signed URLs with `AWSAccessKeyId`, `Expires`, and `Signature` now validate when V2 support is explicitly enabled
+- Expired, tampered, unknown-access-key, and malformed V2 requests fail closed before operation callbacks execute
+- Added canonical AWS Signature V2 fixture coverage, generator-backed V2 request coverage, and virtual-hosted-style request-style tests
+- V2 signature comparison now uses fixed-time byte comparison
+- xUnit and NUnit adapter execution is serialized to avoid socket-bound integration test port races
+- Package version is now `7.2.0` because the release adds a public compatibility setting
+
+v7.1.2
+
+- Flattened shared Touchstone coverage so each named scenario is exposed as a first-class descriptor in the console, xUnit, and NUnit runners
+- Added parser/routing tests that assert parsed bucket, key, request type, permissions, range, multipart, V2 header, and V2 signed URL state through real HTTP requests
+- Added protocol compatibility coverage for S3 XML response shape, metadata headers, request identifiers, and 204 empty-body behavior
+- Added adversarial HTTP coverage for malformed numeric query values, malformed ranges, duplicate query parameters, oversized decoded content length, and post-failure server health
+- Added deterministic fuzz-style coverage for object keys, prefixes, and `max-keys` boundaries
+- Added lifecycle and concurrency coverage for parallel service/object requests, idempotent disposal, and stopped-listener behavior
+- Hardened query parsing for common S3 camel-case aliases such as `AWSAccessKeyId`, `Expires`, `Signature`, `uploadId`, `partNumber`, and `versionId`
+- S3 XML error responses sent through `S3Response.Send(Error)` now include request identifiers when available
+- Added `coverage.runsettings` for XPlat Code Coverage collection
+
+v7.1.1
+
+- Updated AWSSignatureGenerator to 1.1.0
+- Migrated the shared automated tests to Touchstone descriptors
+- Test.Automated now uses Touchstone.Cli
+- Test.Xunit now uses Touchstone.XunitAdapter
+- Added Test.Nunit using Touchstone.NunitAdapter
+- Added stricter negative signature validation coverage
+- Added missing restore request body coverage
+- Added `archive/V2_SIGNATURES.md` with the implementation plan for V2 signatures and V2 signed URLs
+
+v7.1.0
 
 - Added `Object.Restore` callback for `POST /[bucket]/[key]?restore`
 - Added `RestoreRequest`, `RestoreObjectResult`, `RestoreStatus`, `GlacierJobParameters`, and `RestoreTierEnum`

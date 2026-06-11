@@ -12,6 +12,8 @@ namespace Test.Shared.Tests
     using Amazon.Runtime;
     using Amazon.S3;
     using Amazon.S3.Model;
+    using S3ServerLibrary;
+    using S3ServerLibrary.S3Objects;
 
     /// <summary>
     /// Signature validation tests.
@@ -28,9 +30,6 @@ namespace Test.Shared.Tests
         /// <param name="token">Cancellation token.</param>
         public static async Task RunAllAsync(TestRunner runner, S3TestServer server, CancellationToken token = default)
         {
-            Console.WriteLine();
-            Console.WriteLine("--- Signature Validation Tests ---");
-
             await runner.RunTestAsync("Valid signature allows ListBuckets", async (ct) =>
             {
                 ListBucketsResponse response = await server.S3Client.ListBucketsAsync(new ListBucketsRequest(), ct).ConfigureAwait(false);
@@ -145,16 +144,13 @@ namespace Test.Shared.Tests
 
                 using (IAmazonS3 wrongClient = new AmazonS3Client(wrongCreds, config))
                 {
-                    try
+                    AmazonS3Exception s3e = await CaptureAmazonS3Exception(async () =>
                     {
                         await wrongClient.ListBucketsAsync(new ListBucketsRequest(), ct).ConfigureAwait(false);
-                        // Request succeeded when it should have been rejected
-                        AssertHelper.IsTrue(false, "expected rejection but request succeeded");
-                    }
-                    catch (Exception)
-                    {
-                        // Any exception means the server rejected the request
-                    }
+                    }).ConfigureAwait(false);
+
+                    AssertHelper.AreEqual(HttpStatusCode.Forbidden, s3e.StatusCode, "wrong secret status");
+                    AssertHelper.AreEqual("SignatureDoesNotMatch", s3e.ErrorCode, "wrong secret error code");
                 }
             }, token).ConfigureAwait(false);
 
@@ -173,35 +169,102 @@ namespace Test.Shared.Tests
 
                 using (IAmazonS3 unknownClient = new AmazonS3Client(unknownCreds, config))
                 {
-                    try
+                    AmazonS3Exception s3e = await CaptureAmazonS3Exception(async () =>
                     {
                         await unknownClient.ListBucketsAsync(new ListBucketsRequest(), ct).ConfigureAwait(false);
-                        AssertHelper.IsTrue(false, "expected rejection but request succeeded");
-                    }
-                    catch (Exception)
+                    }).ConfigureAwait(false);
+
+                    AssertHelper.AreEqual(HttpStatusCode.Forbidden, s3e.StatusCode, "unknown key status");
+                    AssertHelper.AreEqual("AccessDenied", s3e.ErrorCode, "unknown key error code");
+                }
+            }, token).ConfigureAwait(false);
+
+            await runner.RunTestAsync("Unsigned request is rejected when signatures are enabled", async (ct) =>
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, server.BaseUrl + "/");
+                HttpResponseMessage response = await server.HttpClient.SendAsync(request, ct).ConfigureAwait(false);
+
+                AssertHelper.StatusCodeEquals(HttpStatusCode.Forbidden, response, "unsigned request rejection");
+                string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                AssertHelper.StringContains(body, "AccessDenied", "unsigned request error body");
+            }, token).ConfigureAwait(false);
+
+            await runner.RunTestAsync("Rejected unsigned request does not invoke operation callbacks", async (ct) =>
+            {
+                int port = S3TestServer.GetAvailablePort();
+                bool listBucketsCalled = false;
+
+                S3ServerSettings settings = new S3ServerSettings();
+                settings.Webserver.Hostname = "127.0.0.1";
+                settings.Webserver.Port = port;
+                settings.Webserver.Ssl.Enable = false;
+                settings.EnableSignatures = true;
+
+                using (S3Server authServer = new S3Server(settings))
+                using (HttpClient client = new HttpClient())
+                {
+                    client.Timeout = TimeSpan.FromSeconds(5);
+                    client.DefaultRequestHeaders.ConnectionClose = true;
+
+                    authServer.Service.GetSecretKey = (ctx) => server.SecretKey;
+                    authServer.Service.ListBuckets = async (ctx) =>
                     {
-                        // Any exception means the server rejected the request
-                    }
+                        listBucketsCalled = true;
+                        return new ListAllMyBucketsResult();
+                    };
+
+                    authServer.Start();
+
+                    HttpResponseMessage response = await client.GetAsync("http://127.0.0.1:" + port + "/", ct).ConfigureAwait(false);
+                    AssertHelper.StatusCodeEquals(HttpStatusCode.Forbidden, response, "unsigned request rejection");
+                    AssertHelper.IsFalse(listBucketsCalled, "ListBuckets callback was not invoked");
+
+                    authServer.Stop();
                 }
             }, token).ConfigureAwait(false);
 
             await runner.RunTestAsync("V2 signature returns SignatureDoesNotMatch", async (ct) =>
             {
+                server.ClearObservedRequests();
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, server.BaseUrl + "/");
                 request.Headers.TryAddWithoutValidation("Authorization", "AWS AKIAIOSFODNN7EXAMPLE:somesignature");
                 request.Headers.TryAddWithoutValidation("Date", DateTime.UtcNow.ToString("R"));
 
-                try
-                {
-                    HttpResponseMessage response = await server.HttpClient.SendAsync(request, ct).ConfigureAwait(false);
-                    AssertHelper.StatusCodeEquals(HttpStatusCode.Forbidden, response, "V2 signature rejection");
-                    string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                    AssertHelper.StringContains(body, "SignatureDoesNotMatch", "error body");
-                }
-                catch (HttpRequestException)
-                {
-                    // Server may reset connection
-                }
+                HttpResponseMessage response = await server.HttpClient.SendAsync(request, ct).ConfigureAwait(false);
+                AssertHelper.StatusCodeEquals(HttpStatusCode.Forbidden, response, "V2 signature rejection");
+                string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                AssertHelper.StringContains(body, "SignatureDoesNotMatch", "error body");
+
+                AssertHelper.IsNotNull(server.LastObservedRequest, "observed request");
+                AssertHelper.AreEqual(S3SignatureVersion.Version2, server.LastObservedRequest.SignatureVersion, "signature version");
+                AssertHelper.AreEqual(server.AccessKey, server.LastObservedRequest.AccessKey, "access key");
+            }, token).ConfigureAwait(false);
+
+            await runner.RunTestAsync("V2 signed URL query parameters are rejected while unsupported", async (ct) =>
+            {
+                server.ClearObservedRequests();
+                string expires = DateTimeOffset.UtcNow.AddMinutes(5).ToUnixTimeSeconds().ToString();
+                string url = server.BaseUrl
+                    + "/"
+                    + server.Bucket
+                    + "/hello.html?AWSAccessKeyId="
+                    + WebUtility.UrlEncode(server.AccessKey)
+                    + "&Expires="
+                    + expires
+                    + "&Signature="
+                    + WebUtility.UrlEncode("is78k1u4bSulJPWbGYpzeFp6puo=");
+
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
+                HttpResponseMessage response = await server.HttpClient.SendAsync(request, ct).ConfigureAwait(false);
+
+                AssertHelper.StatusCodeEquals(HttpStatusCode.Forbidden, response, "V2 signed URL rejection");
+                string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                AssertHelper.StringContains(body, "SignatureDoesNotMatch", "V2 signed URL error body");
+
+                AssertHelper.IsNotNull(server.LastObservedRequest, "observed request");
+                AssertHelper.AreEqual(server.AccessKey, server.LastObservedRequest.AccessKey, "access key");
+                AssertHelper.AreEqual(expires, server.LastObservedRequest.Expires, "expires");
+                AssertHelper.AreEqual("is78k1u4bSulJPWbGYpzeFp6puo=", server.LastObservedRequest.Signature, "signature");
             }, token).ConfigureAwait(false);
 
             await runner.RunTestAsync("Tampered credentials are rejected", async (ct) =>
@@ -219,21 +282,22 @@ namespace Test.Shared.Tests
 
                 using (IAmazonS3 tamperedClient = new AmazonS3Client(tamperedCreds, config))
                 {
-                    try
+                    PutObjectRequest putReq = new PutObjectRequest
                     {
-                        PutObjectRequest putReq = new PutObjectRequest
-                        {
-                            BucketName = server.Bucket,
-                            Key = "tampered-object.txt",
-                            ContentBody = "tampered content"
-                        };
+                        BucketName = server.Bucket,
+                        Key = "tampered-object.txt",
+                        ContentBody = "tampered content"
+                    };
+
+                    AmazonS3Exception s3e = await CaptureAmazonS3Exception(async () =>
+                    {
                         await tamperedClient.PutObjectAsync(putReq, ct).ConfigureAwait(false);
-                        AssertHelper.IsTrue(false, "expected rejection but request succeeded");
-                    }
-                    catch (Exception)
-                    {
-                        // Any exception means the server rejected the request
-                    }
+                    }).ConfigureAwait(false);
+
+                    AssertHelper.AreEqual(HttpStatusCode.Forbidden, s3e.StatusCode, "tampered credentials status");
+                    AssertHelper.IsTrue(
+                        s3e.ErrorCode == "SignatureDoesNotMatch" || s3e.ErrorCode == "Forbidden",
+                        "tampered credentials error code is SignatureDoesNotMatch or SDK-level Forbidden");
                 }
             }, token).ConfigureAwait(false);
 
@@ -279,6 +343,20 @@ namespace Test.Shared.Tests
                 DeleteObjectsResponse response = await server.S3Client.DeleteObjectsAsync(request, ct).ConfigureAwait(false);
                 AssertHelper.StatusCodeEquals(200, (int)response.HttpStatusCode, "DeleteObjects with signature");
             }, token).ConfigureAwait(false);
+        }
+
+        private static async Task<AmazonS3Exception> CaptureAmazonS3Exception(Func<Task> action)
+        {
+            try
+            {
+                await action().ConfigureAwait(false);
+            }
+            catch (AmazonS3Exception s3e)
+            {
+                return s3e;
+            }
+
+            throw new Exception("Expected AmazonS3Exception.");
         }
     }
 }

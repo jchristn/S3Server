@@ -3,6 +3,7 @@ namespace Test.Shared.Tests
     using System;
     using System.Net;
     using System.Net.Http;
+    using System.Net.Sockets;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -21,9 +22,6 @@ namespace Test.Shared.Tests
         /// <param name="token">Cancellation token.</param>
         public static async Task RunAllAsync(TestRunner runner, S3TestServer server, CancellationToken token = default)
         {
-            Console.WriteLine();
-            Console.WriteLine("--- Error Handling Tests ---");
-
             await runner.RunTestAsync("Nonexistent bucket HEAD returns 404", async (ct) =>
             {
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Head, server.BaseUrl + "/nonexistent-bucket-xyz");
@@ -137,11 +135,23 @@ namespace Test.Shared.Tests
                 AssertHelper.StringContains(body, "MalformedXML", "error body");
             }, token).ConfigureAwait(false);
 
+            await runner.RunTestAsync("Missing request body returns MissingRequestBodyError for POST restore", async (ct) =>
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, server.BaseUrl + "/" + server.Bucket + "/archived-object.txt?restore");
+                request.Content = new StringContent(String.Empty, Encoding.UTF8, "application/xml");
+
+                HttpResponseMessage response = await server.HttpClient.SendAsync(request, ct).ConfigureAwait(false);
+                AssertHelper.StatusCodeEquals(HttpStatusCode.BadRequest, response, "MissingRequestBodyError restore");
+                string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                AssertHelper.StringContains(body, "MissingRequestBodyError", "error body");
+            }, token).ConfigureAwait(false);
+
             await runner.RunTestAsync("Unwired recognized operation returns 501 NotImplemented", async (ct) =>
             {
+                int port = GetAvailablePort();
                 S3ServerSettings settings = new S3ServerSettings();
                 settings.Webserver.Hostname = "127.0.0.1";
-                settings.Webserver.Port = server.Port + 100;
+                settings.Webserver.Port = port;
                 settings.Webserver.Ssl.Enable = false;
 
                 using (S3Server minimalServer = new S3Server(settings))
@@ -156,7 +166,7 @@ namespace Test.Shared.Tests
                     {
                         client.Timeout = TimeSpan.FromSeconds(5);
                         client.DefaultRequestHeaders.ConnectionClose = true;
-                        string url = $"http://127.0.0.1:{server.Port + 100}/test-bucket?acl";
+                        string url = $"http://127.0.0.1:{port}/test-bucket?acl";
                         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
                         HttpResponseMessage response = await client.SendAsync(request, ct).ConfigureAwait(false);
                         AssertHelper.StatusCodeEquals(HttpStatusCode.NotImplemented, response, "unwired BucketReadAcl");
@@ -170,9 +180,10 @@ namespace Test.Shared.Tests
 
             await runner.RunTestAsync("Unwired restore operation returns 501 NotImplemented", async (ct) =>
             {
+                int port = GetAvailablePort();
                 S3ServerSettings settings = new S3ServerSettings();
                 settings.Webserver.Hostname = "127.0.0.1";
-                settings.Webserver.Port = server.Port + 102;
+                settings.Webserver.Port = port;
                 settings.Webserver.Ssl.Enable = false;
 
                 using (S3Server minimalServer = new S3Server(settings))
@@ -185,7 +196,7 @@ namespace Test.Shared.Tests
                     {
                         client.Timeout = TimeSpan.FromSeconds(5);
                         client.DefaultRequestHeaders.ConnectionClose = true;
-                        string url = $"http://127.0.0.1:{server.Port + 102}/test-bucket/archived-object.txt?restore";
+                        string url = $"http://127.0.0.1:{port}/test-bucket/archived-object.txt?restore";
                         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url);
                         request.Content = new StringContent("<RestoreRequest><Days>1</Days></RestoreRequest>", Encoding.UTF8, "application/xml");
                         HttpResponseMessage response = await client.SendAsync(request, ct).ConfigureAwait(false);
@@ -200,9 +211,10 @@ namespace Test.Shared.Tests
 
             await runner.RunTestAsync("EnableSignatures without GetSecretKey throws at startup", async (ct) =>
             {
+                int port = GetAvailablePort();
                 S3ServerSettings settings = new S3ServerSettings();
                 settings.Webserver.Hostname = "127.0.0.1";
-                settings.Webserver.Port = server.Port + 101;
+                settings.Webserver.Port = port;
                 settings.Webserver.Ssl.Enable = false;
                 settings.EnableSignatures = true;
 
@@ -215,6 +227,15 @@ namespace Test.Shared.Tests
                     }, "Start() should throw when EnableSignatures is true but GetSecretKey is null").ConfigureAwait(false);
                 }
             }, token).ConfigureAwait(false);
+        }
+
+        private static int GetAvailablePort()
+        {
+            TcpListener listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+            listener.Stop();
+            return port;
         }
     }
 }

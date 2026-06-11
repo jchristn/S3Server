@@ -268,6 +268,7 @@
         public async Task<bool> Send(Error error)
         {
             ChunkedTransfer = false;
+            PopulateErrorIdentifiers(error);
 
             byte[] bytes = Encoding.UTF8.GetBytes(SerializationHelper.SerializeXml(error));
 
@@ -295,6 +296,7 @@
             ChunkedTransfer = false;
 
             Error errorBody = new Error(error);
+            PopulateErrorIdentifiers(errorBody);
 
             byte[] bytes = Encoding.UTF8.GetBytes(SerializationHelper.SerializeXml(errorBody));
 
@@ -342,6 +344,17 @@
             if (Headers.Get("Date") != null) Headers.Remove("Date");
 
             Headers.Add("Date", DateTime.UtcNow.ToString(Constants.AmazonTimestampFormatVerbose, CultureInfo.InvariantCulture));
+        }
+
+        private void PopulateErrorIdentifiers(Error error)
+        {
+            if (error == null || _S3Request == null) return;
+
+            if (String.IsNullOrEmpty(error.RequestId))
+                error.RequestId = _S3Request.RequestId;
+
+            if (String.IsNullOrEmpty(error.HostId))
+                error.HostId = _S3Request.TraceId;
         }
 
         #endregion

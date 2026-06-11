@@ -2,16 +2,16 @@ namespace Test.Shared
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
 
     /// <summary>
-    /// Orchestrates test execution with colored console output and summary reporting.
+    /// Orchestrates shared test execution and records results.
     /// </summary>
     public class TestRunner
     {
         private readonly List<TestResult> _Results = new List<TestResult>();
+        private readonly List<string> _DiscoveredTests = new List<string>();
 
         /// <summary>
         /// List of test results.
@@ -19,10 +19,62 @@ namespace Test.Shared
         public IReadOnlyList<TestResult> Results => _Results;
 
         /// <summary>
+        /// List of tests discovered while walking legacy runner-style suites.
+        /// </summary>
+        public IReadOnlyList<string> DiscoveredTests => _DiscoveredTests;
+
+        /// <summary>
+        /// True to collect test names without executing the test bodies.
+        /// </summary>
+        public bool DiscoveryOnly { get; set; } = false;
+
+        /// <summary>
+        /// Optional target test name.  When set, only this test body is executed.
+        /// </summary>
+        public string TargetTestName { get; set; } = null;
+
+        /// <summary>
+        /// True when the target test name was encountered.
+        /// </summary>
+        public bool TargetWasSeen { get; private set; } = false;
+
+        /// <summary>
+        /// True when the target test body was executed.
+        /// </summary>
+        public bool TargetWasExecuted { get; private set; } = false;
+
+        /// <summary>
         /// Per-test timeout in milliseconds.
         /// Default is 10000 (10 seconds).
         /// </summary>
         public int TestTimeoutMs { get; set; } = 5000;
+
+        /// <summary>
+        /// Create a discovery-only runner.
+        /// </summary>
+        /// <returns>Discovery runner.</returns>
+        public static TestRunner CreateDiscoveryRunner()
+        {
+            return new TestRunner
+            {
+                DiscoveryOnly = true
+            };
+        }
+
+        /// <summary>
+        /// Create a runner that executes only one named test.
+        /// </summary>
+        /// <param name="testName">Test name to execute.</param>
+        /// <returns>Targeted runner.</returns>
+        public static TestRunner CreateTargetedRunner(string testName)
+        {
+            if (String.IsNullOrEmpty(testName)) throw new ArgumentNullException(nameof(testName));
+
+            return new TestRunner
+            {
+                TargetTestName = testName
+            };
+        }
 
         /// <summary>
         /// Run a single test and record the result.
@@ -33,7 +85,24 @@ namespace Test.Shared
         /// <returns>TestResult.</returns>
         public async Task<TestResult> RunTestAsync(string testName, Func<CancellationToken, Task> testAction, CancellationToken token = default)
         {
-            Stopwatch sw = Stopwatch.StartNew();
+            if (String.IsNullOrEmpty(testName)) throw new ArgumentNullException(nameof(testName));
+            if (testAction == null) throw new ArgumentNullException(nameof(testAction));
+
+            _DiscoveredTests.Add(testName);
+
+            if (DiscoveryOnly)
+                return new TestResult(testName, true, 0);
+
+            if (!String.IsNullOrEmpty(TargetTestName)
+                && !String.Equals(TargetTestName, testName, StringComparison.Ordinal))
+            {
+                return new TestResult(testName, true, 0);
+            }
+
+            if (!String.IsNullOrEmpty(TargetTestName))
+                TargetWasSeen = true;
+
+            DateTime start = DateTime.UtcNow;
             TestResult result;
 
             try
@@ -43,98 +112,17 @@ namespace Test.Shared
                     testCts.CancelAfter(TestTimeoutMs);
                     await testAction(testCts.Token).ConfigureAwait(false);
                 }
-                sw.Stop();
-                result = new TestResult(testName, true, sw.Elapsed.TotalMilliseconds);
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.Write("  PASS ");
+                result = new TestResult(testName, true, (DateTime.UtcNow - start).TotalMilliseconds);
+                TargetWasExecuted = true;
             }
             catch (Exception ex)
             {
-                sw.Stop();
-                result = new TestResult(testName, false, sw.Elapsed.TotalMilliseconds, ex.Message);
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.Write("  FAIL ");
-            }
-
-            Console.ResetColor();
-            Console.WriteLine($" {testName} ({result.RuntimeMs:F1}ms)");
-
-            if (!result.Passed)
-            {
-                Console.ForegroundColor = ConsoleColor.DarkYellow;
-                Console.WriteLine($"         {result.ErrorMessage}");
-                Console.ResetColor();
+                result = new TestResult(testName, false, (DateTime.UtcNow - start).TotalMilliseconds, ex.Message);
+                TargetWasExecuted = true;
             }
 
             _Results.Add(result);
             return result;
-        }
-
-        /// <summary>
-        /// Print a summary of all test results to the console.
-        /// </summary>
-        /// <param name="totalRuntimeMs">Total elapsed time in milliseconds.</param>
-        public void PrintSummary(double totalRuntimeMs)
-        {
-            int passed = 0;
-            int failed = 0;
-            List<TestResult> failures = new List<TestResult>();
-
-            foreach (TestResult r in _Results)
-            {
-                if (r.Passed) passed++;
-                else
-                {
-                    failed++;
-                    failures.Add(r);
-                }
-            }
-
-            Console.WriteLine();
-            Console.WriteLine(new string('=', 80));
-            Console.WriteLine("TEST SUMMARY");
-            Console.WriteLine(new string('=', 80));
-            Console.WriteLine($"  Total:   {_Results.Count}");
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"  Passed:  {passed}");
-            Console.ForegroundColor = failed > 0 ? ConsoleColor.Red : ConsoleColor.Green;
-            Console.WriteLine($"  Failed:  {failed}");
-            Console.ResetColor();
-            Console.WriteLine($"  Runtime: {totalRuntimeMs:F1}ms");
-            Console.WriteLine();
-
-            if (failures.Count > 0)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("FAILED TESTS:");
-                Console.ResetColor();
-
-                foreach (TestResult f in failures)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Write("  FAIL ");
-                    Console.ResetColor();
-                    Console.WriteLine($" {f.TestName}");
-                    Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    Console.WriteLine($"         {f.ErrorMessage}");
-                    Console.ResetColor();
-                }
-
-                Console.WriteLine();
-            }
-
-            if (failed > 0)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("OVERALL: FAIL");
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("OVERALL: PASS");
-            }
-
-            Console.ResetColor();
         }
     }
 }

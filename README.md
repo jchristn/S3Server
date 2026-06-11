@@ -13,7 +13,7 @@ S3Server is a **protocol adapter** that handles the complexity of the Amazon S3 
 **What S3Server does:**
 - Parses incoming S3 HTTP requests
 - Determines request type (service, bucket, or object operations)
-- Validates AWS Signature V4 (optional)
+- Validates AWS Signature V4 and optional legacy Signature V2
 - Deserializes XML request bodies
 - Routes requests to your callback methods
 - Serializes response objects to XML
@@ -59,7 +59,7 @@ Want a complete S3-compatible storage server built using S3Server? Check out **[
 - Virtual-hosted-style URLs: `http://bucket.domain/key` (configurable)
 
 ✅ **Security & Validation**
-- AWS Signature V4 validation (optional)
+- AWS Signature V4 validation, plus opt-in legacy Signature V2 validation
 - Pre-request hooks for authentication
 - Post-request hooks for logging and metrics
 
@@ -177,6 +177,9 @@ S3ServerSettings settings = new S3ServerSettings
     // Optional: Enable AWS Signature V4 validation
     EnableSignatures = false,
 
+    // Optional: Enable legacy AWS Signature V2 validation when signatures are enabled
+    EnableSignatureV2 = false,
+
     // Note: UseTcpServer is deprecated in v7.0; Watson now uses TCP natively
     UseTcpServer = false
 };
@@ -222,10 +225,11 @@ settings.PostRequestHandler = async (ctx) =>
 
 ### AWS Signature Validation
 
-Enable AWS Signature V4 validation for authenticated requests:
+Enable AWS signature validation for authenticated requests. Signature V4 is enabled by `EnableSignatures`; legacy Signature V2 remains disabled unless `EnableSignatureV2` is also set.
 
 ```csharp
 settings.EnableSignatures = true;
+settings.EnableSignatureV2 = false; // Set true only for legacy S3-compatible clients
 settings.Logging.SignatureV4Validation = true; // Optional debug logging
 
 // Implement callback to retrieve secret key for access key
@@ -233,8 +237,7 @@ server.Service.GetSecretKey = (ctx) =>
 {
     string accessKey = ctx.Request.AccessKey;
 
-    // Look up secret key for this access key
-    // Return base64-encoded secret key
+    // Look up and return the secret key for this access key
     return "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
 
     // Or throw exception if access key is invalid
@@ -242,7 +245,7 @@ server.Service.GetSecretKey = (ctx) =>
 };
 ```
 
-**Note:** Only AWS Signature V4 is supported. V2 signatures will return an error. Chunk signature validation is not yet supported.
+When `EnableSignatureV2` is `true`, S3Server validates legacy V2 header signatures such as `Authorization: AWS AWSAccessKeyId:Signature` and V2 signed URLs containing `AWSAccessKeyId`, `Expires`, and `Signature`. Expired V2 signed URLs are rejected. V2 support is intended for compatibility with older S3 clients and S3-compatible storage ecosystems; AWS has deprecated Signature V2, so leave it disabled unless you need that legacy behavior.
 
 ### Virtual-Hosted-Style URLs
 
@@ -768,7 +771,6 @@ When exceeded, S3Server automatically returns `EntityTooLarge` error.
 ## Known Limitations
 
 - **Chunk signature validation**: Not yet supported for chunked transfer encoding with AWS Signature V4
-- **AWS Signature V2**: Not supported (returns error)
 
 The following S3 operations are not exposed through callbacks (may be added in future releases):
 
@@ -784,16 +786,35 @@ Comprehensive examples are available in the repository:
 
 - **`Test.Server`**: Complete server implementation with all callbacks
 - **`Test.Client`**: S3 client examples using AWS SDK
-- **`Test.RequestStyle`**: Path-style vs virtual-hosted-style URL testing
-- **`Test.SignatureValidation`**: AWS Signature V4 validation examples
-- **`Test.Automated`**: Automated test suite (runs against both HTTP and TCP server modes with signature validation)
-- **`Test.Shared`**: Shared test framework and test logic used by Test.Automated and Test.Xunit
-- **`Test.Xunit`**: xUnit test project for CI/CD integration
+- **`Test.RequestStyle`**: Manual path-style vs virtual-hosted-style URL example harness
+- **`Test.SignatureValidation`**: Manual AWS Signature V4 and V2 validation example harness
+- **`Test.Automated`**: Touchstone console runner over the shared suites
+- **`Test.Shared`**: Touchstone descriptor source of truth for automated, xUnit, and NUnit tests, including parser/routing, compatibility, adversarial, fuzz, lifecycle, and signature coverage
+- **`Test.Xunit`**: xUnit test project using `Touchstone.XunitAdapter`
+- **`Test.Nunit`**: NUnit test project using `Touchstone.NunitAdapter`
 
 Run the test server (requires admin on Windows for wildcard listeners):
 
 ```bash
 dotnet run --project src/Test.Server/Test.Server.csproj
+```
+
+Run the shared automated suite through each supported runner:
+
+```bash
+dotnet run --project src/Test.Automated/Test.Automated.csproj --framework net8.0
+dotnet run --project src/Test.Automated/Test.Automated.csproj --framework net10.0
+dotnet test src/Test.Xunit/Test.Xunit.csproj
+dotnet test src/Test.Nunit/Test.Nunit.csproj
+```
+
+The xUnit and NUnit adapter projects execute these socket-bound integration descriptors serially to avoid local listener port races.
+
+Collect coverage for the library with the shared runsettings file:
+
+```bash
+dotnet test src/Test.Xunit/Test.Xunit.csproj --settings coverage.runsettings --collect:"XPlat Code Coverage"
+dotnet test src/Test.Nunit/Test.Nunit.csproj --settings coverage.runsettings --collect:"XPlat Code Coverage"
 ```
 
 ## Building from Source
@@ -812,8 +833,9 @@ dotnet pack src/S3Server/S3Server.csproj -c Release
 ## Dependencies
 
 - **Watson** (7.0.x): HTTP server framework (supports HTTP/1.1, HTTP/2, and HTTP/3)
-- **AWSSignatureGenerator** (1.0.12): AWS Signature V4 validation (including streaming signatures)
+- **AWSSignatureGenerator** (1.1.0): AWS Signature V4 validation, streaming signature support, and legacy S3 Signature V2 helpers
 - **PrettyId** (2.0.1): Request ID generation
+- **Touchstone** (0.1.12): Shared test descriptors and console/xUnit/NUnit test runners
 
 ## Resources
 
@@ -828,6 +850,31 @@ Have a feature request or found an issue? Please [file an issue on GitHub](https
 ## Version History
 
 Refer to [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
+
+## New in v7.2.0
+
+- Adds opt-in legacy AWS Signature V2 validation behind `S3ServerSettings.EnableSignatureV2`
+- Validates V2 `Authorization: AWS ...` headers and V2 signed URLs with `AWSAccessKeyId`, `Expires`, and `Signature`
+- Keeps V2 disabled by default while preserving existing V4 validation behavior
+- Adds canonical AWS Signature V2 fixture tests, V2 positive/negative request tests, and virtual-hosted-style request coverage
+- Uses fixed-time comparison for V2 signature checks
+- Serializes xUnit and NUnit adapter execution for socket-bound shared descriptors
+
+## New in v7.1.2
+
+- Exposes each shared Touchstone scenario as a first-class descriptor across console, xUnit, and NUnit runners
+- Adds parser/routing, protocol compatibility, adversarial, deterministic fuzz, lifecycle/concurrency, and deeper signature coverage
+- Hardens S3 query parsing for common camel-case aliases used by V2 signed URLs and multipart requests
+- Includes S3 request identifiers in XML error responses sent through `S3Response.Send(Error)`
+- Adds `coverage.runsettings` for XPlat Code Coverage collection
+
+## New in v7.1.1
+
+- Updated `AWSSignatureGenerator` to 1.1.0
+- Migrated shared tests to Touchstone descriptors consumed by console, xUnit, and NUnit runners
+- Added `Test.Nunit`
+- Added stricter negative signature and restore-body coverage
+- Added [archive/V2_SIGNATURES.md](archive/V2_SIGNATURES.md) with the end-to-end plan for V2 header and signed URL validation
 
 ## New in v7.1.0
 

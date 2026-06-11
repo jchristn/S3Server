@@ -23,9 +23,6 @@ namespace Test.Shared.Tests
         /// <param name="token">Cancellation token.</param>
         public static async Task RunAllAsync(TestRunner runner, S3TestServer server, CancellationToken token = default)
         {
-            Console.WriteLine();
-            Console.WriteLine("--- S3 Compliance Tests ---");
-
             #region XML-Response-Format
 
             await runner.RunTestAsync("ListBuckets response contains valid XML with Owner", async (ct) =>

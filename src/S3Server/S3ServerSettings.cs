@@ -87,9 +87,17 @@
         public Func<S3Context, Task> PostRequestHandler = null;
 
         /// <summary>
-        /// Enable or disable support for signature V4.  Dependent upon EnableSignatureValidation being set to true and the Service.GetSecretKey being set.
+        /// Enable or disable signature validation.  Dependent upon Service.GetSecretKey being set.
+        /// AWS Signature V4 is validated when this value is true.
         /// </summary>
         public bool EnableSignatures { get; set; } = false;
+
+        /// <summary>
+        /// Enable or disable legacy AWS Signature V2 validation.
+        /// This setting has no effect unless EnableSignatures is true.
+        /// Signature V2 is deprecated by AWS and should only be enabled for legacy S3-compatible clients.
+        /// </summary>
+        public bool EnableSignatureV2 { get; set; } = false;
 
         #endregion
 

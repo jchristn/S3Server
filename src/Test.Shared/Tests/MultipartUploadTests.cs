@@ -21,9 +21,6 @@ namespace Test.Shared.Tests
         /// <param name="token">Cancellation token.</param>
         public static async Task RunAllAsync(TestRunner runner, S3TestServer server, CancellationToken token = default)
         {
-            Console.WriteLine();
-            Console.WriteLine("--- Multipart Upload Tests ---");
-
             await runner.RunTestAsync("InitiateMultipartUpload returns upload ID", async (ct) =>
             {
                 InitiateMultipartUploadResponse response = await server.S3Client.InitiateMultipartUploadAsync(new InitiateMultipartUploadRequest

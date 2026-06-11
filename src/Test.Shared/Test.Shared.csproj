@@ -17,6 +17,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="AWSSDK.S3" Version="4.0.20.2" />
+		<PackageReference Include="Touchstone.Core" Version="0.1.12" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -4233,7 +4233,15 @@
         </member>
         <member name="P:S3ServerLibrary.S3ServerSettings.EnableSignatures">
             <summary>
-            Enable or disable support for signature V4.  Dependent upon EnableSignatureValidation being set to true and the Service.GetSecretKey being set.
+            Enable or disable signature validation.  Dependent upon Service.GetSecretKey being set.
+            AWS Signature V4 is validated when this value is true.
+            </summary>
+        </member>
+        <member name="P:S3ServerLibrary.S3ServerSettings.EnableSignatureV2">
+            <summary>
+            Enable or disable legacy AWS Signature V2 validation.
+            This setting has no effect unless EnableSignatures is true.
+            Signature V2 is deprecated by AWS and should only be enabled for legacy S3-compatible clients.
             </summary>
         </member>
         <member name="M:S3ServerLibrary.S3ServerSettings.#ctor">

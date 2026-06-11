@@ -7,6 +7,7 @@
     using System.Collections.Generic;
     using System.Globalization;
     using System.Net.NetworkInformation;
+    using System.Security.Cryptography;
     using System.Text;
     using System.Threading.Tasks;
     using AWSSignatureGenerator;
@@ -256,8 +257,7 @@
 
                             if (s3ctx.Request.SignatureVersion == S3SignatureVersion.Version2)
                             {
-                                _Settings.Logger?.Invoke(_Header + "invalid v2 signature '" + s3ctx.Request.Signature + "'");
-                                throw new S3Exception(new Error(ErrorCode.SignatureDoesNotMatch));
+                                ValidateV2Signature(s3ctx, secretKey);
                             }
                             else if (s3ctx.Request.SignatureVersion == S3SignatureVersion.Version4)
                             {
@@ -286,16 +286,7 @@
                                 if (payloadHashMode == V4PayloadHashEnum.Signed)
                                     requestBody = s3ctx.Http.Request.DataAsBytes;
 
-                                string sigFullUrl = s3ctx.Http.Request.Url.Full;
-                                if (!String.IsNullOrEmpty(sigFullUrl) && !Uri.TryCreate(sigFullUrl, UriKind.Absolute, out _))
-                                {
-                                    string hostHeader = s3ctx.Request.Host;
-                                    if (!String.IsNullOrEmpty(hostHeader))
-                                    {
-                                        string hostValue = hostHeader.Contains(":") ? hostHeader.Split(':')[0] : hostHeader;
-                                        sigFullUrl = S3Request.ReplaceWildcardHostname(sigFullUrl, hostValue);
-                                    }
-                                }
+                                string sigFullUrl = GetSignatureFullUrl(s3ctx);
 
                                 V4SignatureResult result = new V4SignatureResult(
                                     timestamp,
@@ -421,9 +412,7 @@
                                 else
                                 {
                                     error = new Error(ErrorCode.NoSuchBucket);
-                                    s3ctx.Response.StatusCode = 404;
-                                    s3ctx.Response.ContentType = Constants.ContentTypeXml;
-                                    await s3ctx.Response.Send(SerializationHelper.SerializeXml(error)).ConfigureAwait(false);
+                                    await s3ctx.Response.Send(error).ConfigureAwait(false);
                                 }
                                 return;
                             }
@@ -791,9 +780,7 @@
                                 else
                                 {
                                     error = new Error(ErrorCode.NoSuchKey);
-                                    s3ctx.Response.StatusCode = 404;
-                                    s3ctx.Response.ContentType = Constants.ContentTypeXml;
-                                    await s3ctx.Response.Send(SerializationHelper.SerializeXml(error)).ConfigureAwait(false);
+                                    await s3ctx.Response.Send(error).ConfigureAwait(false);
                                 }
                                 return;
                             }
@@ -822,9 +809,7 @@
                                 else
                                 {
                                     error = new Error(ErrorCode.NoSuchKey);
-                                    s3ctx.Response.StatusCode = 404;
-                                    s3ctx.Response.ContentType = Constants.ContentTypeXml;
-                                    await s3ctx.Response.Send(SerializationHelper.SerializeXml(error)).ConfigureAwait(false);
+                                    await s3ctx.Response.Send(error).ConfigureAwait(false);
                                 }
                                 return;
                             }
@@ -892,9 +877,7 @@
                                 else
                                 {
                                     error = new Error(ErrorCode.NoSuchKey);
-                                    s3ctx.Response.StatusCode = 404;
-                                    s3ctx.Response.ContentType = Constants.ContentTypeXml;
-                                    await s3ctx.Response.Send(SerializationHelper.SerializeXml(error)).ConfigureAwait(false);
+                                    await s3ctx.Response.Send(error).ConfigureAwait(false);
                                 }
                                 return;
                             }
@@ -1015,9 +998,7 @@
                                 if (effectiveContentLength > _Settings.OperationLimits.MaxPutObjectSize)
                                 {
                                     error = new Error(ErrorCode.EntityTooLarge);
-                                    s3ctx.Response.StatusCode = 400;
-                                    s3ctx.Response.ContentType = Constants.ContentTypeXml;
-                                    await s3ctx.Response.Send(SerializationHelper.SerializeXml(error)).ConfigureAwait(false);
+                                    await s3ctx.Response.Send(error).ConfigureAwait(false);
                                     return;
                                 }
 
@@ -1200,6 +1181,182 @@
             string headerValue = status.HeaderValue;
             if (!String.IsNullOrEmpty(headerValue))
                 headers.Add(Constants.HeaderRestore, headerValue);
+        }
+
+        private void ValidateV2Signature(S3Context s3ctx, string secretKey)
+        {
+            if (!_Settings.EnableSignatureV2)
+            {
+                _Settings.Logger?.Invoke(_Header + "v2 signature rejected because EnableSignatureV2 is false");
+                throw new S3Exception(new Error(ErrorCode.SignatureDoesNotMatch));
+            }
+
+            if (String.IsNullOrEmpty(s3ctx.Request.Signature))
+            {
+                _Settings.Logger?.Invoke(_Header + "v2 signature missing");
+                throw new S3Exception(new Error(ErrorCode.AccessDenied));
+            }
+
+            try
+            {
+                if (String.IsNullOrEmpty(s3ctx.Request.Authorization))
+                    ValidateV2SignedUrl(s3ctx, secretKey);
+                else
+                    ValidateV2HeaderSignature(s3ctx, secretKey);
+            }
+            catch (S3Exception)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                _Settings.Logger?.Invoke(_Header + "v2 signature validation exception:" + Environment.NewLine + e.ToString());
+                throw new S3Exception(new Error(ErrorCode.SignatureDoesNotMatch), e);
+            }
+        }
+
+        private void ValidateV2HeaderSignature(S3Context s3ctx, string secretKey)
+        {
+            string sigFullUrl = GetSignatureFullUrl(s3ctx);
+            string bucketName = GetExplicitBucketName(s3ctx);
+
+            using (V2SignatureResult result = new V2SignatureResult(
+                s3ctx.Http.Request.Method.ToString().ToUpper(),
+                sigFullUrl,
+                s3ctx.Request.AccessKey,
+                secretKey,
+                s3ctx.Http.Request.Headers,
+                bucketName))
+            {
+                if (!SignaturesMatch(result.Signature, s3ctx.Request.Signature))
+                {
+                    _Settings.Logger?.Invoke(_Header + "invalid v2 signature '" + s3ctx.Request.Signature + "'");
+                    throw new S3Exception(new Error(ErrorCode.SignatureDoesNotMatch));
+                }
+            }
+        }
+
+        private void ValidateV2SignedUrl(S3Context s3ctx, string secretKey)
+        {
+            if (!Int64.TryParse(s3ctx.Request.Expires, out long expires))
+            {
+                _Settings.Logger?.Invoke(_Header + "invalid v2 signed URL expiration '" + s3ctx.Request.Expires + "'");
+                throw new S3Exception(new Error(ErrorCode.AccessDenied));
+            }
+
+            if (expires < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+            {
+                _Settings.Logger?.Invoke(_Header + "expired v2 signed URL expiration '" + s3ctx.Request.Expires + "'");
+                throw new S3Exception(new Error(ErrorCode.AccessDenied));
+            }
+
+            string sigFullUrl = GetSignatureFullUrl(s3ctx);
+            string unsignedUrl = RemoveQueryParameters(sigFullUrl, "AWSAccessKeyId", "awsaccesskeyid", "Expires", "expires", "Signature", "signature");
+            string bucketName = GetExplicitBucketName(s3ctx);
+
+            using (V2SignedUrlResult result = new V2SignedUrlResult(
+                s3ctx.Http.Request.Method.ToString().ToUpper(),
+                unsignedUrl,
+                s3ctx.Request.AccessKey,
+                secretKey,
+                expires,
+                s3ctx.Http.Request.Headers,
+                bucketName))
+            {
+                if (!SignaturesMatch(result.Signature, s3ctx.Request.Signature))
+                {
+                    _Settings.Logger?.Invoke(_Header + "invalid v2 signed URL signature '" + s3ctx.Request.Signature + "'");
+                    throw new S3Exception(new Error(ErrorCode.SignatureDoesNotMatch));
+                }
+            }
+        }
+
+        private static string GetSignatureFullUrl(S3Context s3ctx)
+        {
+            string sigFullUrl = s3ctx.Http.Request.Url.Full;
+            if (!String.IsNullOrEmpty(sigFullUrl) && !Uri.TryCreate(sigFullUrl, UriKind.Absolute, out _))
+            {
+                string hostHeader = s3ctx.Request.Host;
+                if (!String.IsNullOrEmpty(hostHeader))
+                {
+                    string hostValue = hostHeader.Contains(":") ? hostHeader.Split(':')[0] : hostHeader;
+                    sigFullUrl = S3Request.ReplaceWildcardHostname(sigFullUrl, hostValue);
+                }
+            }
+
+            return sigFullUrl;
+        }
+
+        private static string GetExplicitBucketName(S3Context s3ctx)
+        {
+            if (s3ctx.Request.RequestStyle == S3RequestStyle.VirtualHostedStyle)
+                return s3ctx.Request.Bucket;
+
+            return null;
+        }
+
+        private static string RemoveQueryParameters(string fullUrl, params string[] parameterNames)
+        {
+            if (String.IsNullOrEmpty(fullUrl)) return fullUrl;
+            if (parameterNames == null || parameterNames.Length < 1) return fullUrl;
+
+            int queryStart = fullUrl.IndexOf('?');
+            if (queryStart < 0) return fullUrl;
+
+            string prefix = fullUrl.Substring(0, queryStart);
+            string queryAndFragment = fullUrl.Substring(queryStart + 1);
+            string fragment = null;
+
+            int fragmentStart = queryAndFragment.IndexOf('#');
+            if (fragmentStart >= 0)
+            {
+                fragment = queryAndFragment.Substring(fragmentStart);
+                queryAndFragment = queryAndFragment.Substring(0, fragmentStart);
+            }
+
+            List<string> retained = new List<string>();
+            string[] elements = queryAndFragment.Split(new[] { '&' }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string element in elements)
+            {
+                string key = element;
+                int equalsIndex = element.IndexOf('=');
+                if (equalsIndex >= 0)
+                    key = element.Substring(0, equalsIndex);
+
+                string decodedKey = Uri.UnescapeDataString(key.Replace("+", "%20"));
+                bool remove = false;
+
+                foreach (string parameterName in parameterNames)
+                {
+                    if (String.Equals(decodedKey, parameterName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        remove = true;
+                        break;
+                    }
+                }
+
+                if (!remove)
+                    retained.Add(element);
+            }
+
+            string result = prefix;
+            if (retained.Count > 0)
+                result += "?" + String.Join("&", retained);
+
+            if (!String.IsNullOrEmpty(fragment))
+                result += fragment;
+
+            return result;
+        }
+
+        private static bool SignaturesMatch(string expected, string provided)
+        {
+            if (expected == null || provided == null) return false;
+
+            byte[] expectedBytes = Encoding.UTF8.GetBytes(expected);
+            byte[] providedBytes = Encoding.UTF8.GetBytes(provided);
+            return CryptographicOperations.FixedTimeEquals(expectedBytes, providedBytes);
         }
 
         #endregion

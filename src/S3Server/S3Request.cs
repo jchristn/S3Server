@@ -607,6 +607,45 @@
             return null;
         }
 
+        private string RetrieveFirstQueryValue(params string[] keys)
+        {
+            if (keys == null || keys.Length < 1) return null;
+
+            foreach (string key in keys)
+            {
+                if (String.IsNullOrEmpty(key)) continue;
+
+                if (QuerystringExists(key))
+                    return RetrieveQueryValue(key);
+            }
+
+            return null;
+        }
+
+        private bool QuerystringExistsAny(params string[] keys)
+        {
+            if (keys == null || keys.Length < 1) return false;
+
+            foreach (string key in keys)
+            {
+                if (String.IsNullOrEmpty(key)) continue;
+                if (QuerystringExists(key)) return true;
+            }
+
+            return false;
+        }
+
+        private bool TryRetrieveQueryInt(out int value, params string[] keys)
+        {
+            value = 0;
+            string stringValue = RetrieveFirstQueryValue(keys);
+
+            if (String.IsNullOrEmpty(stringValue))
+                return false;
+
+            return Int32.TryParse(stringValue, out value);
+        }
+
         /// <summary>
         /// Read a chunk from the request body.
         /// </summary>
@@ -643,66 +682,41 @@
 
             if (_HttpRequest.Query != null && _HttpRequest.Query.Elements != null && _HttpRequest.Query.Elements.Count > 0)
             {
-                AccessKey = RetrieveQueryValue("awsaccesskeyid");
+                AccessKey = RetrieveFirstQueryValue("awsaccesskeyid", "AWSAccessKeyId");
                 ContinuationToken = RetrieveQueryValue("continuation-token");
                 Delimiter = RetrieveQueryValue("delimiter");
-                Expires = RetrieveQueryValue("expires");
+                Expires = RetrieveFirstQueryValue("expires", "Expires");
                 Marker = RetrieveQueryValue("marker");
                 Prefix = RetrieveQueryValue("prefix");
-                Signature = RetrieveQueryValue("signature");
-                UploadId = RetrieveQueryValue("uploadid");
-                VersionId = RetrieveQueryValue("versionid");
+                Signature = RetrieveFirstQueryValue("signature", "Signature");
+                UploadId = RetrieveFirstQueryValue("uploadid", "uploadId", "UploadId");
+                VersionId = RetrieveFirstQueryValue("versionid", "versionId", "VersionId");
 
-                if (QuerystringExists("max-keys"))
+                if (TryRetrieveQueryInt(out int maxKeys, "max-keys"))
                 {
-                    int maxKeys = 0;
-                    string maxKeysStr = RetrieveQueryValue("max-keys");
-                    if (!String.IsNullOrEmpty(maxKeysStr))
-                    {
-                        if (Int32.TryParse(_HttpRequest.Query.Elements["max-keys"], out maxKeys))
-                        {
-                            MaxKeys = maxKeys;
-                        }
-                    }
+                    MaxKeys = maxKeys;
                 }
 
-                if (QuerystringExists("max-parts"))
+                if (TryRetrieveQueryInt(out int maxParts, "max-parts", "maxParts", "MaxParts"))
                 {
-                    int maxParts = 0;
-                    string maxPartsStr = RetrieveQueryValue("max-parts");
-                    if (!String.IsNullOrEmpty(maxPartsStr))
-                    {
-                        if (Int32.TryParse(_HttpRequest.Query.Elements["max-parts"], out maxParts))
-                        {
-                            MaxParts = maxParts;
-                        }
-                    }
+                    MaxParts = maxParts;
                 }
 
-                if (QuerystringExists("partnumber"))
+                if (TryRetrieveQueryInt(out int partNum, "partnumber", "partNumber", "PartNumber"))
                 {
-                    int partNum = 0;
-                    string partNumStr = RetrieveQueryValue("partnumber");
-                    if (!String.IsNullOrEmpty(partNumStr))
-                    {
-                        if (Int32.TryParse(_HttpRequest.Query.Elements["partnumber"], out partNum))
-                        {
-                            PartNumber = partNum;
-                        }
-                    }
+                    PartNumber = partNum;
                 }
 
-                if (QuerystringExists("part-number-marker"))
+                if (TryRetrieveQueryInt(out int partNumMarker, "part-number-marker", "partNumberMarker", "PartNumberMarker"))
                 {
-                    int partNumMarker = 0;
-                    string partNumMarkerStr = RetrieveQueryValue("part-number-marker");
-                    if (!String.IsNullOrEmpty(partNumMarkerStr))
-                    {
-                        if (Int32.TryParse(_HttpRequest.Query.Elements["part-number-marker"], out partNumMarker))
-                        {
-                            PartNumberMarker = partNumMarker;
-                        }
-                    }
+                    PartNumberMarker = partNumMarker;
+                }
+
+                if (!String.IsNullOrEmpty(AccessKey)
+                    && !String.IsNullOrEmpty(Expires)
+                    && !String.IsNullOrEmpty(Signature))
+                {
+                    SignatureVersion = S3SignatureVersion.Version2;
                 }
             }
 
@@ -1093,7 +1107,7 @@
                             RequestType = S3RequestType.ObjectReadAcl;
                         else if (QuerystringExists("legal-hold"))
                             RequestType = S3RequestType.ObjectReadLegalHold;
-                        else if (QuerystringExists("uploadid"))
+                        else if (QuerystringExistsAny("uploadid", "uploadId", "UploadId"))
                             RequestType = S3RequestType.ObjectReadParts;
                         else if (QuerystringExists("retention"))
                             RequestType = S3RequestType.ObjectReadRetention;
@@ -1134,7 +1148,7 @@
                             RequestType = S3RequestType.ObjectWriteLegalHold;
                         else if (QuerystringExists("retention"))
                             RequestType = S3RequestType.ObjectWriteRetention;
-                        else if (QuerystringExists("partnumber") && QuerystringExists("uploadid"))
+                        else if (QuerystringExistsAny("partnumber", "partNumber", "PartNumber") && QuerystringExistsAny("uploadid", "uploadId", "UploadId"))
                             RequestType = S3RequestType.ObjectUploadPart;
                         else
                             RequestType = S3RequestType.ObjectWrite;
@@ -1161,7 +1175,7 @@
                             {
                                 RequestType = S3RequestType.ObjectSelectContent;
                             }
-                            if (QuerystringExists("uploadid"))
+                            if (QuerystringExistsAny("uploadid", "uploadId", "UploadId"))
                                 RequestType = S3RequestType.ObjectCompleteMultipartUpload;
                             if (QuerystringExists("uploads"))
                                 RequestType = S3RequestType.ObjectCreateMultipartUpload;
@@ -1191,7 +1205,7 @@
                             RequestType = S3RequestType.ObjectDeleteAcl;
                         else if (QuerystringExists("tagging"))
                             RequestType = S3RequestType.ObjectDeleteTags;
-                        else if (QuerystringExists("uploadid"))
+                        else if (QuerystringExistsAny("uploadid", "uploadId", "UploadId"))
                             RequestType = S3RequestType.ObjectAbortMultipartUpload;
                         else
                             RequestType = S3RequestType.ObjectDelete;

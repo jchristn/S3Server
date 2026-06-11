@@ -23,9 +23,6 @@ namespace Test.Shared.Tests
         /// <param name="token">Cancellation token.</param>
         public static async Task RunAllAsync(TestRunner runner, S3TestServer server, CancellationToken token = default)
         {
-            Console.WriteLine();
-            Console.WriteLine("--- Bucket API Tests ---");
-
             await runner.RunTestAsync("BucketWrite creates bucket", async (ct) =>
             {
                 PutBucketResponse response = await server.S3Client.PutBucketAsync(new PutBucketRequest { BucketName = server.Bucket }, ct).ConfigureAwait(false);

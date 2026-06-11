@@ -21,9 +21,6 @@ namespace Test.Shared.Tests
         /// <param name="token">Cancellation token.</param>
         public static async Task RunAllAsync(TestRunner runner, S3TestServer server, CancellationToken token = default)
         {
-            Console.WriteLine();
-            Console.WriteLine("--- Service API Tests ---");
-
             await runner.RunTestAsync("ServiceExists returns region", async (ct) =>
             {
 #pragma warning disable S31000

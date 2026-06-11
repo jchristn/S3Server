@@ -24,9 +24,6 @@ namespace Test.Shared.Tests
         /// <param name="token">Cancellation token.</param>
         public static async Task RunAllAsync(TestRunner runner, S3TestServer server, CancellationToken token = default)
         {
-            Console.WriteLine();
-            Console.WriteLine("--- Object API Tests ---");
-
             await runner.RunTestAsync("ObjectWrite uploads object", async (ct) =>
             {
                 byte[] data = Encoding.UTF8.GetBytes("Hello, S3Server!");
@@ -125,6 +122,21 @@ namespace Test.Shared.Tests
 
             await runner.RunTestAsync("HeadObject exposes restore-in-progress metadata", async (ct) =>
             {
+                try
+                {
+                    await server.S3Client.RestoreObjectAsync(new RestoreObjectRequest
+                    {
+                        BucketName = server.Bucket,
+                        Key = "archived-object.txt",
+                        Days = 7
+                    }, ct).ConfigureAwait(false);
+                }
+                catch (AmazonS3Exception s3e)
+                {
+                    if (s3e.ErrorCode != "RestoreAlreadyInProgress")
+                        throw;
+                }
+
                 GetObjectMetadataResponse response = await server.S3Client.GetObjectMetadataAsync(new GetObjectMetadataRequest
                 {
                     BucketName = server.Bucket,

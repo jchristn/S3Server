@@ -52,6 +52,11 @@ namespace Test.Shared
         public bool EnableSignatures { get; private set; }
 
         /// <summary>
+        /// Whether legacy signature V2 validation is enabled.
+        /// </summary>
+        public bool EnableSignatureV2 { get; private set; }
+
+        /// <summary>
         /// Base URL for raw HTTP requests.
         /// </summary>
         public string BaseUrl => $"http://{Hostname}:{Port}";
@@ -71,11 +76,27 @@ namespace Test.Shared
         /// </summary>
         public HttpClient HttpClient { get; private set; }
 
+        /// <summary>
+        /// Parsed request observations captured before the request is routed.
+        /// </summary>
+        public ConcurrentQueue<S3RequestObservation> ObservedRequests { get; private set; } = new ConcurrentQueue<S3RequestObservation>();
+
+        /// <summary>
+        /// Most recent parsed request observation.
+        /// </summary>
+        public S3RequestObservation LastObservedRequest { get; private set; } = null;
+
+        /// <summary>
+        /// Access keys supplied to Service.GetSecretKey.
+        /// </summary>
+        public ConcurrentQueue<string> SecretKeyAccessKeys { get; private set; } = new ConcurrentQueue<string>();
+
         #endregion
 
         #region Private-Members
 
         private bool _Disposed = false;
+        private bool _Started = false;
         private Owner _Owner = new Owner("admin", "Administrator");
         private Grantee _Grantee = new Grantee("admin", "Administrator", null, "CanonicalUser", "admin@admin.com");
         private ConcurrentDictionary<string, RestoreStatus> _RestoreStatuses = new ConcurrentDictionary<string, RestoreStatus>(StringComparer.Ordinal);
@@ -89,12 +110,15 @@ namespace Test.Shared
         /// </summary>
         /// <param name="port">Port number. Default 0 for automatic assignment.</param>
         /// <param name="enableSignatures">True to enable AWS signature validation.</param>
-        public S3TestServer(int port = 0, bool enableSignatures = false)
+        /// <param name="startServer">True to start the server immediately.</param>
+        /// <param name="enableSignatureV2">True to enable legacy AWS signature V2 validation.</param>
+        public S3TestServer(int port = 0, bool enableSignatures = false, bool startServer = true, bool enableSignatureV2 = false)
         {
             Port = port == 0 ? GetAvailablePort() : port;
             EnableSignatures = enableSignatures;
+            EnableSignatureV2 = enableSignatureV2;
 
-            InitializeServer();
+            InitializeServer(startServer);
             InitializeClient();
         }
 
@@ -112,7 +136,8 @@ namespace Test.Shared
 
             if (Server != null)
             {
-                Server.Stop();
+                if (_Started)
+                    Server.Stop();
                 Server.Dispose();
             }
 
@@ -127,11 +152,28 @@ namespace Test.Shared
             }
         }
 
+        /// <summary>
+        /// Remove captured request observations.
+        /// </summary>
+        public void ClearObservedRequests()
+        {
+            while (ObservedRequests.TryDequeue(out _)) { }
+            LastObservedRequest = null;
+        }
+
+        /// <summary>
+        /// Remove captured Service.GetSecretKey access keys.
+        /// </summary>
+        public void ClearSecretKeyAccessKeys()
+        {
+            while (SecretKeyAccessKeys.TryDequeue(out _)) { }
+        }
+
         #endregion
 
         #region Private-Methods
 
-        private void InitializeServer()
+        private void InitializeServer(bool startServer)
         {
             S3ServerSettings settings = new S3ServerSettings();
             settings.Webserver.Hostname = Hostname;
@@ -141,8 +183,15 @@ namespace Test.Shared
             settings.Logging.S3Requests = false;
             settings.OperationLimits.MaxPutObjectSize = 1024;
             settings.EnableSignatures = EnableSignatures;
+            settings.EnableSignatureV2 = EnableSignatureV2;
 
             bool postHandlerExceptionTriggered = false;
+
+            settings.PreRequestHandler = async (ctx) =>
+            {
+                RecordRequest(ctx);
+                return false;
+            };
 
             settings.PostRequestHandler = async (ctx) =>
             {
@@ -170,13 +219,19 @@ namespace Test.Shared
             {
                 Server.Service.GetSecretKey = (ctx) =>
                 {
+                    SecretKeyAccessKeys.Enqueue(ctx.Request.AccessKey);
+
                     if (ctx.Request.AccessKey == AccessKey)
                         return SecretKey;
                     return null;
                 };
             }
 
-            Server.Start();
+            if (startServer)
+            {
+                Server.Start();
+                _Started = true;
+            }
         }
 
         private void InitializeClient()
@@ -200,13 +255,20 @@ namespace Test.Shared
             HttpClient.DefaultRequestHeaders.ConnectionClose = true;
         }
 
-        private static int GetAvailablePort()
+        public static int GetAvailablePort()
         {
             TcpListener listener = new TcpListener(IPAddress.Loopback, 0);
             listener.Start();
             int port = ((IPEndPoint)listener.LocalEndpoint).Port;
             listener.Stop();
             return port;
+        }
+
+        private void RecordRequest(S3Context ctx)
+        {
+            S3RequestObservation observation = S3RequestObservation.From(ctx);
+            LastObservedRequest = observation;
+            ObservedRequests.Enqueue(observation);
         }
 
         private void SetupServiceCallbacks()
