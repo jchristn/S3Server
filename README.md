@@ -14,6 +14,7 @@ S3Server is a **protocol adapter** that handles the complexity of the Amazon S3 
 - Parses incoming S3 HTTP requests
 - Determines request type (service, bucket, or object operations)
 - Validates AWS Signature V4 and optional legacy Signature V2
+- Supports opt-in anonymous public access decisions
 - Deserializes XML request bodies
 - Routes requests to your callback methods
 - Serializes response objects to XML
@@ -22,7 +23,7 @@ S3Server is a **protocol adapter** that handles the complexity of the Amazon S3 
 
 **What S3Server does NOT do:**
 - Store objects or buckets (you implement storage in your callbacks)
-- Provide authentication or authorization logic (you control access in your callbacks)
+- Store users, credentials, ACLs, or policies (you control access data in your application)
 - Manage metadata persistence (you handle metadata storage)
 
 Want a complete S3-compatible storage server built using S3Server? Check out **[Less3](https://github.com/jchristn/less3)**.
@@ -60,7 +61,8 @@ Want a complete S3-compatible storage server built using S3Server? Check out **[
 
 ✅ **Security & Validation**
 - AWS Signature V4 validation, plus opt-in legacy Signature V2 validation
-- Pre-request hooks for authentication
+- Opt-in anonymous authorization hook for public-read/public-write compatibility
+- Pre-request hooks for custom validation
 - Post-request hooks for logging and metrics
 
 ✅ **Developer Friendly**
@@ -247,6 +249,38 @@ server.Service.GetSecretKey = (ctx) =>
 
 When `EnableSignatureV2` is `true`, S3Server validates legacy V2 header signatures such as `Authorization: AWS AWSAccessKeyId:Signature` and V2 signed URLs containing `AWSAccessKeyId`, `Expires`, and `Signature`. Expired V2 signed URLs are rejected. V2 support is intended for compatibility with older S3 clients and S3-compatible storage ecosystems; AWS has deprecated Signature V2, so leave it disabled unless you need that legacy behavior.
 
+### Anonymous Public Access
+
+When signature validation is enabled, unsigned requests are rejected by default. To support S3-compatible public-read or public-write behavior, set `Service.IsAnonymousRequestAllowed`. S3Server calls this callback only for requests that do not include an `Authorization` header, V2 signed URL parameters, or recognized V4 presigned URL material. Requests that include signature material still validate normally and fail closed if the signature is invalid.
+
+```csharp
+settings.EnableSignatures = true;
+
+server.Service.GetSecretKey = (ctx) =>
+{
+    return LookupSecretKey(ctx.Request.AccessKey);
+};
+
+server.Service.IsAnonymousRequestAllowed = async (ctx) =>
+{
+    // Example: consult your bucket/object ACL store for the AllUsers group.
+    switch (ctx.Request.PermissionsRequired)
+    {
+        case S3PermissionType.ObjectRead:
+        case S3PermissionType.BucketRead:
+            return await GrantsPublicRead(ctx.Request.Bucket, ctx.Request.Key);
+
+        case S3PermissionType.BucketWrite:
+            return await GrantsPublicWrite(ctx.Request.Bucket);
+
+        default:
+            return false;
+    }
+};
+```
+
+Keep the callback narrow. For example, a public-read object should allow `ObjectRead`, not ACL writes or administrative operations. A request carrying a bad signature should remain rejected rather than falling back to anonymous access.
+
 ### Virtual-Hosted-Style URLs
 
 Support bucket names in hostnames (`http://bucket.s3.local/key` instead of `http://s3.local/bucket/key`):
@@ -361,6 +395,7 @@ server.Object.Write = async (ctx) =>
 | `Service.ServiceExists` | Check service and return region | HEAD | `/` | `string` (region) |
 | `Service.FindMatchingBaseDomain` | Find base domain for virtual hosting | N/A | N/A | `string` (base domain) |
 | `Service.GetSecretKey` | Get secret key for access key (auth) | N/A | N/A | `string` (secret key) |
+| `Service.IsAnonymousRequestAllowed` | Allow selected unsigned anonymous requests | N/A | N/A | `bool` |
 
 ### Bucket Callbacks
 
@@ -850,6 +885,13 @@ Have a feature request or found an issue? Please [file an issue on GitHub](https
 ## Version History
 
 Refer to [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
+
+## New in v7.3.0
+
+- Adds `Service.IsAnonymousRequestAllowed` for opt-in unsigned anonymous access when `EnableSignatures` is true
+- Supports public-read/public-write-style compatibility while keeping unsigned requests rejected by default
+- Keeps invalid signed requests fail-closed; requests with authorization or signed URL material do not fall back to anonymous access
+- Adds signature validation coverage for allowed anonymous reads/writes, denied anonymous requests, invalid signed requests, and V4 presigned URL material
 
 ## New in v7.2.0
 

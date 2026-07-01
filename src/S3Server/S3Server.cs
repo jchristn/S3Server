@@ -248,78 +248,94 @@
                     {
                         if (Service.GetSecretKey != null)
                         {
-                            string secretKey = Service.GetSecretKey(s3ctx);
-                            if (String.IsNullOrEmpty(secretKey))
+                            if (!HasAuthenticationMaterial(s3ctx))
                             {
-                                _Settings.Logger?.Invoke(_Header + "unable to retrieve secret key for signature " + s3ctx.Request.Signature);
-                                throw new S3Exception(new Error(ErrorCode.AccessDenied));
-                            }
-
-                            if (s3ctx.Request.SignatureVersion == S3SignatureVersion.Version2)
-                            {
-                                ValidateV2Signature(s3ctx, secretKey);
-                            }
-                            else if (s3ctx.Request.SignatureVersion == S3SignatureVersion.Version4)
-                            {
-                                string contentSha256 = null;
-                                if (s3ctx.Http.Request.Headers != null)
-                                    contentSha256 = s3ctx.Http.Request.Headers["x-amz-content-sha256"];
-                                V4PayloadHashEnum payloadHashMode = V4PayloadHashEnum.Signed;
-
-                                if (!String.IsNullOrEmpty(contentSha256))
+                                if (Service.IsAnonymousRequestAllowed != null
+                                    && await Service.IsAnonymousRequestAllowed(s3ctx).ConfigureAwait(false))
                                 {
-                                    if (contentSha256.Equals("STREAMING-AWS4-HMAC-SHA256-PAYLOAD-TRAILER", StringComparison.Ordinal))
-                                        payloadHashMode = V4PayloadHashEnum.StreamingSignedTrailer;
-                                    else if (contentSha256.Equals("STREAMING-AWS4-HMAC-SHA256-PAYLOAD", StringComparison.Ordinal))
-                                        payloadHashMode = V4PayloadHashEnum.StreamingSigned;
-                                    else if (contentSha256.Equals("UNSIGNED-PAYLOAD", StringComparison.Ordinal))
-                                        payloadHashMode = V4PayloadHashEnum.Unsigned;
+                                    _Settings.Logger?.Invoke(_Header + "anonymous request allowed without signature validation");
                                 }
-
-                                string timestamp = null;
-                                if (s3ctx.Http.Request.Headers != null)
-                                    timestamp = s3ctx.Http.Request.Headers["x-amz-date"];
-                                if (String.IsNullOrEmpty(timestamp))
-                                    timestamp = DateTime.UtcNow.ToString(Constants.AmazonTimestampFormatCompact);
-
-                                object requestBody = null;
-                                if (payloadHashMode == V4PayloadHashEnum.Signed)
-                                    requestBody = s3ctx.Http.Request.DataAsBytes;
-
-                                string sigFullUrl = GetSignatureFullUrl(s3ctx);
-
-                                V4SignatureResult result = new V4SignatureResult(
-                                    timestamp,
-                                    s3ctx.Http.Request.Method.ToString().ToUpper(),
-                                    sigFullUrl,
-                                    s3ctx.Request.AccessKey,
-                                    secretKey,
-                                    s3ctx.Request.Region,
-                                    "s3",
-                                    s3ctx.Http.Request.Headers,
-                                    s3ctx.Request.SignedHeaders,
-                                    requestBody,
-                                    payloadHashMode);
-
-                                if (_Settings.Logging.SignatureV4Validation && _Settings.Logger != null)
+                                else
                                 {
-                                    _Settings.Logger(_Header + Environment.NewLine + result);
-                                    _Settings.Logger(_Header + "signature validation:"
-                                        + " provided=" + s3ctx.Request.Signature
-                                        + " expected=" + result.Signature
-                                        + " match=" + result.Signature.Equals(s3ctx.Request.Signature));
-                                }
-
-                                if (!result.Signature.Equals(s3ctx.Request.Signature))
-                                {
-                                    _Settings.Logger?.Invoke(_Header + "invalid v4 signature '" + s3ctx.Request.Signature + "'");
-                                    throw new S3Exception(new Error(ErrorCode.SignatureDoesNotMatch));
+                                    _Settings.Logger?.Invoke(_Header + "unsigned request rejected");
+                                    throw new S3Exception(new Error(ErrorCode.AccessDenied));
                                 }
                             }
                             else
                             {
-                                _Settings.Logger?.Invoke(_Header + "unknown signature version");
-                                throw new S3Exception(new Error(ErrorCode.AccessDenied));
+                                string secretKey = Service.GetSecretKey(s3ctx);
+                                if (String.IsNullOrEmpty(secretKey))
+                                {
+                                    _Settings.Logger?.Invoke(_Header + "unable to retrieve secret key for signature " + s3ctx.Request.Signature);
+                                    throw new S3Exception(new Error(ErrorCode.AccessDenied));
+                                }
+
+                                if (s3ctx.Request.SignatureVersion == S3SignatureVersion.Version2)
+                                {
+                                    ValidateV2Signature(s3ctx, secretKey);
+                                }
+                                else if (s3ctx.Request.SignatureVersion == S3SignatureVersion.Version4)
+                                {
+                                    string contentSha256 = null;
+                                    if (s3ctx.Http.Request.Headers != null)
+                                        contentSha256 = s3ctx.Http.Request.Headers["x-amz-content-sha256"];
+                                    V4PayloadHashEnum payloadHashMode = V4PayloadHashEnum.Signed;
+
+                                    if (!String.IsNullOrEmpty(contentSha256))
+                                    {
+                                        if (contentSha256.Equals("STREAMING-AWS4-HMAC-SHA256-PAYLOAD-TRAILER", StringComparison.Ordinal))
+                                            payloadHashMode = V4PayloadHashEnum.StreamingSignedTrailer;
+                                        else if (contentSha256.Equals("STREAMING-AWS4-HMAC-SHA256-PAYLOAD", StringComparison.Ordinal))
+                                            payloadHashMode = V4PayloadHashEnum.StreamingSigned;
+                                        else if (contentSha256.Equals("UNSIGNED-PAYLOAD", StringComparison.Ordinal))
+                                            payloadHashMode = V4PayloadHashEnum.Unsigned;
+                                    }
+
+                                    string timestamp = null;
+                                    if (s3ctx.Http.Request.Headers != null)
+                                        timestamp = s3ctx.Http.Request.Headers["x-amz-date"];
+                                    if (String.IsNullOrEmpty(timestamp))
+                                        timestamp = DateTime.UtcNow.ToString(Constants.AmazonTimestampFormatCompact);
+
+                                    object requestBody = null;
+                                    if (payloadHashMode == V4PayloadHashEnum.Signed)
+                                        requestBody = s3ctx.Http.Request.DataAsBytes;
+
+                                    string sigFullUrl = GetSignatureFullUrl(s3ctx);
+
+                                    V4SignatureResult result = new V4SignatureResult(
+                                        timestamp,
+                                        s3ctx.Http.Request.Method.ToString().ToUpper(),
+                                        sigFullUrl,
+                                        s3ctx.Request.AccessKey,
+                                        secretKey,
+                                        s3ctx.Request.Region,
+                                        "s3",
+                                        s3ctx.Http.Request.Headers,
+                                        s3ctx.Request.SignedHeaders,
+                                        requestBody,
+                                        payloadHashMode);
+
+                                    if (_Settings.Logging.SignatureV4Validation && _Settings.Logger != null)
+                                    {
+                                        _Settings.Logger(_Header + Environment.NewLine + result);
+                                        _Settings.Logger(_Header + "signature validation:"
+                                            + " provided=" + s3ctx.Request.Signature
+                                            + " expected=" + result.Signature
+                                            + " match=" + result.Signature.Equals(s3ctx.Request.Signature));
+                                    }
+
+                                    if (!result.Signature.Equals(s3ctx.Request.Signature))
+                                    {
+                                        _Settings.Logger?.Invoke(_Header + "invalid v4 signature '" + s3ctx.Request.Signature + "'");
+                                        throw new S3Exception(new Error(ErrorCode.SignatureDoesNotMatch));
+                                    }
+                                }
+                                else
+                                {
+                                    _Settings.Logger?.Invoke(_Header + "unknown signature version");
+                                    throw new S3Exception(new Error(ErrorCode.AccessDenied));
+                                }
                             }
                         }
                     }
@@ -1213,6 +1229,56 @@
                 _Settings.Logger?.Invoke(_Header + "v2 signature validation exception:" + Environment.NewLine + e.ToString());
                 throw new S3Exception(new Error(ErrorCode.SignatureDoesNotMatch), e);
             }
+        }
+
+        private static bool HasAuthenticationMaterial(S3Context s3ctx)
+        {
+            if (s3ctx == null || s3ctx.Request == null) return false;
+
+            S3Request request = s3ctx.Request;
+            if (!String.IsNullOrEmpty(request.Authorization)) return true;
+            if (!String.IsNullOrEmpty(request.AccessKey)) return true;
+            if (!String.IsNullOrEmpty(request.Signature)) return true;
+            if (!String.IsNullOrEmpty(request.Expires)) return true;
+
+            if (HasQuerystringAny(request,
+                "X-Amz-Algorithm",
+                "X-Amz-Credential",
+                "X-Amz-Date",
+                "X-Amz-Expires",
+                "X-Amz-Security-Token",
+                "X-Amz-Signature",
+                "X-Amz-SignedHeaders"))
+            {
+                return true;
+            }
+
+            if (HasQuerystringAny(request,
+                "x-amz-algorithm",
+                "x-amz-credential",
+                "x-amz-date",
+                "x-amz-expires",
+                "x-amz-security-token",
+                "x-amz-signature",
+                "x-amz-signedheaders"))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool HasQuerystringAny(S3Request request, params string[] keys)
+        {
+            if (request == null || keys == null) return false;
+
+            foreach (string key in keys)
+            {
+                if (String.IsNullOrEmpty(key)) continue;
+                if (request.QuerystringExists(key)) return true;
+            }
+
+            return false;
         }
 
         private void ValidateV2HeaderSignature(S3Context s3ctx, string secretKey)

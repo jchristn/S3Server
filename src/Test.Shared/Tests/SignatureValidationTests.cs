@@ -189,6 +189,262 @@ namespace Test.Shared.Tests
                 AssertHelper.StringContains(body, "AccessDenied", "unsigned request error body");
             }, token).ConfigureAwait(false);
 
+            await runner.RunTestAsync("Unsigned anonymous object read is allowed by callback", async (ct) =>
+            {
+                int port = S3TestServer.GetAvailablePort();
+                bool anonymousCallbackCalled = false;
+                bool secretLookupCalled = false;
+                bool objectReadCalled = false;
+
+                S3ServerSettings settings = new S3ServerSettings();
+                settings.Webserver.Hostname = "127.0.0.1";
+                settings.Webserver.Port = port;
+                settings.Webserver.Ssl.Enable = false;
+                settings.EnableSignatures = true;
+
+                using (S3Server authServer = new S3Server(settings))
+                using (HttpClient client = new HttpClient())
+                {
+                    client.Timeout = TimeSpan.FromSeconds(5);
+                    client.DefaultRequestHeaders.ConnectionClose = true;
+
+                    authServer.Service.GetSecretKey = (ctx) =>
+                    {
+                        secretLookupCalled = true;
+                        return server.SecretKey;
+                    };
+                    authServer.Service.IsAnonymousRequestAllowed = async (ctx) =>
+                    {
+                        anonymousCallbackCalled = true;
+                        AssertHelper.AreEqual(S3PermissionType.ObjectRead, ctx.Request.PermissionsRequired, "anonymous read permission");
+                        return true;
+                    };
+                    authServer.Object.Read = async (ctx) =>
+                    {
+                        objectReadCalled = true;
+                        return new S3ServerLibrary.S3Object(
+                            ctx.Request.Key,
+                            "1",
+                            true,
+                            DateTime.UtcNow,
+                            "etag-public-read",
+                            5,
+                            new S3ServerLibrary.S3Objects.Owner("admin", "Administrator"),
+                            "hello",
+                            "text/plain");
+                    };
+
+                    authServer.Start();
+
+                    HttpResponseMessage response = await client.GetAsync("http://127.0.0.1:" + port + "/" + server.Bucket + "/public-read.txt", ct).ConfigureAwait(false);
+                    AssertHelper.StatusCodeEquals(HttpStatusCode.OK, response, "anonymous object read");
+                    string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    AssertHelper.AreEqual("hello", body, "anonymous object body");
+                    AssertHelper.IsTrue(anonymousCallbackCalled, "anonymous callback was called");
+                    AssertHelper.IsFalse(secretLookupCalled, "secret lookup was not called for anonymous request");
+                    AssertHelper.IsTrue(objectReadCalled, "object read callback was called");
+
+                    authServer.Stop();
+                }
+            }, token).ConfigureAwait(false);
+
+            await runner.RunTestAsync("Unsigned anonymous object write is allowed by callback", async (ct) =>
+            {
+                int port = S3TestServer.GetAvailablePort();
+                bool anonymousCallbackCalled = false;
+                bool secretLookupCalled = false;
+                bool objectWriteCalled = false;
+
+                S3ServerSettings settings = new S3ServerSettings();
+                settings.Webserver.Hostname = "127.0.0.1";
+                settings.Webserver.Port = port;
+                settings.Webserver.Ssl.Enable = false;
+                settings.EnableSignatures = true;
+
+                using (S3Server authServer = new S3Server(settings))
+                using (HttpClient client = new HttpClient())
+                {
+                    client.Timeout = TimeSpan.FromSeconds(5);
+                    client.DefaultRequestHeaders.ConnectionClose = true;
+
+                    authServer.Service.GetSecretKey = (ctx) =>
+                    {
+                        secretLookupCalled = true;
+                        return server.SecretKey;
+                    };
+                    authServer.Service.IsAnonymousRequestAllowed = async (ctx) =>
+                    {
+                        anonymousCallbackCalled = true;
+                        AssertHelper.AreEqual(S3PermissionType.BucketWrite, ctx.Request.PermissionsRequired, "anonymous write permission");
+                        return true;
+                    };
+                    authServer.Object.Write = async (ctx) =>
+                    {
+                        objectWriteCalled = true;
+                    };
+
+                    authServer.Start();
+
+                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Put, "http://127.0.0.1:" + port + "/" + server.Bucket + "/public-write.txt");
+                    request.Content = new StringContent("hello", Encoding.UTF8, "text/plain");
+                    HttpResponseMessage response = await client.SendAsync(request, ct).ConfigureAwait(false);
+
+                    AssertHelper.StatusCodeEquals(HttpStatusCode.OK, response, "anonymous object write");
+                    AssertHelper.IsTrue(anonymousCallbackCalled, "anonymous callback was called");
+                    AssertHelper.IsFalse(secretLookupCalled, "secret lookup was not called for anonymous request");
+                    AssertHelper.IsTrue(objectWriteCalled, "object write callback was called");
+
+                    authServer.Stop();
+                }
+            }, token).ConfigureAwait(false);
+
+            await runner.RunTestAsync("Unsigned anonymous request is rejected when callback denies", async (ct) =>
+            {
+                int port = S3TestServer.GetAvailablePort();
+                bool anonymousCallbackCalled = false;
+                bool objectReadCalled = false;
+
+                S3ServerSettings settings = new S3ServerSettings();
+                settings.Webserver.Hostname = "127.0.0.1";
+                settings.Webserver.Port = port;
+                settings.Webserver.Ssl.Enable = false;
+                settings.EnableSignatures = true;
+
+                using (S3Server authServer = new S3Server(settings))
+                using (HttpClient client = new HttpClient())
+                {
+                    client.Timeout = TimeSpan.FromSeconds(5);
+                    client.DefaultRequestHeaders.ConnectionClose = true;
+
+                    authServer.Service.GetSecretKey = (ctx) => server.SecretKey;
+                    authServer.Service.IsAnonymousRequestAllowed = async (ctx) =>
+                    {
+                        anonymousCallbackCalled = true;
+                        return false;
+                    };
+                    authServer.Object.Read = async (ctx) =>
+                    {
+                        objectReadCalled = true;
+                        return new S3ServerLibrary.S3Object();
+                    };
+
+                    authServer.Start();
+
+                    HttpResponseMessage response = await client.GetAsync("http://127.0.0.1:" + port + "/" + server.Bucket + "/private.txt", ct).ConfigureAwait(false);
+                    AssertHelper.StatusCodeEquals(HttpStatusCode.Forbidden, response, "denied anonymous request");
+                    string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    AssertHelper.StringContains(body, "AccessDenied", "denied anonymous error body");
+                    AssertHelper.IsTrue(anonymousCallbackCalled, "anonymous callback was called");
+                    AssertHelper.IsFalse(objectReadCalled, "object read callback was not called");
+
+                    authServer.Stop();
+                }
+            }, token).ConfigureAwait(false);
+
+            await runner.RunTestAsync("Invalid signed request does not use anonymous callback", async (ct) =>
+            {
+                int port = S3TestServer.GetAvailablePort();
+                bool anonymousCallbackCalled = false;
+                bool secretLookupCalled = false;
+                bool objectReadCalled = false;
+
+                S3ServerSettings settings = new S3ServerSettings();
+                settings.Webserver.Hostname = "127.0.0.1";
+                settings.Webserver.Port = port;
+                settings.Webserver.Ssl.Enable = false;
+                settings.EnableSignatures = true;
+
+                using (S3Server authServer = new S3Server(settings))
+                using (HttpClient client = new HttpClient())
+                {
+                    client.Timeout = TimeSpan.FromSeconds(5);
+                    client.DefaultRequestHeaders.ConnectionClose = true;
+
+                    authServer.Service.GetSecretKey = (ctx) =>
+                    {
+                        secretLookupCalled = true;
+                        return server.SecretKey;
+                    };
+                    authServer.Service.IsAnonymousRequestAllowed = async (ctx) =>
+                    {
+                        anonymousCallbackCalled = true;
+                        return true;
+                    };
+                    authServer.Object.Read = async (ctx) =>
+                    {
+                        objectReadCalled = true;
+                        return new S3ServerLibrary.S3Object();
+                    };
+
+                    authServer.Start();
+
+                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "http://127.0.0.1:" + port + "/" + server.Bucket + "/signed-public.txt");
+                    request.Headers.TryAddWithoutValidation("Authorization", "AWS4-HMAC-SHA256 Credential=" + server.AccessKey + "/20260101/us-west-1/s3/aws4_request, SignedHeaders=host;x-amz-date, Signature=bad-signature");
+                    request.Headers.TryAddWithoutValidation("x-amz-date", "20260101T000000Z");
+
+                    HttpResponseMessage response = await client.SendAsync(request, ct).ConfigureAwait(false);
+                    AssertHelper.StatusCodeEquals(HttpStatusCode.Forbidden, response, "invalid signed request");
+                    string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    AssertHelper.StringContains(body, "SignatureDoesNotMatch", "invalid signed request error body");
+                    AssertHelper.IsFalse(anonymousCallbackCalled, "anonymous callback was not called");
+                    AssertHelper.IsTrue(secretLookupCalled, "secret lookup was called for signed request");
+                    AssertHelper.IsFalse(objectReadCalled, "object read callback was not called");
+
+                    authServer.Stop();
+                }
+            }, token).ConfigureAwait(false);
+
+            await runner.RunTestAsync("V4 presigned URL material does not use anonymous callback", async (ct) =>
+            {
+                int port = S3TestServer.GetAvailablePort();
+                bool anonymousCallbackCalled = false;
+                bool objectReadCalled = false;
+
+                S3ServerSettings settings = new S3ServerSettings();
+                settings.Webserver.Hostname = "127.0.0.1";
+                settings.Webserver.Port = port;
+                settings.Webserver.Ssl.Enable = false;
+                settings.EnableSignatures = true;
+
+                using (S3Server authServer = new S3Server(settings))
+                using (HttpClient client = new HttpClient())
+                {
+                    client.Timeout = TimeSpan.FromSeconds(5);
+                    client.DefaultRequestHeaders.ConnectionClose = true;
+
+                    authServer.Service.GetSecretKey = (ctx) => server.SecretKey;
+                    authServer.Service.IsAnonymousRequestAllowed = async (ctx) =>
+                    {
+                        anonymousCallbackCalled = true;
+                        return true;
+                    };
+                    authServer.Object.Read = async (ctx) =>
+                    {
+                        objectReadCalled = true;
+                        return new S3ServerLibrary.S3Object();
+                    };
+
+                    authServer.Start();
+
+                    string url = "http://127.0.0.1:" + port + "/" + server.Bucket + "/presigned-public.txt"
+                        + "?X-Amz-Algorithm=AWS4-HMAC-SHA256"
+                        + "&X-Amz-Credential=" + WebUtility.UrlEncode(server.AccessKey + "/20260101/us-west-1/s3/aws4_request")
+                        + "&X-Amz-Date=20260101T000000Z"
+                        + "&X-Amz-Expires=60"
+                        + "&X-Amz-SignedHeaders=host"
+                        + "&X-Amz-Signature=bad";
+
+                    HttpResponseMessage response = await client.GetAsync(url, ct).ConfigureAwait(false);
+                    AssertHelper.StatusCodeEquals(HttpStatusCode.Forbidden, response, "V4 presigned query rejection");
+                    string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    AssertHelper.StringContains(body, "AccessDenied", "V4 presigned query error body");
+                    AssertHelper.IsFalse(anonymousCallbackCalled, "anonymous callback was not called");
+                    AssertHelper.IsFalse(objectReadCalled, "object read callback was not called");
+
+                    authServer.Stop();
+                }
+            }, token).ConfigureAwait(false);
+
             await runner.RunTestAsync("Rejected unsigned request does not invoke operation callbacks", async (ct) =>
             {
                 int port = S3TestServer.GetAvailablePort();

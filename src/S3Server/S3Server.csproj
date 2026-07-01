@@ -2,13 +2,13 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.1;net8.0;net10.0</TargetFrameworks>
-		<Version>7.2.0</Version>
+		<Version>7.3.0</Version>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Authors>Joel Christner</Authors>
 		<Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
 		<Copyright>(c)2026 Joel Christner</Copyright>
-		<PackageReleaseNotes>Added opt-in legacy AWS Signature V2 validation for header signatures and signed URLs, canonical AWS Signature V2 fixtures, virtual-hosted-style request coverage, fixed-time V2 signature comparison, and broader serialized Touchstone test coverage across console, xUnit, and NUnit runners.</PackageReleaseNotes>
+		<PackageReleaseNotes>Added opt-in anonymous request authorization for public-read/public-write compatibility through Service.IsAnonymousRequestAllowed, while preserving fail-closed signature validation for requests that include authorization or signed URL material.</PackageReleaseNotes>
 		<PackageTags>aws s3 storage rest interface server less3 minio ceph view</PackageTags>
 		<PackageLicenseUrl></PackageLicenseUrl>
 		<PackageProjectUrl>https://github.com/jchristn/S3Server</PackageProjectUrl>

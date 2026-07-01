@@ -32,6 +32,13 @@
         /// </summary>
         public Func<S3Context, string> GetSecretKey { get; set; } = null;
 
+        /// <summary>
+        /// Method to invoke to determine whether an unsigned anonymous request should bypass signature validation.
+        /// This callback is only consulted when signature validation is enabled and the request contains no
+        /// authorization header, signed URL parameters, or other recognized signature material.
+        /// </summary>
+        public Func<S3Context, Task<bool>> IsAnonymousRequestAllowed { get; set; } = null;
+
         #endregion
 
         #region Private-Members

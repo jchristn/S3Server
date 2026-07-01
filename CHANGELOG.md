@@ -2,6 +2,14 @@
 
 ## Current Version
 
+v7.3.0
+
+- Added `Service.IsAnonymousRequestAllowed` for opt-in unsigned anonymous request authorization when `EnableSignatures` is true
+- Unsigned requests remain rejected by default unless the host application explicitly allows the parsed request
+- Requests that include an authorization header, V2 signed URL parameters, or recognized V4 presigned URL material continue through signature validation and do not fall back to anonymous access
+- Added shared signature validation coverage for anonymous public-read/public-write-style requests, denied anonymous requests, invalid signed requests, and V4 presigned URL material
+- Package version is now `7.3.0` because the release adds a public compatibility callback
+
 v7.2.0
 
 - Added opt-in legacy AWS Signature V2 validation through `S3ServerSettings.EnableSignatureV2`
