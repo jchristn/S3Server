@@ -881,7 +881,10 @@
                                     if (s3ctx.Request.RangeStart != null)
                                     {
                                         long rangeEnd = s3ctx.Request.RangeEnd ?? (s3ctx.Request.RangeStart.Value + s3obj.Size - 1);
-                                        s3ctx.Response.Headers.Add("Content-Range", "bytes " + s3ctx.Request.RangeStart.Value + "-" + rangeEnd + "/*");
+                                        // Emit the full object size as the Content-Range total when the callback supplies it
+                                        // (S3Object.TotalSize); otherwise fall back to '*' (unknown total) for compatibility.
+                                        string total = s3obj.TotalSize != null ? s3obj.TotalSize.Value.ToString(CultureInfo.InvariantCulture) : "*";
+                                        s3ctx.Response.Headers.Add("Content-Range", "bytes " + s3ctx.Request.RangeStart.Value + "-" + rangeEnd + "/" + total);
                                     }
 
                                     s3ctx.Response.StatusCode = 206;

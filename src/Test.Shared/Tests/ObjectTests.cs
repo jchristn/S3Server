@@ -96,6 +96,11 @@ namespace Test.Shared.Tests
                 AssertHelper.IsNotNull(contentRange, "Content-Range header present");
                 AssertHelper.StringContains(contentRange, "bytes", "Content-Range format");
 
+                // When the callback supplies S3Object.TotalSize, the Content-Range total is the full object
+                // size (here 5, the length of "hello") rather than '*'. Ranged/multipart download clients
+                // (e.g. the AWS CLI) require a numeric total to parse.
+                AssertHelper.AreEqual("bytes 0-4/5", contentRange, "Content-Range total reflects TotalSize");
+
                 string acceptRanges = null;
                 if (response.Headers.Contains("Accept-Ranges"))
                 {

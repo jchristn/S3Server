@@ -458,6 +458,7 @@ namespace Test.Shared
                 string rangeData = data.Substring((int)ctx.Request.RangeStart, (int)((int)ctx.Request.RangeEnd - (int)ctx.Request.RangeStart + 1));
 
                 obj.Size = rangeData.Length;
+                obj.TotalSize = data.Length;
                 obj.DataString = rangeData;
                 return obj;
             };

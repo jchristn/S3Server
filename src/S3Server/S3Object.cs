@@ -80,6 +80,25 @@
         }
 
         /// <summary>
+        /// The total size in bytes of the full object, used to build the Content-Range header on a range
+        /// (206 Partial Content) response as 'bytes start-end/total'.  When null (the default), the
+        /// Content-Range total is emitted as '*' (unknown).  On a range read, set <see cref="Size"/> to the
+        /// number of bytes in the returned range and this to the full object size.
+        /// </summary>
+        public long? TotalSize
+        {
+            get
+            {
+                return _TotalSize;
+            }
+            set
+            {
+                if (value != null && value.Value < 0) throw new ArgumentOutOfRangeException(nameof(TotalSize));
+                _TotalSize = value;
+            }
+        }
+
+        /// <summary>
         /// The class of storage where the resource resides.
         /// Valid values are STANDARD, REDUCED_REDUNDANCY, GLACIER, STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING, DEEP_ARCHIVE, OUTPOSTS.
         /// </summary>
@@ -190,6 +209,7 @@
         private Stream _DataStream = null;
         private byte[] _DataBytes = null;
         private long _Size = 0;
+        private long? _TotalSize = null;
         private string _ETag = null;
         private DateTime _LastModified = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 

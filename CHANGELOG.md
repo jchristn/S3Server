@@ -2,6 +2,13 @@
 
 ## Current Version
 
+v7.3.1
+
+- Range (`206 Partial Content`) responses now emit a real `Content-Range` total (`bytes start-end/total`) when the `Object.ReadRange` callback sets the new `S3Object.TotalSize` property to the full object size
+- Previously the total was always `*` (unknown), which prevented ranged/multipart download clients such as the AWS CLI (`aws s3 cp` of large objects) from parsing the object size
+- Backward compatible: when `TotalSize` is not set, the `Content-Range` total remains `*` exactly as before, so existing implementations are unaffected
+- Added a range test asserting the `Content-Range` total reflects `TotalSize`
+
 v7.3.0
 
 - Added `Service.IsAnonymousRequestAllowed` for opt-in unsigned anonymous request authorization when `EnableSignatures` is true

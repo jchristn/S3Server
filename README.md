@@ -447,6 +447,8 @@ server.Object.Write = async (ctx) =>
 
 \* `ReadRange` is triggered when Range header is present
 
+In a `ReadRange` callback, set `S3Object.Size` to the number of bytes in the returned range and `S3Object.TotalSize` to the full object size. S3Server then emits `Content-Range: bytes start-end/total` on the `206 Partial Content` response; ranged/multipart download clients (for example the AWS CLI) require this numeric total. If `TotalSize` is left null, the total is emitted as `*` (unknown).
+
 For archived objects, set `ObjectMetadata.RestoreStatus` and `S3Object.RestoreStatus` to have S3Server emit the `x-amz-restore` response header on `HEAD` and `GET`.
 
 ### Multipart Upload Callbacks
@@ -885,6 +887,12 @@ Have a feature request or found an issue? Please [file an issue on GitHub](https
 ## Version History
 
 Refer to [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
+
+## New in v7.3.1
+
+- Range (`206 Partial Content`) responses emit a real `Content-Range` total (`bytes start-end/total`) when the `Object.ReadRange` callback sets the new `S3Object.TotalSize` to the full object size
+- Fixes ranged/multipart download clients such as the AWS CLI (`aws s3 cp` of large objects), which cannot parse the previous `bytes start-end/*` total
+- Backward compatible: when `TotalSize` is not set, the `Content-Range` total remains `*` as before
 
 ## New in v7.3.0
 
