@@ -34,7 +34,7 @@
         /// <summary>
         /// Quote fields.
         /// </summary>
-        [XmlElement(ElementName = "QuoteFields", IsNullable = true)]
+        [XmlElement(ElementName = "QuoteFields")]
         public QuoteFieldsEnum QuoteFields { get; set; } = QuoteFieldsEnum.ALWAYS;
 
         /// <summary>

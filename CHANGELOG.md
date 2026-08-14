@@ -2,6 +2,14 @@
 
 ## Current Version
 
+v7.3.2
+
+- Upgraded to Watson `7.1.0` and refreshed the remaining dependencies to their latest stable versions (AWSSDK.S3, RestWrapper, Microsoft.NET.Test.Sdk, NUnit, NUnit3TestAdapter, coverlet.collector, and related test packages)
+- Fixed S3 Select request parsing: several value-type properties on the S3 Select models (`RequestProgress.Enabled`, `ScanRange.Start`/`End`, `CsvInputSerialization.AllowQuotedRecordDelimiter`/`FileHeaderInfo`, `CsvOutputSerialization.QuoteFields`, and `JsonInputSerialization.Type`) were annotated with `[XmlElement(IsNullable = true)]`, which is illegal on non-nullable value types and caused `DeserializeXml<SelectObjectContentRequest>` to throw for every `SelectObjectContent` request; the invalid annotations were removed
+- Fixed `S3Object.DataString` setter, which copied `value.Length` (character count) instead of the UTF-8 byte length, corrupting multibyte string payloads
+- Expanded automated test coverage toward full coverage with new positive and negative unit suites for the S3 data models and `SerializationHelper`, raising line coverage from ~86% to ~94% and branch coverage from ~63% to ~79%
+- No public API surface changes
+
 v7.3.1
 
 - Range (`206 Partial Content`) responses now emit a real `Content-Range` total (`bytes start-end/total`) when the `Object.ReadRange` callback sets the new `S3Object.TotalSize` property to the full object size

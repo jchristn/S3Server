@@ -16,7 +16,7 @@
         /// <summary>
         /// Enabled.
         /// </summary>
-        [XmlElement(ElementName = "Enabled", IsNullable = true)]
+        [XmlElement(ElementName = "Enabled")]
         public bool Enabled { get; set; } = false;
 
         #endregion

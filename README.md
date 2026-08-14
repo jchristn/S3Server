@@ -869,7 +869,7 @@ dotnet pack src/S3Server/S3Server.csproj -c Release
 
 ## Dependencies
 
-- **Watson** (7.0.x): HTTP server framework (supports HTTP/1.1, HTTP/2, and HTTP/3)
+- **Watson** (7.1.0): HTTP server framework (supports HTTP/1.1, HTTP/2, and HTTP/3)
 - **AWSSignatureGenerator** (1.1.0): AWS Signature V4 validation, streaming signature support, and legacy S3 Signature V2 helpers
 - **PrettyId** (2.0.1): Request ID generation
 - **Touchstone** (0.1.12): Shared test descriptors and console/xUnit/NUnit test runners
@@ -887,6 +887,14 @@ Have a feature request or found an issue? Please [file an issue on GitHub](https
 ## Version History
 
 Refer to [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
+
+## New in v7.3.2
+
+- Upgrades to Watson `7.1.0` and refreshes the remaining dependencies to their latest stable versions
+- Fixes S3 Select request parsing: invalid `[XmlElement(IsNullable = true)]` annotations on non-nullable value-type properties of the S3 Select models caused `DeserializeXml<SelectObjectContentRequest>` to throw for every `SelectObjectContent` request; the annotations were removed
+- Fixes the `S3Object.DataString` setter, which truncated multibyte UTF-8 payloads by copying the character count instead of the byte count
+- Expands automated test coverage with new positive/negative unit suites for the S3 data models and `SerializationHelper` (line coverage ~86% to ~94%, branch coverage ~63% to ~79%)
+- No public API surface changes
 
 ## New in v7.3.1
 

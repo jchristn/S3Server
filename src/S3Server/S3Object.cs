@@ -192,7 +192,7 @@
                 {
                     byte[] bytes = Encoding.UTF8.GetBytes(value);
                     _DataBytes = new byte[bytes.Length];
-                    Buffer.BlockCopy(bytes, 0, _DataBytes, 0, value.Length);
+                    Buffer.BlockCopy(bytes, 0, _DataBytes, 0, bytes.Length);
 
                     _DataStream = new MemoryStream();
                     _DataStream.Write(_DataBytes, 0, _DataBytes.Length);

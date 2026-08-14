@@ -2,13 +2,13 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.1;net8.0;net10.0</TargetFrameworks>
-		<Version>7.3.1</Version>
+		<Version>7.3.2</Version>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Authors>Joel Christner</Authors>
 		<Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
 		<Copyright>(c)2026 Joel Christner</Copyright>
-		<PackageReleaseNotes>Range (206 Partial Content) responses now emit a real Content-Range total when the ReadRange callback sets S3Object.TotalSize, so clients performing ranged/multipart downloads (for example the AWS CLI) can parse the object size. When TotalSize is not set, the total remains '*' as before, so the change is fully backward compatible.</PackageReleaseNotes>
+		<PackageReleaseNotes>Dependency refresh: upgraded to Watson 7.1.0 and updated other dependencies to their latest stable versions. Expanded automated test coverage with additional positive and negative cases. No public API changes.</PackageReleaseNotes>
 		<PackageTags>aws s3 storage rest interface server less3 minio ceph view</PackageTags>
 		<PackageLicenseUrl></PackageLicenseUrl>
 		<PackageProjectUrl>https://github.com/jchristn/S3Server</PackageProjectUrl>
@@ -32,7 +32,7 @@
 	<ItemGroup>
 		<PackageReference Include="AWSSignatureGenerator" Version="1.1.0" />
 		<PackageReference Include="PrettyId" Version="2.0.1" />
-		<PackageReference Include="Watson" Version="7.0.10" />
+		<PackageReference Include="Watson" Version="7.1.0" />
 	</ItemGroup>
 
 	<ItemGroup>

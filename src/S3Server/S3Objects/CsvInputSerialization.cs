@@ -16,7 +16,7 @@
         /// <summary>
         /// Allow quoted record delimiter.
         /// </summary>
-        [XmlElement(ElementName = "AllowQuotedRecordDelimiter", IsNullable = true)]
+        [XmlElement(ElementName = "AllowQuotedRecordDelimiter")]
         public bool AllowQuotedRecordDelimiter { get; set; } = true;
 
         /// <summary>
@@ -34,7 +34,7 @@
         /// <summary>
         /// File header info.
         /// </summary>
-        [XmlElement(ElementName = "FileHeaderInfo", IsNullable = true)]
+        [XmlElement(ElementName = "FileHeaderInfo")]
         public FileHeaderInfoEnum FileHeaderInfo { get; set; } = FileHeaderInfoEnum.NONE;
 
         /// <summary>

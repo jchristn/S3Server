@@ -16,7 +16,7 @@
         /// <summary>
         /// Allow quoted record delimiter.
         /// </summary>
-        [XmlElement(ElementName = "Type", IsNullable = true)]
+        [XmlElement(ElementName = "Type")]
         public JsonTypeEnum Type { get; set; } = JsonTypeEnum.DOCUMENT;
 
         #endregion

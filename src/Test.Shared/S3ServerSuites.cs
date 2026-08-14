@@ -25,6 +25,7 @@ namespace Test.Shared
                 {
                     ServerApiSuite(),
                     SignatureValidationSuite(),
+                    SerializationSuite(),
                     UtilitySuite()
                 };
             }
@@ -73,6 +74,24 @@ namespace Test.Shared
                     new RunnerSuiteSource("CanonicalSignatureFixtures", "Canonical signature fixtures", CanonicalSignatureFixtureTests.RunAllAsync),
                     new RunnerSuiteSource("SignatureV4", "Signature V4", SignatureValidationTests.RunAllAsync, true),
                     new RunnerSuiteSource("SignatureV2", "Signature V2", SignatureV2ValidationTests.RunAllAsync, true, true)));
+        }
+
+        /// <summary>
+        /// Serialization test suite.  These cases exercise the S3Objects data models and the
+        /// SerializationHelper without requiring a running server.
+        /// </summary>
+        /// <returns>Suite descriptor.</returns>
+        public static TestSuiteDescriptor SerializationSuite()
+        {
+            const string suiteId = "Serialization";
+
+            return new TestSuiteDescriptor(
+                suiteId: suiteId,
+                displayName: "Serialization",
+                cases: BuildRunnerCases(
+                    suiteId,
+                    new RunnerOnlySource("Serialization", "Serialization", SerializationTests.RunAllAsync),
+                    new RunnerOnlySource("DataModel", "Data model", DataModelTests.RunAllAsync)));
         }
 
         /// <summary>
@@ -180,6 +199,72 @@ namespace Test.Shared
             }
 
             return cases;
+        }
+
+        private static IReadOnlyList<TestCaseDescriptor> BuildRunnerCases(
+            string suiteId,
+            params RunnerOnlySource[] sources)
+        {
+            List<TestCaseDescriptor> cases = new List<TestCaseDescriptor>();
+
+            foreach (RunnerOnlySource source in sources)
+            {
+                foreach (string testName in DiscoverRunnerTestNames(source.ExecuteAsync))
+                {
+                    string caseId = source.CategoryId + "_" + NormalizeCaseId(testName);
+                    string displayName = source.DisplayName + ": " + testName;
+
+                    cases.Add(RunnerCase(
+                        suiteId,
+                        caseId,
+                        displayName,
+                        source.ExecuteAsync,
+                        testName));
+                }
+            }
+
+            return cases;
+        }
+
+        private static IReadOnlyList<string> DiscoverRunnerTestNames(
+            Func<TestRunner, CancellationToken, Task> executeAsync)
+        {
+            TestRunner runner = TestRunner.CreateDiscoveryRunner();
+            executeAsync(runner, CancellationToken.None).GetAwaiter().GetResult();
+
+            List<string> names = new List<string>();
+            HashSet<string> seen = new HashSet<string>(StringComparer.Ordinal);
+
+            foreach (string name in runner.DiscoveredTests)
+            {
+                if (seen.Add(name))
+                    names.Add(name);
+            }
+
+            return names;
+        }
+
+        private static TestCaseDescriptor RunnerCase(
+            string suiteId,
+            string caseId,
+            string displayName,
+            Func<TestRunner, CancellationToken, Task> executeAsync,
+            string targetTestName)
+        {
+            return new TestCaseDescriptor(
+                suiteId: suiteId,
+                caseId: caseId,
+                displayName: displayName,
+                executeAsync: async ct =>
+                {
+                    TestRunner runner = TestRunner.CreateTargetedRunner(targetTestName);
+                    await executeAsync(runner, ct).ConfigureAwait(false);
+
+                    if (!runner.TargetWasExecuted)
+                        throw new InvalidOperationException("Target test was not executed: " + targetTestName);
+
+                    AssertAllPassed(runner);
+                });
         }
 
         private static IReadOnlyList<string> DiscoverTestNames(
@@ -313,6 +398,27 @@ namespace Test.Shared
                 ExecuteAsync = executeAsync;
                 EnableSignatures = enableSignatures;
                 EnableSignatureV2 = enableSignatureV2;
+            }
+        }
+
+        private sealed class RunnerOnlySource
+        {
+            public string CategoryId { get; private set; }
+            public string DisplayName { get; private set; }
+            public Func<TestRunner, CancellationToken, Task> ExecuteAsync { get; private set; }
+
+            public RunnerOnlySource(
+                string categoryId,
+                string displayName,
+                Func<TestRunner, CancellationToken, Task> executeAsync)
+            {
+                if (String.IsNullOrEmpty(categoryId)) throw new ArgumentNullException(nameof(categoryId));
+                if (String.IsNullOrEmpty(displayName)) throw new ArgumentNullException(nameof(displayName));
+                if (executeAsync == null) throw new ArgumentNullException(nameof(executeAsync));
+
+                CategoryId = categoryId;
+                DisplayName = displayName;
+                ExecuteAsync = executeAsync;
             }
         }
     }

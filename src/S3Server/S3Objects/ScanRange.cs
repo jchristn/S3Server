@@ -16,7 +16,7 @@
         /// <summary>
         /// End.
         /// </summary>
-        [XmlElement(ElementName = "End", IsNullable = true)]
+        [XmlElement(ElementName = "End")]
         public long End
         {
             get
@@ -33,7 +33,7 @@
         /// <summary>
         /// Start.
         /// </summary>
-        [XmlElement(ElementName = "Start", IsNullable = true)]
+        [XmlElement(ElementName = "Start")]
         public long Start
         {
             get
