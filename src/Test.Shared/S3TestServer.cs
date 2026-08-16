@@ -91,6 +91,12 @@ namespace Test.Shared
         /// </summary>
         public ConcurrentQueue<string> SecretKeyAccessKeys { get; private set; } = new ConcurrentQueue<string>();
 
+        /// <summary>
+        /// Most recent select request deserialized and passed to Object.SelectContent.
+        /// Null until an S3 Select (POST ?select&amp;select-type=2) request is handled.
+        /// </summary>
+        public SelectObjectContentRequest LastSelectRequest { get; private set; } = null;
+
         #endregion
 
         #region Private-Members
@@ -594,7 +600,10 @@ namespace Test.Shared
 
             Server.Object.AbortMultipartUpload = async (ctx) => { };
 
-            Server.Object.SelectContent = async (ctx, selectReq) => { };
+            Server.Object.SelectContent = async (ctx, selectReq) =>
+            {
+                LastSelectRequest = selectReq;
+            };
         }
 
         private bool IsArchivedKey(string key)

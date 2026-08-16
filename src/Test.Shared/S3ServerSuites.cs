@@ -47,6 +47,7 @@ namespace Test.Shared
                     new RunnerSuiteSource("Service", "Service", ServiceTests.RunAllAsync),
                     new RunnerSuiteSource("Bucket", "Bucket", BucketTests.RunAllAsync),
                     new RunnerSuiteSource("Object", "Object", ObjectTests.RunAllAsync),
+                    new RunnerSuiteSource("SelectContent", "S3 Select", SelectContentTests.RunAllAsync),
                     new RunnerSuiteSource("MultipartUpload", "Multipart upload", MultipartUploadTests.RunAllAsync),
                     new RunnerSuiteSource("ErrorHandling", "Error handling", ErrorHandlingTests.RunAllAsync),
                     new RunnerSuiteSource("S3Compliance", "S3 compliance", S3ComplianceTests.RunAllAsync),
