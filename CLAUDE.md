@@ -148,6 +148,7 @@ The library supports multipart upload operations through callbacks:
 ### Target Frameworks
 
 The library targets multiple frameworks (S3Server.csproj:4):
+- netstandard2.1
 - net8.0
 - net10.0
 
@@ -178,8 +179,8 @@ AWS Signature V4 validation can be enabled:
 
 ## Notable Dependencies
 
-- **Watson** (7.0.x): HTTP server framework (HTTP/1.1, HTTP/2, HTTP/3)
-- **AWSSignatureGenerator** (1.0.10): AWS signature validation
+- **Watson** (7.1.x): HTTP server framework (HTTP/1.1, HTTP/2, HTTP/3)
+- **AWSSignatureGenerator** (1.1.0): AWS signature validation
 - **PrettyId** (2.0.1): Request ID generation
 
 ## Project Structure
@@ -230,6 +231,8 @@ Request/response bodies use XML serialization via SerializationHelper:
 - Responses are serialized in the S3 namespace (`http://s3.amazonaws.com/doc/2006-03-01/`); a root `Error` has no namespace and `BucketLoggingStatus` uses `http://doc.s3.amazonaws.com/2006-03-01`
 - Deserialization tries bare XML, then the S3 namespace, then a namespace-agnostic reader
 - `ListVersionsResult` serializes through `XmlEntries` (a `ListVersionsEntryCollection`), because XmlSerializer cannot map two members to the same `Version` element name
+- A `DeleteMarker` omits `ETag`, `Size`, and `StorageClass` (virtual `ShouldSerializeStorageClass`), so it serializes as `Key`, `VersionId`, `IsLatest`, `LastModified`, `Owner`
+- `DeleteResult.Errors` serializes through `XmlErrors` (a `DeleteErrorCollection` of `DeleteError`), which writes `Key`, `VersionId`, `Code`, `Message`; a standalone `Error` keeps `Code` first
 - `XmlWriterExtended` rewrites timestamp elements to `yyyy-MM-ddTHH:mm:ss.fffZ` and, for listings requested with `encoding-type=url`, URL-encodes listing values with Amazon S3's rules
 - `ResponseSerializationContext` (thread-static) tells models the ListObjects version, whether to omit Owner, and DeleteObjects quiet mode while S3Server serializes a response; outside a request, models serialize with their own shape
 
@@ -247,6 +250,11 @@ OperationLimitsSettings.MaxPutObjectSize controls maximum object size for PutObj
 ## Chunked Transfer Encoding
 
 When handling chunked uploads (detected via `ctx.Request.Chunked` property), use `ctx.Request.ReadChunk()` to read chunks iteratively. Each chunk has a `Length`, `Data`, and `IsFinal` property. Continue reading until `IsFinal` is true. This is commonly used by AWS CLI for streaming uploads.
+
+## Recent Changes in v8.0.1
+
+- Delete markers in ListObjectVersions carry no nil `ETag` and no `StorageClass`; null `ETag`/`Owner` on versions are omitted
+- DeleteResult per-key errors are written as Key, VersionId, Code, Message via `DeleteResult.XmlErrors`
 
 ## Recent Changes in v8.0.0
 

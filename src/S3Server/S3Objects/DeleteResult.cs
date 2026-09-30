@@ -1,6 +1,8 @@
 ﻿namespace S3ServerLibrary.S3Objects
 {
     using System.Collections.Generic;
+    using System.ComponentModel;
+    using System.Text.Json.Serialization;
     using System.Xml.Serialization;
 
     /// <summary>
@@ -18,14 +20,43 @@
         public List<Deleted> DeletedObjects { get; set; } = new List<Deleted>();
 
         /// <summary>
-        /// List of errors encountered during the operation.
+        /// List of errors encountered during the operation.  Setting null stores an empty list.
+        /// Each error is serialized as an Error element with Key, VersionId, Code, and Message, in that order, as Amazon
+        /// S3 does.  Other Error members are not part of a DeleteResult entry and are not serialized.
         /// </summary>
-        [XmlElement(ElementName = "Error", IsNullable = true)]
-        public List<Error> Errors { get; set; } = new List<Error>();
+        [XmlIgnore]
+        public List<Error> Errors
+        {
+            get
+            {
+                return _Errors;
+            }
+            set
+            {
+                if (value == null) _Errors = new List<Error>();
+                else _Errors = value;
+            }
+        }
+
+        /// <summary>
+        /// XML serialization surface for Errors.  Do not use directly.
+        /// </summary>
+        [XmlElement(ElementName = "Error")]
+        [JsonIgnore]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public DeleteErrorCollection XmlErrors
+        {
+            get
+            {
+                return new DeleteErrorCollection(this, _Errors);
+            }
+        }
 
         #endregion
 
         #region Private-Members
+
+        private List<Error> _Errors = new List<Error>();
 
         #endregion
 

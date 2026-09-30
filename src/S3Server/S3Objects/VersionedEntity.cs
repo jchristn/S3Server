@@ -42,9 +42,9 @@
         }
 
         /// <summary>
-        /// Object ETag.
+        /// Object ETag.  Omitted from XML when null or empty, as it is for a delete marker.
         /// </summary>
-        [XmlElement(ElementName = "ETag", IsNullable = true)]
+        [XmlElement(ElementName = "ETag")]
         public string ETag
         {
             get
@@ -82,6 +82,15 @@
         }
 
         /// <summary>
+        /// Determine whether to serialize ETag.
+        /// </summary>
+        /// <returns>True if ETag is not null or empty.</returns>
+        public bool ShouldSerializeETag()
+        {
+            return !String.IsNullOrEmpty(ETag);
+        }
+
+        /// <summary>
         /// Determine whether to serialize Size.
         /// </summary>
         public bool ShouldSerializeSize()
@@ -97,9 +106,20 @@
         public StorageClassEnum StorageClass { get; set; } = StorageClassEnum.STANDARD;
 
         /// <summary>
-        /// Object owner.
+        /// Determine whether to serialize StorageClass.
+        /// Always true for an object version.  DeleteMarker overrides this to return false, because Amazon S3 does not
+        /// send StorageClass for a delete marker.
         /// </summary>
-        [XmlElement(ElementName = "Owner", IsNullable = true)]
+        /// <returns>True to serialize StorageClass.</returns>
+        public virtual bool ShouldSerializeStorageClass()
+        {
+            return true;
+        }
+
+        /// <summary>
+        /// Object owner.  Omitted from XML when null.
+        /// </summary>
+        [XmlElement(ElementName = "Owner")]
         public Owner Owner { get; set; } = null;
 
         #endregion

@@ -2,13 +2,13 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.1;net8.0;net10.0</TargetFrameworks>
-		<Version>8.0.0</Version>
+		<Version>8.0.1</Version>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Authors>Joel Christner</Authors>
 		<Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
 		<Copyright>(c)2026 Joel Christner</Copyright>
-		<PackageReleaseNotes>Major release matching Amazon S3 wire behavior, verified against Amazon S3: operation-scoped parameter validation with exact S3 errors; encoding-type=url listings; exact ListObjects v1/v2 shapes; DeleteObjects quiet mode; HEAD Range support and S3 range rules; S3 error detail elements; millisecond timestamps; CORS and Accept-Charset headers off by default (EmitCorsHeaders). Adds a compatibility test suite. See CHANGELOG.md for breaking changes and migration notes.</PackageReleaseNotes>
+		<PackageReleaseNotes>Patch release: ListObjectVersions delete markers contain only Key, VersionId, IsLatest, LastModified, and Owner (no nil ETag or StorageClass); DeleteObjects per-key errors are written as Key, VersionId, Code, Message. See CHANGELOG.md.</PackageReleaseNotes>
 		<PackageTags>aws s3 storage rest interface server less3 minio ceph view</PackageTags>
 		<PackageLicenseUrl></PackageLicenseUrl>
 		<PackageProjectUrl>https://github.com/jchristn/S3Server</PackageProjectUrl>

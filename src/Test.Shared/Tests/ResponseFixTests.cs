@@ -68,6 +68,81 @@ namespace Test.Shared.Tests
 
             #endregion
 
+            #region Delete-Markers-And-Delete-Errors
+
+            await runner.RunTestAsync("ListObjectVersions delete marker on the wire has only Key VersionId IsLatest LastModified Owner", async (ct) =>
+            {
+                HttpResponseMessage response = await server.HttpClient.GetAsync(server.BaseUrl + "/" + server.Bucket + "?versions", ct).ConfigureAwait(false);
+                AssertHelper.StatusCodeEquals(HttpStatusCode.OK, response, "ListObjectVersions");
+
+                string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                AssertHelper.StringDoesNotContain(body, "nil", "no nil attributes");
+
+                XElement root = XDocument.Parse(body).Root;
+                XElement marker = root.Elements().Single(e => e.Name.LocalName == "DeleteMarker");
+                AssertHelper.AreEqual("Key,VersionId,IsLatest,LastModified,Owner", String.Join(",", marker.Elements().Select(e => e.Name.LocalName)), "delete marker elements");
+
+                XElement version = root.Elements().Single(e => e.Name.LocalName == "Version");
+                AssertHelper.AreEqual("Key,VersionId,IsLatest,LastModified,ETag,Size,StorageClass,Owner", String.Join(",", version.Elements().Select(e => e.Name.LocalName)), "version elements");
+            }, token).ConfigureAwait(false);
+
+            await runner.RunTestAsync("DeleteObjects per-key errors on the wire list Key and VersionId before Code and Message", async (ct) =>
+            {
+                Func<S3Context, DeleteMultiple, Task<DeleteResult>> original = server.Server.Object.DeleteMultiple;
+
+                try
+                {
+                    server.Server.Object.DeleteMultiple = async (ctx, del) =>
+                    {
+                        Error denied = new Error(ErrorCode.AccessDenied, "denied.txt");
+                        denied.Message = "Access Denied";
+                        denied.RequestId = "not-per-key";
+                        return new DeleteResult(
+                            new List<Deleted> { new Deleted("ok.txt", null, null) },
+                            new List<Error> { denied, new Error(ErrorCode.NoSuchVersion, "versioned.txt", "v1") });
+                    };
+
+                    string xml = "<Delete><Object><Key>ok.txt</Key></Object><Object><Key>denied.txt</Key></Object><Object><Key>versioned.txt</Key><VersionId>v1</VersionId></Object></Delete>";
+                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, server.BaseUrl + "/" + server.Bucket + "?delete");
+                    request.Content = new StringContent(xml, System.Text.Encoding.UTF8, "application/xml");
+
+                    HttpResponseMessage response = await server.HttpClient.SendAsync(request, ct).ConfigureAwait(false);
+                    AssertHelper.StatusCodeEquals(HttpStatusCode.OK, response, "DeleteObjects");
+
+                    XElement root = XDocument.Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false)).Root;
+                    AssertHelper.AreEqual(_S3Namespace, root.Name.NamespaceName, "namespace");
+                    XElement[] errors = root.Elements().Where(e => e.Name.LocalName == "Error").ToArray();
+                    AssertHelper.AreEqual(2, errors.Length, "error count");
+                    AssertHelper.AreEqual("Key,Code,Message", String.Join(",", errors[0].Elements().Select(e => e.Name.LocalName)), "first error elements");
+                    AssertHelper.AreEqual("Access Denied", errors[0].Elements().Single(e => e.Name.LocalName == "Message").Value, "first error message");
+                    AssertHelper.AreEqual("Key,VersionId,Code,Message", String.Join(",", errors[1].Elements().Select(e => e.Name.LocalName)), "second error elements");
+
+                    Amazon.S3.Model.DeleteObjectsRequest sdkRequest = new Amazon.S3.Model.DeleteObjectsRequest { BucketName = server.Bucket };
+                    sdkRequest.AddKey("denied.txt");
+                    Amazon.S3.DeleteObjectsException thrown = null;
+                    try
+                    {
+                        await server.S3Client.DeleteObjectsAsync(sdkRequest, ct).ConfigureAwait(false);
+                    }
+                    catch (Amazon.S3.DeleteObjectsException ex)
+                    {
+                        thrown = ex;
+                    }
+
+                    AssertHelper.IsNotNull(thrown, "AWS SDK reports per-key errors");
+                    AssertHelper.AreEqual(2, thrown.Response.DeleteErrors.Count, "AWS SDK error count");
+                    AssertHelper.AreEqual("denied.txt", thrown.Response.DeleteErrors[0].Key, "AWS SDK error key");
+                    AssertHelper.AreEqual("AccessDenied", thrown.Response.DeleteErrors[0].Code, "AWS SDK error code");
+                    AssertHelper.AreEqual("v1", thrown.Response.DeleteErrors[1].VersionId, "AWS SDK error version");
+                }
+                finally
+                {
+                    server.Server.Object.DeleteMultiple = original;
+                }
+            }, token).ConfigureAwait(false);
+
+            #endregion
+
             #region Not-Modified
 
             await runner.RunTestAsync("NotModified from Object.Read returns 304 with no body and the ETag intact", async (ct) =>

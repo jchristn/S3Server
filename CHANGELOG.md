@@ -2,6 +2,23 @@
 
 ## Current Version
 
+v8.0.1
+
+Two response-body fixes found by Less3's compatibility suite after it moved to 8.0.0. No public API is removed or changed.
+
+Response bodies
+
+- A `DeleteMarker` in a ListObjectVersions response now contains exactly `Key`, `VersionId`, `IsLatest`, `LastModified`, and `Owner`, as Amazon S3 sends. Previously it also carried an empty `ETag` marked `xsi:nil` and a `StorageClass`. This applies whether the result is built with `Entries`, `Versions`, or `DeleteMarkers`
+- `VersionedEntity.ETag` and `VersionedEntity.Owner` are omitted when null instead of being written as `xsi:nil` elements. `VersionedEntity.ShouldSerializeStorageClass()` is now virtual, and `DeleteMarker` overrides it to return `false`
+- Per-key `Error` entries in a DeleteObjects `DeleteResult` are now written as `Key`, `VersionId`, `Code`, `Message`, the order in Amazon S3's DeleteObjects documentation. A standalone error body still starts with `Code`. Request-level members of `Error` (`RequestId`, `Resource`, `HostId`, `BucketName`, and the other detail elements) are no longer written inside a `DeleteResult` entry, where Amazon S3 does not send them
+- `DeleteResult.Errors` is unchanged as a `List<Error>`, and setting it to `null` now stores an empty list. It is serialized through the new `DeleteResult.XmlErrors` property (`DeleteErrorCollection` of `DeleteError`), which is a serialization surface only, like `ListVersionsResult.XmlEntries`
+
+Tests
+
+- Added serialization tests for the delete marker shape (through `Entries` and `DeleteMarkers`, with and without an owner), the unchanged `Version` shape, interleaved versions and delete markers, `DeleteResult` error element order, round-trips, and a standalone `Error`
+- Added wire tests through S3Server for the ListObjectVersions delete marker shape and for DeleteObjects per-key errors, including parsing by the AWS SDK for .NET
+- Not recorded against Amazon S3 in this release: the delete marker element order follows the order S3Server already wrote, and the DeleteResult error order follows the Amazon S3 documentation. No Compatibility scenario was added, because a delete marker needs a versioned bucket and the scenarios never change bucket settings
+
 v8.0.0
 
 S3Server's responses now match Amazon S3 in the details 7.4.0 left out. Every behavior below was recorded from Amazon S3 (us-west-1), and a new compatibility suite enforces it. This is a major version because several changes alter existing behavior; see "Breaking changes" and "Migrating from 7.x".

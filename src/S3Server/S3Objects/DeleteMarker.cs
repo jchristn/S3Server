@@ -5,6 +5,7 @@
 
     /// <summary>
     /// Delete marker, serialized as a DeleteMarker element.
+    /// As Amazon S3 does, a delete marker serializes only Key, VersionId, IsLatest, LastModified, and Owner.
     /// </summary>
     [XmlType(TypeName = "DeleteMarker")]
     public class DeleteMarker : VersionedEntity
@@ -36,6 +37,16 @@
             base.Size = null;
             base.StorageClass = StorageClassEnum.STANDARD;
             base.Owner = owner;
+        }
+
+        /// <summary>
+        /// Determine whether to serialize StorageClass.  Always false, because Amazon S3 does not send StorageClass for
+        /// a delete marker.
+        /// </summary>
+        /// <returns>False.</returns>
+        public override bool ShouldSerializeStorageClass()
+        {
+            return false;
         }
     }
 }

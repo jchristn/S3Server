@@ -1022,6 +1022,12 @@ Have a feature request or found an issue? Please [file an issue on GitHub](https
 
 Refer to [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
 
+## New in v8.0.1
+
+- ListObjectVersions delete markers contain exactly `Key`, `VersionId`, `IsLatest`, `LastModified`, and `Owner`, with no `xsi:nil` `ETag` and no `StorageClass`
+- DeleteObjects per-key errors are written as `Key`, `VersionId`, `Code`, `Message`, while standalone error bodies still start with `Code`
+- No public API is removed or changed. See [CHANGELOG.md](CHANGELOG.md) for details
+
 ## New in v8.0.0
 
 This major release makes S3Server's responses match Amazon S3 in the details that 7.4.0 left out. Each behavior was checked against Amazon S3, and the new `Compatibility` suite enforces it. See [CHANGELOG.md](CHANGELOG.md) for breaking changes and migration notes.

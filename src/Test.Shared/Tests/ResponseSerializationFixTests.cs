@@ -137,6 +137,56 @@ namespace Test.Shared.Tests
                 return Task.CompletedTask;
             }, token).ConfigureAwait(false);
 
+            await runner.RunTestAsync("DeleteResult Error entries list Key and VersionId before Code and Message", (ct) =>
+            {
+                DeleteResult result = new DeleteResult(null, new List<Error>
+                {
+                    new Error(ErrorCode.AccessDenied, "a.txt"),
+                    new Error(ErrorCode.NoSuchVersion, "b.txt", "v1", "request-id", "/bucket/b.txt")
+                });
+
+                XElement[] errors = Root(result).Elements().Where(e => e.Name.LocalName == "Error").ToArray();
+                AssertHelper.AreEqual(2, errors.Length, "error count");
+                AssertHelper.AreEqual("Key,Code,Message", ElementNames(errors[0]), "error without version");
+                AssertHelper.AreEqual("Key,VersionId,Code,Message", ElementNames(errors[1]), "error with version, request-level members omitted");
+                AssertHelper.AreEqual("b.txt", errors[1].Elements().Single(e => e.Name.LocalName == "Key").Value, "key value");
+                AssertHelper.AreEqual("NoSuchVersion", errors[1].Elements().Single(e => e.Name.LocalName == "Code").Value, "code value");
+                return Task.CompletedTask;
+            }, token).ConfigureAwait(false);
+
+            await runner.RunTestAsync("DeleteResult Error entries round-trip and a standalone Error still starts with Code", (ct) =>
+            {
+                Error custom = new Error(ErrorCode.AccessDenied, "a.txt", "v2");
+                custom.Message = "Access Denied";
+                DeleteResult result = new DeleteResult(new List<Deleted> { new Deleted("d.txt", null, null) }, new List<Error> { custom });
+
+                DeleteResult back = SerializationHelper.DeserializeXml<DeleteResult>(SerializationHelper.SerializeXml(result));
+                AssertHelper.AreEqual(1, back.DeletedObjects.Count, "deleted count");
+                AssertHelper.AreEqual(1, back.Errors.Count, "error count");
+                AssertHelper.AreEqual("a.txt", back.Errors[0].Key, "key");
+                AssertHelper.AreEqual("v2", back.Errors[0].VersionId, "version");
+                AssertHelper.AreEqual(ErrorCode.AccessDenied, back.Errors[0].Code, "code");
+                AssertHelper.AreEqual("Access Denied", back.Errors[0].Message, "message");
+
+                DeleteResult keyFirst = SerializationHelper.DeserializeXml<DeleteResult>(
+                    "<DeleteResult xmlns=\"" + _S3Namespace + "\"><Error><Key>k</Key><Code>AccessDenied</Code><Message>Access Denied</Message></Error></DeleteResult>");
+                AssertHelper.AreEqual(1, keyFirst.Errors.Count, "Amazon S3 form error count");
+                AssertHelper.AreEqual("k", keyFirst.Errors[0].Key, "Amazon S3 form key");
+
+                string standalone = SerializationHelper.SerializeXml(new Error(ErrorCode.NoSuchKey, "a.txt"));
+                AssertHelper.AreEqual("Code", XDocument.Parse(standalone).Root.Elements().First().Name.LocalName, "standalone error starts with Code");
+                AssertHelper.AreEqual("a.txt", SerializationHelper.DeserializeXml<Error>(standalone).Key, "standalone error round-trips");
+                return Task.CompletedTask;
+            }, token).ConfigureAwait(false);
+
+            await runner.RunTestAsync("DeleteResult with null Errors serializes no Error elements", (ct) =>
+            {
+                DeleteResult result = new DeleteResult(new List<Deleted> { new Deleted("k", null, null) }, null);
+                AssertHelper.IsNotNull(result.Errors, "Errors is never null");
+                AssertHelper.IsNull(Root(result).Elements().FirstOrDefault(e => e.Name.LocalName == "Error" || e.Name.LocalName == "XmlErrors"), "no Error or wrapper element");
+                return Task.CompletedTask;
+            }, token).ConfigureAwait(false);
+
             #endregion
 
             #region ListBucketResult
@@ -226,6 +276,81 @@ namespace Test.Shared.Tests
                 result.Name = "b";
                 XElement root = XDocument.Parse(SerializationHelper.SerializeXml(result)).Root;
                 AssertHelper.IsNull(root.Elements().FirstOrDefault(e => e.Name.LocalName == "Version" || e.Name.LocalName == "DeleteMarker"), "no entries");
+                return Task.CompletedTask;
+            }, token).ConfigureAwait(false);
+
+            await runner.RunTestAsync("DeleteMarker serializes exactly Key VersionId IsLatest LastModified Owner", (ct) =>
+            {
+                Owner owner = new Owner("owner-id", "Owner");
+                string[] paths = new[] { "Entries", "DeleteMarkers" };
+
+                foreach (string path in paths)
+                {
+                    ListVersionsResult result = new ListVersionsResult();
+                    result.Name = "b";
+                    DeleteMarker marker = new DeleteMarker("k", "2", true, DateTime.UtcNow, owner);
+                    if (path == "Entries") result.Entries.Add(marker);
+                    else result.DeleteMarkers.Add(marker);
+
+                    string xml = SerializationHelper.SerializeXml(result);
+                    XElement element = XDocument.Parse(xml).Root.Elements().Single(e => e.Name.LocalName == "DeleteMarker");
+                    AssertHelper.AreEqual("Key,VersionId,IsLatest,LastModified,Owner", ElementNames(element), path + " delete marker elements");
+                    AssertHelper.StringDoesNotContain(xml, "nil", path + " no nil attributes");
+                    AssertHelper.StringDoesNotContain(xml, _XsiNamespace, path + " no xsi namespace");
+                }
+
+                ListVersionsResult noOwner = new ListVersionsResult();
+                noOwner.Name = "b";
+                noOwner.Entries.Add(new DeleteMarker("k", "2", true, DateTime.UtcNow, null));
+                noOwner.Entries.Add(new ObjectVersion("k", "1", false, DateTime.UtcNow, "etag", 1, null));
+                string noOwnerXml = SerializationHelper.SerializeXml(noOwner);
+                AssertHelper.StringDoesNotContain(noOwnerXml, "nil", "null owner writes no nil element");
+                AssertHelper.AreEqual("Key,VersionId,IsLatest,LastModified", ElementNames(XDocument.Parse(noOwnerXml).Root.Elements().Single(e => e.Name.LocalName == "DeleteMarker")), "null owner omitted");
+                return Task.CompletedTask;
+            }, token).ConfigureAwait(false);
+
+            await runner.RunTestAsync("ObjectVersion still serializes ETag Size and StorageClass", (ct) =>
+            {
+                ListVersionsResult result = new ListVersionsResult();
+                result.Name = "b";
+                result.Entries.Add(new ObjectVersion("k", "1", true, DateTime.UtcNow, "etag", 5, new Owner("owner-id", "Owner"), StorageClassEnum.STANDARD_IA));
+
+                XElement version = Root(result).Elements().Single(e => e.Name.LocalName == "Version");
+                AssertHelper.AreEqual("Key,VersionId,IsLatest,LastModified,ETag,Size,StorageClass,Owner", ElementNames(version), "version elements");
+                AssertHelper.AreEqual("\"etag\"", version.Elements().Single(e => e.Name.LocalName == "ETag").Value, "ETag value");
+                AssertHelper.AreEqual("STANDARD_IA", version.Elements().Single(e => e.Name.LocalName == "StorageClass").Value, "StorageClass value");
+                return Task.CompletedTask;
+            }, token).ConfigureAwait(false);
+
+            await runner.RunTestAsync("Interleaved versions and delete markers keep order and each has its own shape", (ct) =>
+            {
+                Owner owner = new Owner("owner-id", "Owner");
+                ListVersionsResult result = new ListVersionsResult();
+                result.Name = "b";
+                result.Entries.Add(new DeleteMarker("a.txt", "4", true, DateTime.UtcNow, owner));
+                result.Entries.Add(new ObjectVersion("a.txt", "3", false, DateTime.UtcNow, "etag3", 3, owner));
+                result.Entries.Add(new DeleteMarker("a.txt", "2", false, DateTime.UtcNow, owner));
+                result.Entries.Add(new ObjectVersion("a.txt", "1", false, DateTime.UtcNow, "etag1", 1, owner));
+
+                string xml = SerializationHelper.SerializeXml(result);
+                XElement[] entries = XDocument.Parse(xml).Root.Elements()
+                    .Where(e => e.Name.LocalName == "Version" || e.Name.LocalName == "DeleteMarker")
+                    .ToArray();
+
+                AssertHelper.AreEqual("DeleteMarker:4,Version:3,DeleteMarker:2,Version:1", String.Join(",", entries.Select(e => e.Name.LocalName + ":" + e.Elements().Single(c => c.Name.LocalName == "VersionId").Value)), "order");
+                foreach (XElement entry in entries)
+                {
+                    string expected = entry.Name.LocalName == "DeleteMarker"
+                        ? "Key,VersionId,IsLatest,LastModified,Owner"
+                        : "Key,VersionId,IsLatest,LastModified,ETag,Size,StorageClass,Owner";
+                    AssertHelper.AreEqual(expected, ElementNames(entry), entry.Name.LocalName + " shape");
+                }
+
+                ListVersionsResult back = SerializationHelper.DeserializeXml<ListVersionsResult>(xml);
+                AssertHelper.AreEqual(4, back.Entries.Count, "entries round-trip");
+                AssertHelper.IsTrue(back.Entries[0] is DeleteMarker, "first entry is a delete marker");
+                AssertHelper.IsNull(back.Entries[0].ETag, "delete marker ETag stays null");
+                AssertHelper.AreEqual("\"etag3\"", back.Entries[1].ETag, "version ETag round-trips");
                 return Task.CompletedTask;
             }, token).ConfigureAwait(false);
 
@@ -415,6 +540,11 @@ namespace Test.Shared.Tests
         private static XElement Root(object obj)
         {
             return XDocument.Parse(SerializationHelper.SerializeXml(obj)).Root;
+        }
+
+        private static string ElementNames(XElement element)
+        {
+            return String.Join(",", element.Elements().Select(e => e.Name.LocalName));
         }
 
         private static XElement SerializeDeleted(Deleted deleted)
