@@ -9,8 +9,6 @@
     [XmlRoot(ElementName = "Error", IsNullable = true)]
     public class Error
     {
-        // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
-
         #region Public-Members
 
         /// <summary>
@@ -156,6 +154,8 @@
                         return "The version ID specified in the request does not match an existing version.";
                     case ErrorCode.NotImplemented:
                         return "A header you provided implies functionality that is not implemented.";
+                    case ErrorCode.NotModified:
+                        return "Not Modified";
                     case ErrorCode.NotSignedUp:
                         return "Your account is not signed up for the Amazon S3 service.";
                     case ErrorCode.ObjectAlreadyInActiveTierError:
@@ -374,6 +374,8 @@
                         return 404;
                     case ErrorCode.NotImplemented:
                         return 501;
+                    case ErrorCode.NotModified:
+                        return 304;
                     case ErrorCode.NotSignedUp:
                         return 403;
                     case ErrorCode.ObjectAlreadyInActiveTierError:

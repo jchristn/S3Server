@@ -598,6 +598,15 @@
         /// </summary>
         [EnumMember(Value = "ServerSideEncryptionConfigurationNotFoundError")]
         [XmlEnum(Name = "ServerSideEncryptionConfigurationNotFoundError")]
-        ServerSideEncryptionConfigurationNotFoundError
+        ServerSideEncryptionConfigurationNotFoundError,
+
+        /// <summary>
+        /// The object has not been modified relative to the entity tag or date supplied in a conditional
+        /// request header (If-None-Match or If-Modified-Since).  Maps to HTTP 304.
+        /// Responses carrying this code are sent with headers only and no body, as Amazon S3 does.
+        /// </summary>
+        [EnumMember(Value = "NotModified")]
+        [XmlEnum(Name = "NotModified")]
+        NotModified
     }
 }

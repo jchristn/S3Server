@@ -8,8 +8,6 @@
     [XmlRoot(ElementName = "Tagging")]
     public class Tagging
     {
-        // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
-
         #region Public-Members
 
         /// <summary>

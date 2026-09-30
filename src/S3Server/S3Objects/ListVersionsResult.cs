@@ -2,6 +2,9 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel;
+    using System.Linq;
+    using System.Text.Json.Serialization;
     using System.Xml.Serialization;
 
     /// <summary>
@@ -10,8 +13,6 @@
     [XmlRoot(ElementName = "ListVersionsResult", IsNullable = true)]
     public class ListVersionsResult
     {
-        // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
-
         #region Public-Members
 
         /// <summary>
@@ -73,16 +74,82 @@
         public bool IsTruncated { get; set; } = false;
 
         /// <summary>
-        /// Object versions.
+        /// Object versions.  Serialized as Version elements, all before the DeleteMarkers, when Entries is empty.
+        /// Ignored for serialization when Entries is non-empty.  Populated during deserialization.
+        /// Setting null assigns an empty list.
         /// </summary>
-        [XmlElement(ElementName = "Version")]
-        public List<ObjectVersion> Versions { get; set; } = new List<ObjectVersion>();
+        [XmlIgnore]
+        public List<ObjectVersion> Versions
+        {
+            get
+            {
+                return _Versions;
+            }
+            set
+            {
+                if (value == null) _Versions = new List<ObjectVersion>();
+                else _Versions = value;
+            }
+        }
 
         /// <summary>
-        /// Delete markers.
+        /// Delete markers.  Serialized as DeleteMarker elements, all after the Versions, when Entries is empty.
+        /// Ignored for serialization when Entries is non-empty.  Populated during deserialization.
+        /// Setting null assigns an empty list.
         /// </summary>
-        [XmlElement(ElementName = "DeleteMarker")]
-        public List<DeleteMarker> DeleteMarkers { get; set; } = new List<DeleteMarker>();
+        [XmlIgnore]
+        public List<DeleteMarker> DeleteMarkers
+        {
+            get
+            {
+                return _DeleteMarkers;
+            }
+            set
+            {
+                if (value == null) _DeleteMarkers = new List<DeleteMarker>();
+                else _DeleteMarkers = value;
+            }
+        }
+
+        /// <summary>
+        /// Versions and delete markers in a single sequence, serialized in list order as interleaved Version and
+        /// DeleteMarker elements.  Amazon S3 orders them by key, then newest first.  Add ObjectVersion and DeleteMarker
+        /// instances.  When non-empty, this list is serialized instead of Versions and DeleteMarkers.
+        /// Populated in document order during deserialization.  Setting null assigns an empty list.
+        /// </summary>
+        [XmlIgnore]
+        public List<VersionedEntity> Entries
+        {
+            get
+            {
+                return _Entries;
+            }
+            set
+            {
+                if (value == null) _Entries = new List<VersionedEntity>();
+                else _Entries = value;
+            }
+        }
+
+        /// <summary>
+        /// XML serialization surface for Entries, Versions, and DeleteMarkers.  Do not use directly.
+        /// </summary>
+        [XmlElement(ElementName = "Version", Type = typeof(ObjectVersion))]
+        [XmlElement(ElementName = "DeleteMarker", Type = typeof(DeleteMarker))]
+        [JsonIgnore]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public ListVersionsEntryCollection XmlEntries
+        {
+            get
+            {
+                if (_Entries.Count > 0)
+                    return new ListVersionsEntryCollection(this, _Entries);
+
+                return new ListVersionsEntryCollection(
+                    this,
+                    _Versions.Cast<VersionedEntity>().Concat(_DeleteMarkers.Cast<VersionedEntity>()));
+            }
+        }
 
         /// <summary>
         /// Next key marker for pagination when results are truncated.
@@ -126,6 +193,9 @@
 
         private int _MaxKeys = 0;
         private string _Prefix = "";
+        private List<ObjectVersion> _Versions = new List<ObjectVersion>();
+        private List<DeleteMarker> _DeleteMarkers = new List<DeleteMarker>();
+        private List<VersionedEntity> _Entries = new List<VersionedEntity>();
 
         #endregion
 
@@ -194,21 +264,21 @@
         #region Public-Methods
 
         /// <summary>
-        /// Helper method for XML serialization.
+        /// Helper method for XML serialization.  Versions are serialized through XmlEntries, never directly.
         /// </summary>
         /// <returns>Boolean.</returns>
         public bool ShouldSerializeVersions()
         {
-            return Versions != null && Versions.Count > 0;
+            return false;
         }
 
         /// <summary>
-        /// Helper method for XML serialization.
+        /// Helper method for XML serialization.  Delete markers are serialized through XmlEntries, never directly.
         /// </summary>
         /// <returns>Boolean.</returns>
         public bool ShouldSerializeDeleteMarkers()
         {
-            return DeleteMarkers != null && DeleteMarkers.Count > 0;
+            return false;
         }
 
         /// <summary>

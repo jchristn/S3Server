@@ -8,8 +8,6 @@ namespace S3ServerLibrary.S3Objects
     [XmlRoot(ElementName = "CommonPrefixes", IsNullable = true)]
     public class CommonPrefixes
     {
-        // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
-
         #region Public-Members
 
         /// <summary>

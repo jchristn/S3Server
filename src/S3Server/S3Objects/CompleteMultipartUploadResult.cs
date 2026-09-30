@@ -10,8 +10,6 @@
     [XmlRoot(ElementName = "CompleteMultipartUploadResult")]
     public class CompleteMultipartUploadResult
     {
-        // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
-
         #region Public-Members
 
         /// <summary>

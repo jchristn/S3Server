@@ -182,6 +182,16 @@ S3ServerSettings settings = new S3ServerSettings
     // Optional: Enable legacy AWS Signature V2 validation when signatures are enabled
     EnableSignatureV2 = false,
 
+    // Optional: Validate signatures before PreRequestHandler runs (default false)
+    ValidateSignaturesBeforePreRequestHandler = false,
+
+    // Optional: Route suffix ranges (bytes=-N) to Object.ReadRange (default true)
+    RouteSuffixRangesToReadRange = true,
+
+    // Optional: Keep the webserver's default Host, Accept, Accept-Language, and
+    // Cache-Control response headers (default false, which removes them)
+    PreserveWebserverDefaultHeaders = false,
+
     // Note: UseTcpServer is deprecated in v7.0; Watson now uses TCP natively
     UseTcpServer = false
 };
@@ -189,23 +199,38 @@ S3ServerSettings settings = new S3ServerSettings
 
 ### Request Handlers
 
-S3Server provides hooks to intercept requests at different stages:
+S3Server provides hooks to intercept requests at different stages. The order is:
+
+```
+PreRequestHandler -> signature validation -> AuthenticatedRequestHandler -> operation callback -> PostRequestHandler
+```
+
+With `ValidateSignaturesBeforePreRequestHandler = true`, signature validation moves ahead of `PreRequestHandler`.
+
+> **Security:** with the default order, `PreRequestHandler` runs **before** signature validation and sees unauthenticated input. Use it for logging, metrics, or populating `ctx.Metadata` for `Service.GetSecretKey`. Do not answer, modify, or disclose data from it. Anything that answers requests belongs in `AuthenticatedRequestHandler`, which only runs for requests that passed signature validation (or were allowed by `Service.IsAnonymousRequestAllowed`).
 
 ```csharp
-// Pre-request handler (auth, logging, validation)
+// Pre-request handler (logging, metadata for GetSecretKey)
+// Sees unauthenticated input under the default order.
 // Return true to terminate request, false to continue routing
 settings.PreRequestHandler = async (ctx) =>
 {
-    // Check authentication
-    if (!IsAuthenticated(ctx))
+    // Add custom metadata for downstream callbacks
+    ctx.Metadata = new { TenantId = LookupTenant(ctx.Request.AccessKey) };
+
+    return false; // Continue to signature validation and routing
+};
+
+// Authenticated request handler (authorization, request interception)
+// Only invoked after signature validation succeeds.
+// Return true to terminate request, false to continue routing
+settings.AuthenticatedRequestHandler = async (ctx) =>
+{
+    if (!IsAuthorized(ctx))
     {
-        ctx.Response.StatusCode = 403;
         await ctx.Response.Send(ErrorCode.AccessDenied);
         return true; // Terminate
     }
-
-    // Add custom metadata for downstream callbacks
-    ctx.Metadata = new { UserId = "user123" };
 
     return false; // Continue to callback routing
 };
@@ -406,7 +431,7 @@ server.Object.Write = async (ctx) =>
 | `Bucket.Exists` | Check if bucket exists | HEAD | `/[bucket]` | `bool` |
 | `Bucket.Delete` | Delete a bucket | DELETE | `/[bucket]` | `void` |
 | `Bucket.ReadAcl` | Read bucket ACL | GET | `/[bucket]?acl` | `AccessControlPolicy` |
-| `Bucket.WriteAcl` | Write bucket ACL | PUT | `/[bucket]?acl` | `void` |
+| `Bucket.WriteAcl` | Write bucket ACL (policy is `null` for canned ACLs) | PUT | `/[bucket]?acl` | `void` |
 | `Bucket.DeleteAcl` | Delete bucket ACL | DELETE | `/[bucket]?acl` | `void` |
 | `Bucket.ReadLocation` | Get bucket region | GET | `/[bucket]?location` | `LocationConstraint` |
 | `Bucket.ReadLogging` | Get logging config | GET | `/[bucket]?logging` | `BucketLoggingStatus` |
@@ -427,12 +452,13 @@ server.Object.Write = async (ctx) =>
 | Callback | Description | Method | URL | Response Type |
 |----------|-------------|--------|-----|---------------|
 | `Object.Write` | Upload object | PUT | `/[bucket]/[key]` | `void` |
+| `Object.Copy` | Copy object | PUT | `/[bucket]/[key]` with `x-amz-copy-source` | `CopyObjectResult` |
 | `Object.Read` | Download object | GET | `/[bucket]/[key]` | `S3Object` |
 | `Object.Exists` | Check if object exists | HEAD | `/[bucket]/[key]` | `ObjectMetadata` |
 | `Object.Delete` | Delete object | DELETE | `/[bucket]/[key]` | `void` |
 | `Object.ReadRange` | Download byte range | GET | `/[bucket]/[key]`* | `S3Object` |
 | `Object.ReadAcl` | Get object ACL | GET | `/[bucket]/[key]?acl` | `AccessControlPolicy` |
-| `Object.WriteAcl` | Set object ACL | PUT | `/[bucket]/[key]?acl` | `void` |
+| `Object.WriteAcl` | Set object ACL (policy is `null` for canned ACLs) | PUT | `/[bucket]/[key]?acl` | `void` |
 | `Object.DeleteAcl` | Delete object ACL | DELETE | `/[bucket]/[key]?acl` | `void` |
 | `Object.ReadTagging` | Get object tags | GET | `/[bucket]/[key]?tagging` | `Tagging` |
 | `Object.WriteTagging` | Set object tags | PUT | `/[bucket]/[key]?tagging` | `void` |
@@ -445,9 +471,15 @@ server.Object.Write = async (ctx) =>
 | `Object.Restore` | Restore archived object | POST | `/[bucket]/[key]?restore` | `RestoreObjectResult` |
 | `Object.SelectContent` | S3 Select query | POST | `/[bucket]/[key]?select&select-type=2` | `void` |
 
-\* `ReadRange` is triggered when Range header is present
+\* `ReadRange` is triggered when a valid single-range `Range` header is present. A `Range` header that cannot be parsed (multiple ranges, a unit other than `bytes`, non-numeric bounds, or `last < first`) is ignored, as Amazon S3 does, and the request is served by `Object.Read` with `200`.
 
 In a `ReadRange` callback, set `S3Object.Size` to the number of bytes in the returned range and `S3Object.TotalSize` to the full object size. S3Server then emits `Content-Range: bytes start-end/total` on the `206 Partial Content` response; ranged/multipart download clients (for example the AWS CLI) require this numeric total. If `TotalSize` is left null, the total is emitted as `*` (unknown).
+
+For a suffix range (`Range: bytes=-N`, the last N bytes), `RangeStart` and `RangeEnd` are null and `ctx.Request.RangeSuffixLength` is set. Return the last N bytes (or the whole object if it is shorter) and set `TotalSize`, which is required: S3Server computes `Content-Range` from it, and fails the request with `InternalError` if it is missing. A zero-length suffix, or a suffix range on an empty object, returns `416 InvalidRange`. Set `RouteSuffixRangesToReadRange = false` to send suffix ranges to `Object.Read` as versions before 7.4.0 did.
+
+`Object.WriteAcl` and `Bucket.WriteAcl` receive a `null` policy when the request has no body, which is how canned ACLs (`x-amz-acl`) and grant headers (`x-amz-grant-*`) arrive. Read those headers with `ctx.Request.RetrieveHeaderValue`. A body that is present but not valid XML is still rejected with `MalformedXML`.
+
+`Object.Copy` receives a PUT carrying `x-amz-copy-source`. The source is parsed into `ctx.Request.CopySourceBucket`, `CopySourceKey`, and `CopySourceVersionId`. If `Object.Copy` is not set, the request goes to `DefaultRequestHandler` or returns `NotImplemented`. It is never delivered to `Object.Write`.
 
 For archived objects, set `ObjectMetadata.RestoreStatus` and `S3Object.RestoreStatus` to have S3Server emit the `x-amz-restore` response header on `HEAD` and `GET`.
 
@@ -457,6 +489,7 @@ For archived objects, set `ObjectMetadata.RestoreStatus` and `S3Object.RestoreSt
 |----------|-------------|--------|-----|---------------|
 | `Object.CreateMultipartUpload` | Initiate multipart upload | POST | `/[bucket]/[key]?uploads` | `InitiateMultipartUploadResult` |
 | `Object.UploadPart` | Upload a part | PUT | `/[bucket]/[key]?partNumber=N&uploadId=ID` | `void` |
+| `Object.UploadPartCopy` | Upload a part by copying | PUT | `/[bucket]/[key]?partNumber=N&uploadId=ID` with `x-amz-copy-source` | `CopyPartResult` |
 | `Object.ReadParts` | List uploaded parts | GET | `/[bucket]/[key]?uploadId=ID` | `ListPartsResult` |
 | `Object.CompleteMultipartUpload` | Complete upload | POST | `/[bucket]/[key]?uploadId=ID` | `CompleteMultipartUploadResult` |
 | `Object.AbortMultipartUpload` | Abort upload | DELETE | `/[bucket]/[key]?uploadId=ID` | `void` |
@@ -520,6 +553,21 @@ byte[] DataAsBytes            // Request body as bytes (fully reads stream)
 // Range requests
 long? RangeStart              // Start byte for range request
 long? RangeEnd                // End byte for range request
+long? RangeSuffixLength       // N for a suffix range (bytes=-N); RangeStart and RangeEnd are then null
+
+// Copy requests (ObjectCopy and ObjectUploadPartCopy)
+string CopySourceBucket       // From x-amz-copy-source, URL-decoded
+string CopySourceKey          // From x-amz-copy-source, URL-decoded
+string CopySourceVersionId    // From the versionId parameter of x-amz-copy-source
+long? CopySourceRangeStart    // From x-amz-copy-source-range
+long? CopySourceRangeEnd      // From x-amz-copy-source-range
+
+// Conditional requests (evaluated by your callback; see the property docs for RFC 9110 order)
+List<string> IfMatch          // Entity tags as sent, or "*"
+List<string> IfNoneMatch      // Entity tags as sent, or "*"
+DateTime? IfModifiedSince     // Null when absent or not a valid HTTP date
+DateTime? IfUnmodifiedSince   // Null when absent or not a valid HTTP date
+// Also CopySourceIfMatch, CopySourceIfNoneMatch, CopySourceIfModifiedSince, CopySourceIfUnmodifiedSince
 
 // Listing parameters
 int MaxKeys                   // Maximum keys to return (default 1000)
@@ -527,6 +575,8 @@ string Prefix                 // Object key prefix filter
 string Delimiter              // Delimiter for grouping
 string Marker                 // Pagination marker
 string ContinuationToken      // Continuation token for v2 listing
+string StartAfter             // start-after for v2 listing
+bool FetchOwner               // fetch-owner=true for v2 listing
 
 // Multipart upload
 string UploadId               // Multipart upload ID
@@ -540,9 +590,13 @@ S3PermissionType PermissionsRequired // Permission needed for this operation
 bool HeaderExists(string key)
 bool QuerystringExists(string key)
 string RetrieveHeaderValue(string key)
-string RetrieveQueryValue(string key)
+string RetrieveQueryValue(string key)   // URL-decoded value, or null if absent
 Task<Chunk> ReadChunk()       // Read chunk for chunked transfer encoding
 ```
+
+Use `RetrieveQueryValue` for querystring parameters S3Server does not parse. It returns decoded values (`a%2Fb%20c` becomes `a/b c`). `ctx.Http.Request.Query.Elements` holds the raw, percent-encoded values.
+
+Numeric querystring parameters (`max-keys`, `max-parts`, `part-number-marker`, `partNumber`) that are negative or not integers are rejected with `400 InvalidArgument` before any handler runs.
 
 ### S3Response
 
@@ -608,6 +662,29 @@ Common error codes:
 - `ErrorCode.SignatureDoesNotMatch` - 403
 
 See `S3Objects/ErrorCode.cs` for the complete list of 60+ error codes.
+
+### Conditional Requests (304 Not Modified)
+
+S3Server parses `If-Match`, `If-None-Match`, `If-Modified-Since`, and `If-Unmodified-Since` into `ctx.Request`. Your callback decides whether each condition holds, because only it knows the object's ETag and modification time. To answer `304 Not Modified`, add the `ETag` (and optionally `Last-Modified`) headers and throw `NotModified`. The response is sent with headers only, with no body and no `Content-Type`, as Amazon S3 does:
+
+```csharp
+server.Object.Read = async (ctx) =>
+{
+    ObjectMetadata md = GetMetadata(ctx.Request.Key);
+    ctx.Response.Headers.Add("ETag", md.ETag);
+
+    if (ctx.Request.IfNoneMatch != null && ctx.Request.IfNoneMatch.Contains(md.ETag))
+        throw new S3Exception(new Error(ErrorCode.NotModified));
+
+    // ... return object
+};
+```
+
+A failed `If-Match` or `If-Unmodified-Since` should throw `PreconditionFailed` (412).
+
+### XML Namespace
+
+Response bodies are serialized in the Amazon S3 namespace (`http://s3.amazonaws.com/doc/2006-03-01/`), as Amazon S3 sends them. A top-level `Error` has no namespace, and `BucketLoggingStatus` uses `http://doc.s3.amazonaws.com/2006-03-01`. Request bodies are accepted with or without a namespace.
 
 ## Client Configuration
 
@@ -887,6 +964,20 @@ Have a feature request or found an issue? Please [file an issue on GitHub](https
 ## Version History
 
 Refer to [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
+
+## New in v7.4.0
+
+This release fixes security, data integrity, and protocol accuracy problems found while building Less3's S3 compatibility suite. Some existing behavior changes; see [CHANGELOG.md](CHANGELOG.md) for details and opt-out settings.
+
+- `AuthenticatedRequestHandler` runs after signature validation. `ValidateSignaturesBeforePreRequestHandler` moves validation ahead of `PreRequestHandler`, which by default sees unauthenticated input
+- Canned ACL writes (`x-amz-acl`, `x-amz-grant-*`, empty body) reach `WriteAcl` with a `null` policy instead of failing
+- Signature enforcement fails closed if `Service.GetSecretKey` is cleared after `Start()`
+- Unparseable requests (for example `max-keys=-1`) return an S3 XML error instead of the webserver's HTML error page. Invalid numeric parameters return `400 InvalidArgument`
+- Malformed `Range` headers are ignored and the full object is served, as Amazon S3 does. Suffix ranges (`bytes=-N`) route to `Object.ReadRange`
+- CopyObject and UploadPartCopy have their own request types and callbacks (`Object.Copy`, `Object.UploadPartCopy`) and are never delivered to `Object.Write` or `Object.UploadPart` as empty uploads
+- Response bodies carry the S3 XML namespace, `DeleteResult` omits nil and false values, `ListBucketResult` adds `NextMarker`, `StartAfter`, and `ContinuationToken`, and `ListVersionsResult.Entries` interleaves versions and delete markers
+- `ErrorCode.NotModified` sends a bodyless `304`, and conditional request headers are parsed into typed properties
+- Request-only headers (`Host`, `Accept`, `Accept-Language`, `Cache-Control`) are no longer echoed on every response
 
 ## New in v7.3.2
 

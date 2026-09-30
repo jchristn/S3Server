@@ -11,8 +11,6 @@
     [XmlRoot(ElementName = "Version", IsNullable = true)]
     public class VersionedEntity
     {
-        // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
-
         #region Public-Members
 
         /// <summary>
@@ -133,79 +131,5 @@
         #region Private-Methods
 
         #endregion
-    }
-
-    /// <summary>
-    /// Instantiate.
-    /// </summary>
-    [XmlType(TypeName = "Version")]
-    public class ObjectVersion : VersionedEntity
-    {
-        /// <summary>
-        /// Instantiate.
-        /// </summary>
-        public ObjectVersion()
-        {
-
-        }
-
-        /// <summary>
-        /// Instantiate.
-        /// </summary>
-        /// <param name="key">Key.</param>
-        /// <param name="versionId">Version ID.</param>
-        /// <param name="lastModified">Last modified.</param>
-        /// <param name="isLatest">Is latest.</param>
-        /// <param name="eTag">ETag.</param>
-        /// <param name="size">Size.</param>
-        /// <param name="owner">Owner.</param>
-        /// <param name="storageClass">Storage class.  Valid values are STANDARD, REDUCED_REDUNDANCY, GLACIER, STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING, DEEP_ARCHIVE, OUTPOSTS.</param>
-        public ObjectVersion(string key, string versionId, bool isLatest, DateTime lastModified, string eTag, long? size, Owner owner, StorageClassEnum storageClass = StorageClassEnum.STANDARD)
-        {
-            base.Key = key;
-            base.VersionId = versionId;
-            base.IsLatest = isLatest;
-            base.LastModified = lastModified;
-            base.ETag = eTag;
-            base.Size = size;
-            base.StorageClass = storageClass;
-            base.Owner = owner;
-        }
-    }
-
-    /// <summary>
-    /// Instantiate.
-    /// </summary>
-    [XmlType(TypeName = "DeleteMarker")]
-    public class DeleteMarker : VersionedEntity
-    {
-        /// <summary>
-        /// Instantiate.
-        /// </summary>
-        public DeleteMarker()
-        {
-            base.Size = null;
-            base.ETag = null;
-        }
-
-        /// <summary>
-        /// Instantiate.
-        /// </summary>
-        /// <param name="key">Key.</param>
-        /// <param name="versionId">Version ID.</param>
-        /// <param name="lastModified">Last modified.</param>
-        /// <param name="isLatest">Is latest.</param>
-        /// <param name="owner">Owner.</param>
-        public DeleteMarker(string key, string versionId, bool isLatest, DateTime lastModified, Owner owner)
-        {
-            base.Key = key;
-            base.VersionId = versionId;
-            base.IsLatest = isLatest;
-            base.LastModified = lastModified;
-            base.ETag = null;
-            base.Size = null;
-            base.StorageClass = StorageClassEnum.STANDARD;
-            base.Owner = owner;
-        }
     }
 }

@@ -183,6 +183,16 @@ namespace Test.Shared
         public S3PermissionType PermissionsRequired { get; private set; }
 
         /// <summary>
+        /// The parsed request itself, for asserting properties not copied into this observation.
+        /// </summary>
+        public S3Request Request { get; private set; }
+
+        /// <summary>
+        /// Value of the x-amz-acl request header, or null.
+        /// </summary>
+        public string AclHeader { get; private set; }
+
+        /// <summary>
         /// Create an observation from a live context.
         /// </summary>
         /// <param name="ctx">S3 context.</param>
@@ -227,7 +237,9 @@ namespace Test.Shared
                 IsBucketRequest = req.IsBucketRequest,
                 IsObjectRequest = req.IsObjectRequest,
                 IsMultipartUploadRequest = req.IsMultipartUploadRequest,
-                PermissionsRequired = req.PermissionsRequired
+                PermissionsRequired = req.PermissionsRequired,
+                Request = req,
+                AclHeader = req.HeaderExists("x-amz-acl") ? req.RetrieveHeaderValue("x-amz-acl") : null
             };
         }
     }

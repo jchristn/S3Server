@@ -10,13 +10,25 @@
     using System.Text.Json.Serialization;
     using System.Xml;
     using System.Xml.Serialization;
+    using S3ServerLibrary.S3Objects;
 
     /// <summary>
     /// Serialization helper.
+    /// Thread-safe; serializers are cached per type in concurrent dictionaries.
     /// </summary>
     public static class SerializationHelper
     {
         #region Public-Members
+
+        /// <summary>
+        /// XML namespace Amazon S3 uses for response bodies: http://s3.amazonaws.com/doc/2006-03-01/.
+        /// </summary>
+        public const string S3XmlNamespace = "http://s3.amazonaws.com/doc/2006-03-01/";
+
+        /// <summary>
+        /// XML namespace Amazon S3 uses for bucket logging bodies (BucketLoggingStatus): http://doc.s3.amazonaws.com/2006-03-01.
+        /// </summary>
+        public const string S3LoggingXmlNamespace = "http://doc.s3.amazonaws.com/2006-03-01";
 
         #endregion
 
@@ -27,6 +39,7 @@
         private static JsonStringEnumConverter _StringEnumConverter = new JsonStringEnumConverter();
         private static ConcurrentDictionary<Type, XmlSerializer> _DeserializerCache = new ConcurrentDictionary<Type, XmlSerializer>();
         private static ConcurrentDictionary<Type, XmlSerializer> _SerializerCache = new ConcurrentDictionary<Type, XmlSerializer>();
+        private static ConcurrentDictionary<Type, XmlSerializer> _NamespacedSerializerCache = new ConcurrentDictionary<Type, XmlSerializer>();
         private static string _ByteOrderMarkUtf8 = Encoding.UTF8.GetString(Encoding.UTF8.GetPreamble());
 
         #endregion
@@ -130,9 +143,7 @@
                 xml = xml.TrimStart(_ByteOrderMarkUtf8.ToCharArray());
             }
 
-            // Try standard namespace-aware deserialization first.
-            // This correctly handles AWS SDK XML which includes the S3 namespace
-            // on all elements (root and children).
+            // Try deserialization with no namespace first, for clients that send bare XML.
             try
             {
                 XmlSerializer xmls = _SerializerCache.GetOrAdd(typeof(T), t => new XmlSerializer(t));
@@ -143,8 +154,31 @@
             }
             catch (InvalidOperationException)
             {
+                // Fall through to namespace-aware deserialization using the S3 namespace.
+            }
+
+            // Try the S3 namespace, which is what SerializeXml emits and what the AWS SDKs send.
+            // This path honors xsi:nil, which the namespace-agnostic fallback below cannot.
+            try
+            {
+                XmlSerializer xmls = _NamespacedSerializerCache.GetOrAdd(typeof(T), t => new XmlSerializer(t, GetXmlNamespace(t)));
+
+                // Preserve whitespace-only element content (for example an S3 Select RecordDelimiter of a newline),
+                // matching the namespace-agnostic fallback.
+                XmlReaderSettings readerSettings = new XmlReaderSettings();
+                readerSettings.IgnoreWhitespace = false;
+                readerSettings.DtdProcessing = DtdProcessing.Prohibit;
+
+                using (StringReader stringReader = new StringReader(xml))
+                using (XmlReader reader = XmlReader.Create(stringReader, readerSettings))
+                {
+                    return (T)xmls.Deserialize(reader);
+                }
+            }
+            catch (InvalidOperationException)
+            {
                 // Fall through to namespace-agnostic deserialization for clients
-                // that send XML without the S3 namespace.
+                // that send XML in some other namespace or a mix of namespaces.
             }
 
             // Fallback: namespace-agnostic deserialization
@@ -168,15 +202,21 @@
 
         /// <summary>
         /// Serialize XML.
+        /// Every element is placed in the Amazon S3 namespace (S3XmlNamespace), as Amazon S3 does for response bodies,
+        /// with two exceptions that also match Amazon S3: a root Error is serialized with no namespace, and a root
+        /// BucketLoggingStatus uses S3LoggingXmlNamespace.  Nested types (including an Error inside a DeleteResult)
+        /// inherit the root namespace.
         /// </summary>
-        /// <param name="obj">Object.</param>
-        /// <param name="pretty">Pretty print.</param>
+        /// <param name="obj">Object.  Cannot be null.</param>
+        /// <param name="pretty">Pretty print.  Default is false.</param>
         /// <returns>XML string.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if obj is null.</exception>
         public static string SerializeXml(object obj, bool pretty = false)
         {
             if (obj == null) throw new ArgumentNullException(nameof(obj));
 
-            XmlSerializer xmlSerializer = _SerializerCache.GetOrAdd(obj.GetType(), t => new XmlSerializer(t));
+            string defaultNamespace = GetXmlNamespace(obj.GetType());
+            XmlSerializer xmlSerializer = _NamespacedSerializerCache.GetOrAdd(obj.GetType(), t => new XmlSerializer(t, GetXmlNamespace(t)));
 
             using (MemoryStream stream = new MemoryStream())
             {
@@ -189,7 +229,7 @@
                 using (XmlWriter writer = XmlWriter.Create(stream, settings))
                 {
                     XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
-                    ns.Add("", "http://s3.amazonaws.com/doc/2006-03-01/");
+                    ns.Add("", defaultNamespace);
                     xmlSerializer.Serialize(new XmlWriterExtended(writer), obj, ns);
                     byte[] bytes = stream.ToArray();
                     string ret = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
@@ -254,6 +294,13 @@
 
                 writer.WriteEndObject();
             }
+        }
+
+        private static string GetXmlNamespace(Type type)
+        {
+            if (type == typeof(Error)) return "";
+            if (type == typeof(BucketLoggingStatus)) return S3LoggingXmlNamespace;
+            return S3XmlNamespace;
         }
 
         private static XmlSerializer GetNamespaceAgnosticSerializer(Type type)

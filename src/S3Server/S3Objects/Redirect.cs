@@ -8,8 +8,6 @@
     [XmlRoot(ElementName = "Redirect", IsNullable = true)]
     public class Redirect
     {
-        // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
-
         #region Public-Members
 
         /// <summary>

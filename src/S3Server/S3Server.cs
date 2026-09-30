@@ -79,6 +79,14 @@
 
         #region Private-Members
 
+        private static readonly HashSet<string> _RequestOnlyDefaultHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Host",
+            "Accept",
+            "Accept-Language",
+            "Cache-Control"
+        };
+
         private string _Header = "[S3Server] ";
         private bool _Disposed = false;
 
@@ -108,6 +116,11 @@
                 {
                     string key = header.Key;
                     if (String.IsNullOrEmpty(key)) continue;
+
+                    // Host and Accept* are request headers, and a blanket Cache-Control would override the value
+                    // stored with each object, so none of them belong on every S3 response.
+                    if (!_Settings.PreserveWebserverDefaultHeaders && _RequestOnlyDefaultHeaders.Contains(key)) continue;
+
                     if (key.ToLower().Equals("accept-charset"))
                     {
                         updatedHeaders.Add("Accept-Charset", "utf8"); // Minio support
@@ -122,6 +135,13 @@
             }
 
             _Webserver = new Webserver(_Settings.Webserver, RequestHandler);
+
+            // The webserver adds a Host default header during construction, so filter again afterward.
+            if (!_Settings.PreserveWebserverDefaultHeaders)
+            {
+                RemoveRequestOnlyDefaultHeaders(_Settings.Webserver);
+                RemoveRequestOnlyDefaultHeaders(_Webserver.Settings);
+            }
         }
 
         #endregion
@@ -234,6 +254,12 @@
                     if (_Settings.Logging.S3Requests && _Settings.Logger != null)
                         _Settings.Logger(_Header + "S3 request: " + Environment.NewLine + SerializationHelper.SerializeJson(s3ctx.Request, true));
 
+                    if (!_Settings.RouteSuffixRangesToReadRange)
+                        s3ctx.Request.RouteSuffixRangeAsObjectRead();
+
+                    if (_Settings.ValidateSignaturesBeforePreRequestHandler)
+                        await ValidateSignatureAsync(s3ctx).ConfigureAwait(false);
+
                     if (_Settings.PreRequestHandler != null)
                     {
                         success = await _Settings.PreRequestHandler(s3ctx).ConfigureAwait(false);
@@ -244,99 +270,16 @@
                         }
                     }
 
-                    if (_Settings.EnableSignatures)
+                    if (!_Settings.ValidateSignaturesBeforePreRequestHandler)
+                        await ValidateSignatureAsync(s3ctx).ConfigureAwait(false);
+
+                    if (_Settings.AuthenticatedRequestHandler != null)
                     {
-                        if (Service.GetSecretKey != null)
+                        success = await _Settings.AuthenticatedRequestHandler(s3ctx).ConfigureAwait(false);
+                        if (success)
                         {
-                            if (!HasAuthenticationMaterial(s3ctx))
-                            {
-                                if (Service.IsAnonymousRequestAllowed != null
-                                    && await Service.IsAnonymousRequestAllowed(s3ctx).ConfigureAwait(false))
-                                {
-                                    _Settings.Logger?.Invoke(_Header + "anonymous request allowed without signature validation");
-                                }
-                                else
-                                {
-                                    _Settings.Logger?.Invoke(_Header + "unsigned request rejected");
-                                    throw new S3Exception(new Error(ErrorCode.AccessDenied));
-                                }
-                            }
-                            else
-                            {
-                                string secretKey = Service.GetSecretKey(s3ctx);
-                                if (String.IsNullOrEmpty(secretKey))
-                                {
-                                    _Settings.Logger?.Invoke(_Header + "unable to retrieve secret key for signature " + s3ctx.Request.Signature);
-                                    throw new S3Exception(new Error(ErrorCode.AccessDenied));
-                                }
-
-                                if (s3ctx.Request.SignatureVersion == S3SignatureVersion.Version2)
-                                {
-                                    ValidateV2Signature(s3ctx, secretKey);
-                                }
-                                else if (s3ctx.Request.SignatureVersion == S3SignatureVersion.Version4)
-                                {
-                                    string contentSha256 = null;
-                                    if (s3ctx.Http.Request.Headers != null)
-                                        contentSha256 = s3ctx.Http.Request.Headers["x-amz-content-sha256"];
-                                    V4PayloadHashEnum payloadHashMode = V4PayloadHashEnum.Signed;
-
-                                    if (!String.IsNullOrEmpty(contentSha256))
-                                    {
-                                        if (contentSha256.Equals("STREAMING-AWS4-HMAC-SHA256-PAYLOAD-TRAILER", StringComparison.Ordinal))
-                                            payloadHashMode = V4PayloadHashEnum.StreamingSignedTrailer;
-                                        else if (contentSha256.Equals("STREAMING-AWS4-HMAC-SHA256-PAYLOAD", StringComparison.Ordinal))
-                                            payloadHashMode = V4PayloadHashEnum.StreamingSigned;
-                                        else if (contentSha256.Equals("UNSIGNED-PAYLOAD", StringComparison.Ordinal))
-                                            payloadHashMode = V4PayloadHashEnum.Unsigned;
-                                    }
-
-                                    string timestamp = null;
-                                    if (s3ctx.Http.Request.Headers != null)
-                                        timestamp = s3ctx.Http.Request.Headers["x-amz-date"];
-                                    if (String.IsNullOrEmpty(timestamp))
-                                        timestamp = DateTime.UtcNow.ToString(Constants.AmazonTimestampFormatCompact);
-
-                                    object requestBody = null;
-                                    if (payloadHashMode == V4PayloadHashEnum.Signed)
-                                        requestBody = s3ctx.Http.Request.DataAsBytes;
-
-                                    string sigFullUrl = GetSignatureFullUrl(s3ctx);
-
-                                    V4SignatureResult result = new V4SignatureResult(
-                                        timestamp,
-                                        s3ctx.Http.Request.Method.ToString().ToUpper(),
-                                        sigFullUrl,
-                                        s3ctx.Request.AccessKey,
-                                        secretKey,
-                                        s3ctx.Request.Region,
-                                        "s3",
-                                        s3ctx.Http.Request.Headers,
-                                        s3ctx.Request.SignedHeaders,
-                                        requestBody,
-                                        payloadHashMode);
-
-                                    if (_Settings.Logging.SignatureV4Validation && _Settings.Logger != null)
-                                    {
-                                        _Settings.Logger(_Header + Environment.NewLine + result);
-                                        _Settings.Logger(_Header + "signature validation:"
-                                            + " provided=" + s3ctx.Request.Signature
-                                            + " expected=" + result.Signature
-                                            + " match=" + result.Signature.Equals(s3ctx.Request.Signature));
-                                    }
-
-                                    if (!result.Signature.Equals(s3ctx.Request.Signature))
-                                    {
-                                        _Settings.Logger?.Invoke(_Header + "invalid v4 signature '" + s3ctx.Request.Signature + "'");
-                                        throw new S3Exception(new Error(ErrorCode.SignatureDoesNotMatch));
-                                    }
-                                }
-                                else
-                                {
-                                    _Settings.Logger?.Invoke(_Header + "unknown signature version");
-                                    throw new S3Exception(new Error(ErrorCode.AccessDenied));
-                                }
-                            }
+                            await s3ctx.Response.Send().ConfigureAwait(false);
+                            return;
                         }
                     }
 
@@ -553,7 +496,10 @@
                             {
                                 try
                                 {
-                                    acp = SerializationHelper.DeserializeXml<AccessControlPolicy>(s3ctx.Request.DataAsString);
+                                    // Canned ACLs (x-amz-acl) and grant headers (x-amz-grant-*) arrive with no body; the policy is null.
+                                    string aclBody = s3ctx.Request.DataAsString;
+                                    if (!String.IsNullOrWhiteSpace(aclBody))
+                                        acp = SerializationHelper.DeserializeXml<AccessControlPolicy>(aclBody);
                                 }
                                 catch (InvalidOperationException ioe)
                                 {
@@ -871,6 +817,21 @@
 
                                 if (s3obj != null)
                                 {
+                                    bool isSuffixRange = s3ctx.Request.RangeStart == null && s3ctx.Request.RangeSuffixLength != null;
+                                    if (isSuffixRange)
+                                    {
+                                        if (s3obj.TotalSize == null)
+                                        {
+                                            _Settings.Logger?.Invoke(_Header + "Object.ReadRange did not set S3Object.TotalSize for suffix range; unable to compute Content-Range");
+                                            throw new S3Exception(new Error(ErrorCode.InternalError));
+                                        }
+
+                                        // RFC 9110 section 14.1.3: a zero-length suffix, or any suffix of an empty
+                                        // representation, is unsatisfiable.
+                                        if (s3obj.TotalSize.Value < 1 || s3obj.Size < 1 || s3obj.Size > s3obj.TotalSize.Value)
+                                            throw new S3Exception(new Error(ErrorCode.InvalidRange));
+                                    }
+
                                     if (!String.IsNullOrEmpty(s3obj.ETag)) s3ctx.Response.Headers.Add(Constants.HeaderETag, s3obj.ETag);
 
                                     s3ctx.Response.Headers.Add(Constants.HeaderLastModified, s3obj.LastModified.ToString(Constants.AmazonTimestampFormatVerbose, CultureInfo.InvariantCulture));
@@ -878,7 +839,14 @@
                                     s3ctx.Response.Headers.Add(Constants.HeaderAcceptRanges, "bytes");
                                     AddRestoreHeader(s3ctx.Response.Headers, s3obj.RestoreStatus);
 
-                                    if (s3ctx.Request.RangeStart != null)
+                                    if (isSuffixRange)
+                                    {
+                                        long totalSize = s3obj.TotalSize.Value;
+                                        long suffixStart = totalSize - s3obj.Size;
+                                        long suffixEnd = totalSize - 1;
+                                        s3ctx.Response.Headers.Add("Content-Range", "bytes " + suffixStart + "-" + suffixEnd + "/" + totalSize);
+                                    }
+                                    else if (s3ctx.Request.RangeStart != null)
                                     {
                                         long rangeEnd = s3ctx.Request.RangeEnd ?? (s3ctx.Request.RangeStart.Value + s3obj.Size - 1);
                                         // Emit the full object size as the Content-Range total when the callback supplies it
@@ -995,6 +963,32 @@
                             }
                             break;
 
+                        case S3RequestType.ObjectCopy:
+                            if (Object.Copy != null)
+                            {
+                                CopyObjectResult copyResult = await Object.Copy(s3ctx).ConfigureAwait(false);
+                                if (copyResult == null) copyResult = new CopyObjectResult();
+
+                                s3ctx.Response.StatusCode = 200;
+                                s3ctx.Response.ContentType = Constants.ContentTypeXml;
+                                await s3ctx.Response.Send(SerializationHelper.SerializeXml(copyResult)).ConfigureAwait(false);
+                                return;
+                            }
+                            break;
+
+                        case S3RequestType.ObjectUploadPartCopy:
+                            if (Object.UploadPartCopy != null)
+                            {
+                                CopyPartResult copyPartResult = await Object.UploadPartCopy(s3ctx).ConfigureAwait(false);
+                                if (copyPartResult == null) copyPartResult = new CopyPartResult();
+
+                                s3ctx.Response.StatusCode = 200;
+                                s3ctx.Response.ContentType = Constants.ContentTypeXml;
+                                await s3ctx.Response.Send(SerializationHelper.SerializeXml(copyPartResult)).ConfigureAwait(false);
+                                return;
+                            }
+                            break;
+
                         case S3RequestType.ObjectUploadPart:
                             if (Object.UploadPart != null)
                             {
@@ -1034,7 +1028,10 @@
                             {
                                 try
                                 {
-                                    acp = SerializationHelper.DeserializeXml<AccessControlPolicy>(s3ctx.Request.DataAsString);
+                                    // Canned ACLs (x-amz-acl) and grant headers (x-amz-grant-*) arrive with no body; the policy is null.
+                                    string aclBody = s3ctx.Request.DataAsString;
+                                    if (!String.IsNullOrWhiteSpace(aclBody))
+                                        acp = SerializationHelper.DeserializeXml<AccessControlPolicy>(aclBody);
                                 }
                                 catch (InvalidOperationException ioe)
                                 {
@@ -1154,7 +1151,13 @@
                 {
                     s3ctx.Response.StatusCode = s3e.HttpStatusCode;
                     s3ctx.Response.ContentType = Constants.ContentTypeXml;
-                    await s3ctx.Response.Send(s3e.Error).ConfigureAwait(false);
+                    await s3ctx.Response.Send(s3e.Error ?? new Error(ErrorCode.InternalError)).ConfigureAwait(false);
+                }
+                else
+                {
+                    // The request could not be parsed into an S3Context (for example, an invalid querystring value).
+                    // Answer with an S3 XML error directly so the client never sees the webserver's default HTML error page.
+                    await SendRawError(ctx, s3e.Error ?? new Error(ErrorCode.InternalError)).ConfigureAwait(false);
                 }
 
                 return;
@@ -1168,6 +1171,10 @@
                     s3ctx.Response.StatusCode = 500;
                     s3ctx.Response.ContentType = Constants.ContentTypeXml;
                     await s3ctx.Response.Send(S3Objects.ErrorCode.InternalError).ConfigureAwait(false);
+                }
+                else
+                {
+                    await SendRawError(ctx, new Error(ErrorCode.InternalError)).ConfigureAwait(false);
                 }
 
                 return;
@@ -1189,6 +1196,143 @@
                             _Settings.Logger?.Invoke(_Header + "post-request handler exception:" + Environment.NewLine + e.ToString());
                         }
                     }
+                }
+            }
+        }
+
+        private static void RemoveRequestOnlyDefaultHeaders(WebserverSettings settings)
+        {
+            if (settings == null || settings.Headers == null || settings.Headers.DefaultHeaders == null) return;
+
+            List<string> remove = new List<string>();
+            foreach (string key in settings.Headers.DefaultHeaders.Keys)
+            {
+                if (!String.IsNullOrEmpty(key) && _RequestOnlyDefaultHeaders.Contains(key)) remove.Add(key);
+            }
+
+            foreach (string key in remove) settings.Headers.DefaultHeaders.Remove(key);
+        }
+
+        private async Task SendRawError(HttpContextBase ctx, Error error)
+        {
+            try
+            {
+                if (ctx == null || ctx.Response == null || ctx.Response.ResponseSent) return;
+
+                byte[] bytes = Encoding.UTF8.GetBytes(SerializationHelper.SerializeXml(error));
+
+                ctx.Response.ChunkedTransfer = false;
+                ctx.Response.StatusCode = error.HttpStatusCode;
+                ctx.Response.ContentType = Constants.ContentTypeXml;
+                ctx.Response.ContentLength = bytes.Length;
+                if (ctx.Response.Headers != null && ctx.Response.Headers.Get("Server") == null)
+                    ctx.Response.Headers.Add("Server", "AmazonS3");
+
+                await ctx.Response.Send(bytes).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                _Settings.Logger?.Invoke(_Header + "unable to send error response:" + Environment.NewLine + e.ToString());
+            }
+        }
+
+        private async Task ValidateSignatureAsync(S3Context s3ctx)
+        {
+            if (!_Settings.EnableSignatures) return;
+
+            if (Service.GetSecretKey == null)
+            {
+                _Settings.Logger?.Invoke(_Header + "signature validation enabled but Service.GetSecretKey is not set; request rejected");
+                throw new S3Exception(new Error(ErrorCode.AccessDenied));
+            }
+
+            if (!HasAuthenticationMaterial(s3ctx))
+            {
+                if (Service.IsAnonymousRequestAllowed != null
+                    && await Service.IsAnonymousRequestAllowed(s3ctx).ConfigureAwait(false))
+                {
+                    _Settings.Logger?.Invoke(_Header + "anonymous request allowed without signature validation");
+                }
+                else
+                {
+                    _Settings.Logger?.Invoke(_Header + "unsigned request rejected");
+                    throw new S3Exception(new Error(ErrorCode.AccessDenied));
+                }
+            }
+            else
+            {
+                string secretKey = Service.GetSecretKey(s3ctx);
+                if (String.IsNullOrEmpty(secretKey))
+                {
+                    _Settings.Logger?.Invoke(_Header + "unable to retrieve secret key for signature " + s3ctx.Request.Signature);
+                    throw new S3Exception(new Error(ErrorCode.AccessDenied));
+                }
+
+                if (s3ctx.Request.SignatureVersion == S3SignatureVersion.Version2)
+                {
+                    ValidateV2Signature(s3ctx, secretKey);
+                }
+                else if (s3ctx.Request.SignatureVersion == S3SignatureVersion.Version4)
+                {
+                    string contentSha256 = null;
+                    if (s3ctx.Http.Request.Headers != null)
+                        contentSha256 = s3ctx.Http.Request.Headers["x-amz-content-sha256"];
+                    V4PayloadHashEnum payloadHashMode = V4PayloadHashEnum.Signed;
+
+                    if (!String.IsNullOrEmpty(contentSha256))
+                    {
+                        if (contentSha256.Equals("STREAMING-AWS4-HMAC-SHA256-PAYLOAD-TRAILER", StringComparison.Ordinal))
+                            payloadHashMode = V4PayloadHashEnum.StreamingSignedTrailer;
+                        else if (contentSha256.Equals("STREAMING-AWS4-HMAC-SHA256-PAYLOAD", StringComparison.Ordinal))
+                            payloadHashMode = V4PayloadHashEnum.StreamingSigned;
+                        else if (contentSha256.Equals("UNSIGNED-PAYLOAD", StringComparison.Ordinal))
+                            payloadHashMode = V4PayloadHashEnum.Unsigned;
+                    }
+
+                    string timestamp = null;
+                    if (s3ctx.Http.Request.Headers != null)
+                        timestamp = s3ctx.Http.Request.Headers["x-amz-date"];
+                    if (String.IsNullOrEmpty(timestamp))
+                        timestamp = DateTime.UtcNow.ToString(Constants.AmazonTimestampFormatCompact);
+
+                    object requestBody = null;
+                    if (payloadHashMode == V4PayloadHashEnum.Signed)
+                        requestBody = s3ctx.Http.Request.DataAsBytes;
+
+                    string sigFullUrl = GetSignatureFullUrl(s3ctx);
+
+                    V4SignatureResult result = new V4SignatureResult(
+                        timestamp,
+                        s3ctx.Http.Request.Method.ToString().ToUpper(),
+                        sigFullUrl,
+                        s3ctx.Request.AccessKey,
+                        secretKey,
+                        s3ctx.Request.Region,
+                        "s3",
+                        s3ctx.Http.Request.Headers,
+                        s3ctx.Request.SignedHeaders,
+                        requestBody,
+                        payloadHashMode);
+
+                    if (_Settings.Logging.SignatureV4Validation && _Settings.Logger != null)
+                    {
+                        _Settings.Logger(_Header + Environment.NewLine + result);
+                        _Settings.Logger(_Header + "signature validation:"
+                            + " provided=" + s3ctx.Request.Signature
+                            + " expected=" + result.Signature
+                            + " match=" + result.Signature.Equals(s3ctx.Request.Signature));
+                    }
+
+                    if (!result.Signature.Equals(s3ctx.Request.Signature))
+                    {
+                        _Settings.Logger?.Invoke(_Header + "invalid v4 signature '" + s3ctx.Request.Signature + "'");
+                        throw new S3Exception(new Error(ErrorCode.SignatureDoesNotMatch));
+                    }
+                }
+                else
+                {
+                    _Settings.Logger?.Invoke(_Header + "unknown signature version");
+                    throw new S3Exception(new Error(ErrorCode.AccessDenied));
                 }
             }
         }

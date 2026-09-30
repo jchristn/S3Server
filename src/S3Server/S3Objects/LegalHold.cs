@@ -10,8 +10,6 @@
     [XmlRoot(ElementName = "LegalHold", IsNullable = true)]
     public class LegalHold
     {
-        // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
-
         #region Public-Members
 
         /// <summary>

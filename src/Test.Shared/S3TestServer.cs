@@ -6,6 +6,7 @@ namespace Test.Shared
     using System.Net;
     using System.Net.Http;
     using System.Net.Sockets;
+    using System.Threading;
     using System.Threading.Tasks;
     using Amazon;
     using Amazon.Runtime;
@@ -97,6 +98,36 @@ namespace Test.Shared
         /// </summary>
         public SelectObjectContentRequest LastSelectRequest { get; private set; } = null;
 
+        /// <summary>
+        /// Number of times Object.Write was invoked.
+        /// </summary>
+        public int ObjectWriteCount => _ObjectWriteCount;
+
+        /// <summary>
+        /// Number of times Object.Read was invoked.
+        /// </summary>
+        public int ObjectReadCount => _ObjectReadCount;
+
+        /// <summary>
+        /// Number of times Object.ReadRange was invoked.
+        /// </summary>
+        public int ObjectReadRangeCount => _ObjectReadRangeCount;
+
+        /// <summary>
+        /// Number of times Object.UploadPart was invoked.
+        /// </summary>
+        public int ObjectUploadPartCount => _ObjectUploadPartCount;
+
+        /// <summary>
+        /// Number of times Bucket.WriteAcl or Object.WriteAcl was invoked.
+        /// </summary>
+        public int WriteAclCount => _WriteAclCount;
+
+        /// <summary>
+        /// Policy passed to the most recent Bucket.WriteAcl or Object.WriteAcl invocation.
+        /// </summary>
+        public AccessControlPolicy LastWriteAclPolicy { get; private set; } = null;
+
         #endregion
 
         #region Private-Members
@@ -106,6 +137,11 @@ namespace Test.Shared
         private Owner _Owner = new Owner("admin", "Administrator");
         private Grantee _Grantee = new Grantee("admin", "Administrator", null, "CanonicalUser", "admin@admin.com");
         private ConcurrentDictionary<string, RestoreStatus> _RestoreStatuses = new ConcurrentDictionary<string, RestoreStatus>(StringComparer.Ordinal);
+        private int _ObjectWriteCount = 0;
+        private int _ObjectReadCount = 0;
+        private int _ObjectReadRangeCount = 0;
+        private int _ObjectUploadPartCount = 0;
+        private int _WriteAclCount = 0;
 
         #endregion
 
@@ -348,7 +384,11 @@ namespace Test.Shared
                 return new AccessControlPolicy(_Owner, acl);
             };
 
-            Server.Bucket.WriteAcl = async (ctx, acp) => { };
+            Server.Bucket.WriteAcl = async (ctx, acp) =>
+            {
+                LastWriteAclPolicy = acp;
+                Interlocked.Increment(ref _WriteAclCount);
+            };
 
             Server.Bucket.ReadLocation = async (ctx) => new LocationConstraint("us-west-1");
 
@@ -439,7 +479,24 @@ namespace Test.Shared
 
         private void SetupObjectCallbacks()
         {
-            Server.Object.Write = async (ctx) => { };
+            Server.Object.Write = async (ctx) =>
+            {
+                Interlocked.Increment(ref _ObjectWriteCount);
+
+                // Consume the body as a real implementation would, so the response is never sent while the
+                // client is still uploading (which can surface as a connection reset and a transport-level retry).
+                await DrainRequestBody(ctx).ConfigureAwait(false);
+            };
+
+            Server.Object.Copy = async (ctx) =>
+            {
+                return new CopyObjectResult("9b2c3e7a8d1f4e6b5c2a1d8f7e4b3c2a", new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc));
+            };
+
+            Server.Object.UploadPartCopy = async (ctx) =>
+            {
+                return new CopyPartResult("1b2c3e7a8d1f4e6b5c2a1d8f7e4b3c2b", new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc));
+            };
 
             Server.Object.Exists = async (ctx) =>
             {
@@ -451,6 +508,8 @@ namespace Test.Shared
 
             Server.Object.Read = async (ctx) =>
             {
+                Interlocked.Increment(ref _ObjectReadCount);
+
                 if (ctx.Request.Key == "nonexistent-object-xyz.bin")
                     return null;
 
@@ -459,9 +518,23 @@ namespace Test.Shared
 
             Server.Object.ReadRange = async (ctx) =>
             {
+                Interlocked.Increment(ref _ObjectReadRangeCount);
+
                 S3Object obj = BuildObject(ctx.Request.Key);
                 string data = "hello";
-                string rangeData = data.Substring((int)ctx.Request.RangeStart, (int)((int)ctx.Request.RangeEnd - (int)ctx.Request.RangeStart + 1));
+                string rangeData;
+
+                if (ctx.Request.RangeSuffixLength != null)
+                {
+                    int suffix = (int)Math.Min(ctx.Request.RangeSuffixLength.Value, data.Length);
+                    rangeData = data.Substring(data.Length - suffix);
+                }
+                else
+                {
+                    int start = (int)ctx.Request.RangeStart.Value;
+                    int end = ctx.Request.RangeEnd != null ? (int)Math.Min(ctx.Request.RangeEnd.Value, data.Length - 1) : data.Length - 1;
+                    rangeData = data.Substring(start, end - start + 1);
+                }
 
                 obj.Size = rangeData.Length;
                 obj.TotalSize = data.Length;
@@ -478,7 +551,11 @@ namespace Test.Shared
                 return new AccessControlPolicy(_Owner, acl);
             };
 
-            Server.Object.WriteAcl = async (ctx, acp) => { };
+            Server.Object.WriteAcl = async (ctx, acp) =>
+            {
+                LastWriteAclPolicy = acp;
+                Interlocked.Increment(ref _WriteAclCount);
+            };
             Server.Object.DeleteAcl = async (ctx) => { };
 
             Server.Object.ReadTagging = async (ctx) =>
@@ -561,7 +638,10 @@ namespace Test.Shared
                     "upload-id-123");
             };
 
-            Server.Object.UploadPart = async (ctx) => { };
+            Server.Object.UploadPart = async (ctx) =>
+            {
+                Interlocked.Increment(ref _ObjectUploadPartCount);
+            };
 
             Server.Object.ReadParts = async (ctx) =>
             {
@@ -604,6 +684,22 @@ namespace Test.Shared
             {
                 LastSelectRequest = selectReq;
             };
+        }
+
+        private static async Task DrainRequestBody(S3Context ctx)
+        {
+            if (ctx.Request.Chunked)
+            {
+                while (true)
+                {
+                    WatsonWebserver.Core.Chunk chunk = await ctx.Request.ReadChunk().ConfigureAwait(false);
+                    if (chunk == null || chunk.IsFinal) break;
+                }
+            }
+            else if (ctx.Request.ContentLength > 0)
+            {
+                byte[] ignored = ctx.Request.DataAsBytes;
+            }
         }
 
         private bool IsArchivedKey(string key)

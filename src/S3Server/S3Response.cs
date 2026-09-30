@@ -262,12 +262,19 @@
 
         /// <summary>
         /// Send an error response to the requestor and close the connection.
+        /// An error with code NotModified is sent as HTTP 304 with headers only (no body and no Content-Type), as Amazon S3 does;
+        /// headers already added to Headers (for example ETag and Last-Modified) are preserved.
         /// </summary>
-        /// <param name="error">Error.</param>
+        /// <param name="error">Error.  Cannot be null.</param>
         /// <returns>True if successful.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if error is null.</exception>
         public async Task<bool> Send(Error error)
         {
+            if (error == null) throw new ArgumentNullException(nameof(error));
+
             ChunkedTransfer = false;
+            if (error.Code == ErrorCode.NotModified) return await SendNotModified().ConfigureAwait(false);
+
             PopulateErrorIdentifiers(error);
 
             byte[] bytes = Encoding.UTF8.GetBytes(SerializationHelper.SerializeXml(error));
@@ -288,12 +295,14 @@
 
         /// <summary>
         /// Send an error response to the requestor and close the connection.
+        /// ErrorCode.NotModified is sent as HTTP 304 with headers only (no body and no Content-Type), as Amazon S3 does.
         /// </summary>
         /// <param name="error">ErrorCode.</param>
         /// <returns>True if successful.</returns>
         public async Task<bool> Send(ErrorCode error)
         {
             ChunkedTransfer = false;
+            if (error == ErrorCode.NotModified) return await SendNotModified().ConfigureAwait(false);
 
             Error errorBody = new Error(error);
             PopulateErrorIdentifiers(errorBody);
@@ -344,6 +353,19 @@
             if (Headers.Get("Date") != null) Headers.Remove("Date");
 
             Headers.Add("Date", DateTime.UtcNow.ToString(Constants.AmazonTimestampFormatVerbose, CultureInfo.InvariantCulture));
+        }
+
+        private async Task<bool> SendNotModified()
+        {
+            StatusCode = 304;
+            ContentType = null;
+            _HttpResponse.ContentLength = 0;
+
+            if (Headers != null && Headers.Get("Content-Type") != null) Headers.Remove("Content-Type");
+
+            SetResponseHeaders();
+
+            return await _HttpResponse.Send().ConfigureAwait(false);
         }
 
         private void PopulateErrorIdentifiers(Error error)

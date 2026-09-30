@@ -251,6 +251,18 @@
         /// </summary>
         [EnumMember(Value = "ObjectWriteTags")]
         ObjectWriteTags,
+        /// <summary>
+        /// Copy an object (PUT on an object key carrying the x-amz-copy-source header, without uploadId).
+        /// Routed to Object.Copy.  Never routed to Object.Write.
+        /// </summary>
+        [EnumMember(Value = "ObjectCopy")]
+        ObjectCopy,
+        /// <summary>
+        /// Upload a part by copying from an existing object (PUT with partNumber, uploadId, and x-amz-copy-source).
+        /// Routed to Object.UploadPartCopy.  Never routed to Object.UploadPart.
+        /// </summary>
+        [EnumMember(Value = "ObjectUploadPartCopy")]
+        ObjectUploadPartCopy,
 
         #endregion
     }

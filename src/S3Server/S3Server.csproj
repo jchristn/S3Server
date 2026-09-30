@@ -2,13 +2,13 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.1;net8.0;net10.0</TargetFrameworks>
-		<Version>7.3.2</Version>
+		<Version>7.4.0</Version>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Authors>Joel Christner</Authors>
 		<Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
 		<Copyright>(c)2026 Joel Christner</Copyright>
-		<PackageReleaseNotes>Dependency refresh: upgraded to Watson 7.1.0 and updated other dependencies to their latest stable versions. Expanded automated test coverage with additional positive and negative cases. No public API changes.</PackageReleaseNotes>
+		<PackageReleaseNotes>Security and protocol fixes: AuthenticatedRequestHandler runs after signature validation; canned ACL writes reach WriteAcl with a null policy; signature checks fail closed if GetSecretKey is cleared; CopyObject and UploadPartCopy route to new Object.Copy and Object.UploadPartCopy callbacks instead of Object.Write; parse failures return S3 XML errors; malformed Range headers are ignored and suffix ranges route to ReadRange; S3 XML namespace on responses; 304 Not Modified support; request-only default headers removed. See CHANGELOG.md for behavior changes and opt-out settings.</PackageReleaseNotes>
 		<PackageTags>aws s3 storage rest interface server less3 minio ceph view</PackageTags>
 		<PackageLicenseUrl></PackageLicenseUrl>
 		<PackageProjectUrl>https://github.com/jchristn/S3Server</PackageProjectUrl>

@@ -20,44 +20,44 @@ namespace Test.Shared.Tests
         /// <param name="token">Cancellation token.</param>
         public static async Task RunAllAsync(TestRunner runner, S3TestServer server, CancellationToken token = default)
         {
-            await runner.RunTestAsync("Invalid max-keys keeps default parser value", async (ct) =>
+            await runner.RunTestAsync("Non-numeric max-keys returns InvalidArgument", async (ct) =>
             {
                 server.ClearObservedRequests();
                 HttpResponseMessage response = await server.HttpClient.GetAsync(server.BaseUrl + "/" + server.Bucket + "?max-keys=not-a-number", ct).ConfigureAwait(false);
-                AssertHelper.StatusCodeEquals(HttpStatusCode.OK, response, "invalid max-keys request");
+                AssertHelper.StatusCodeEquals(HttpStatusCode.BadRequest, response, "invalid max-keys request");
 
-                S3RequestObservation observed = RequireLastObservation(server);
-                AssertHelper.AreEqual(1000, observed.MaxKeys, "default max keys");
+                string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                AssertHelper.StringContains(body, "<Code>InvalidArgument</Code>", "error code");
+                AssertHelper.IsNull(server.LastObservedRequest, "request never reached routing");
             }, token).ConfigureAwait(false);
 
-            await runner.RunTestAsync("Negative max-keys fails closed", async (ct) =>
+            await runner.RunTestAsync("Negative max-keys returns InvalidArgument", async (ct) =>
             {
-                await AssertRejectedOrDisconnected(async () =>
-                {
-                    return await server.HttpClient.GetAsync(server.BaseUrl + "/" + server.Bucket + "?max-keys=-1", ct).ConfigureAwait(false);
-                }, "negative max-keys").ConfigureAwait(false);
+                HttpResponseMessage response = await server.HttpClient.GetAsync(server.BaseUrl + "/" + server.Bucket + "?max-keys=-1", ct).ConfigureAwait(false);
+                AssertHelper.StatusCodeEquals(HttpStatusCode.BadRequest, response, "negative max-keys");
+
+                string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                AssertHelper.StringContains(body, "<Code>InvalidArgument</Code>", "error code");
             }, token).ConfigureAwait(false);
 
-            await runner.RunTestAsync("Malformed range header fails closed", async (ct) =>
+            await runner.RunTestAsync("Malformed range header is ignored and the full object is served", async (ct) =>
             {
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, server.BaseUrl + "/" + server.Bucket + "/test-object.txt");
                 request.Headers.TryAddWithoutValidation("Range", "bytes=abc-def");
 
-                await AssertRejectedOrDisconnected(async () =>
-                {
-                    return await server.HttpClient.SendAsync(request, ct).ConfigureAwait(false);
-                }, "malformed range").ConfigureAwait(false);
+                HttpResponseMessage response = await server.HttpClient.SendAsync(request, ct).ConfigureAwait(false);
+                AssertHelper.StatusCodeEquals(HttpStatusCode.OK, response, "malformed range");
+                AssertHelper.AreEqual("hello", await response.Content.ReadAsStringAsync().ConfigureAwait(false), "full body");
             }, token).ConfigureAwait(false);
 
-            await runner.RunTestAsync("Inverted range header fails closed", async (ct) =>
+            await runner.RunTestAsync("Inverted range header is ignored and the full object is served", async (ct) =>
             {
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, server.BaseUrl + "/" + server.Bucket + "/test-object.txt");
                 request.Headers.TryAddWithoutValidation("Range", "bytes=4-1");
 
-                await AssertRejectedOrDisconnected(async () =>
-                {
-                    return await server.HttpClient.SendAsync(request, ct).ConfigureAwait(false);
-                }, "inverted range").ConfigureAwait(false);
+                HttpResponseMessage response = await server.HttpClient.SendAsync(request, ct).ConfigureAwait(false);
+                AssertHelper.StatusCodeEquals(HttpStatusCode.OK, response, "inverted range");
+                AssertHelper.AreEqual("hello", await response.Content.ReadAsStringAsync().ConfigureAwait(false), "full body");
             }, token).ConfigureAwait(false);
 
             await runner.RunTestAsync("Oversized decoded content length is rejected", async (ct) =>
@@ -93,13 +93,10 @@ namespace Test.Shared.Tests
 
             await runner.RunTestAsync("Server remains usable after adversarial parse failure", async (ct) =>
             {
-                HttpRequestMessage bad = new HttpRequestMessage(HttpMethod.Get, server.BaseUrl + "/" + server.Bucket + "/test-object.txt");
-                bad.Headers.TryAddWithoutValidation("Range", "bytes=nope");
-
                 await AssertRejectedOrDisconnected(async () =>
                 {
-                    return await server.HttpClient.SendAsync(bad, ct).ConfigureAwait(false);
-                }, "bad range setup").ConfigureAwait(false);
+                    return await server.HttpClient.GetAsync(server.BaseUrl + "/" + server.Bucket + "?max-parts=nope", ct).ConfigureAwait(false);
+                }, "bad query setup").ConfigureAwait(false);
 
                 HttpResponseMessage response = await server.HttpClient.GetAsync(server.BaseUrl + "/", ct).ConfigureAwait(false);
                 AssertHelper.StatusCodeEquals(HttpStatusCode.OK, response, "post-failure health check");

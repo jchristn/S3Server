@@ -59,7 +59,7 @@ dotnet pack src/S3Server/S3Server.csproj -c Release
    - Contains `S3Request`: Parsed S3 request details
    - Contains `S3Response`: Response object for sending data back
    - Contains `Http`: Underlying HTTP context from WatsonWebserver
-   - Contains `Metadata`: User-defined metadata (useful for PreRequestHandler auth)
+   - Contains `Metadata`: User-defined metadata (populate in PreRequestHandler for GetSecretKey, or in AuthenticatedRequestHandler)
 
 3. **S3Request** (S3Request.cs:16) - Parsed S3 request information
    - Determines `RequestType` (bucket vs object operation)
@@ -77,9 +77,12 @@ dotnet pack src/S3Server/S3Server.csproj -c Release
 ```
 HTTP Request → S3Server.RequestHandler()
   → S3Context created (wraps HTTP context)
-  → S3Request parses request (determines type, style, bucket, key)
-  → PreRequestHandler (optional - for auth/logging)
-  → Signature validation (if enabled)
+  → S3Request parses request (determines type, style, bucket, key, copy source, ranges, conditionals)
+      (a parse failure, e.g. max-keys=-1, returns an S3 XML error written directly to the Watson context)
+  → PreRequestHandler (optional - logging/metadata; sees UNAUTHENTICATED input by default)
+  → Signature validation (if enabled; runs before PreRequestHandler when
+      ValidateSignaturesBeforePreRequestHandler = true)
+  → AuthenticatedRequestHandler (optional - only for requests that passed validation)
   → Switch on RequestType → Invoke appropriate callback
   → Callback returns data or throws S3Exception
   → S3Response sends HTTP response
@@ -105,7 +108,11 @@ Settings must be configured BEFORE starting the server:
 - `EnableSignatures`: Enable AWS signature V4 validation
 - `UseTcpServer`: Deprecated in v7.0. Watson now uses TCP natively. Retained for backward compatibility but has no effect.
 - `OperationLimits`: Size limits (e.g., MaxPutObjectSize)
-- `PreRequestHandler`: Called before routing (return true to terminate)
+- `PreRequestHandler`: Called before routing (return true to terminate). Runs BEFORE signature validation by default, so it must not answer or disclose data
+- `AuthenticatedRequestHandler`: Called after signature validation and before routing (return true to terminate)
+- `ValidateSignaturesBeforePreRequestHandler`: Run signature validation before PreRequestHandler (default false)
+- `RouteSuffixRangesToReadRange`: Route `bytes=-N` to Object.ReadRange (default true)
+- `PreserveWebserverDefaultHeaders`: Keep Watson's Host/Accept/Accept-Language/Cache-Control default response headers (default false)
 - `DefaultRequestHandler`: Called when no callback matches
 - `PostRequestHandler`: Called after response sent
 
@@ -200,11 +207,14 @@ src/
 
 - This library provides the HTTP interface and request parsing ONLY
 - Storage logic (persisting buckets/objects) must be implemented in callbacks
-- The library returns generic 400 errors if no callback is set for a request type
+- The library returns NotImplemented (501) if no callback is set for a recognized request type, and InvalidRequest (400) for unrecognized requests
+- CopyObject and UploadPartCopy (PUT with `x-amz-copy-source`) route to `Object.Copy` / `Object.UploadPartCopy`, never to `Object.Write` / `Object.UploadPart`
+- Unparseable Range headers are ignored (full object via Object.Read); suffix ranges set `RangeSuffixLength` and require `S3Object.TotalSize`
+- `WriteAcl` callbacks receive a null policy for canned ACLs (empty body)
 - All XML serialization/deserialization is handled automatically
 - The library uses WatsonWebserver's HttpContextBase internally
 - S3Request extracts bucket/key from either path-style or virtual-hosted URLs
-- The main request handler (S3Server.cs:181) is a 800+ line switch statement routing requests
+- The main request handler (`S3Server.RequestHandler`) is a large switch statement routing requests; signature validation lives in `ValidateSignatureAsync`
 
 ## XML Handling
 
@@ -213,6 +223,9 @@ Request/response bodies use XML serialization via SerializationHelper:
 - Callbacks return S3Objects, which are serialized to XML automatically
 - Invalid XML throws InvalidOperationException, caught and returns MalformedXML error
 - All S3Objects models are in `S3Objects/` directory
+- Responses are serialized in the S3 namespace (`http://s3.amazonaws.com/doc/2006-03-01/`); a root `Error` has no namespace and `BucketLoggingStatus` uses `http://doc.s3.amazonaws.com/2006-03-01`
+- Deserialization tries bare XML, then the S3 namespace, then a namespace-agnostic reader
+- `ListVersionsResult` serializes through `XmlEntries` (a `ListVersionsEntryCollection`), because XmlSerializer cannot map two members to the same `Version` element name
 
 ## Size Limits
 
@@ -221,6 +234,14 @@ OperationLimitsSettings.MaxPutObjectSize controls maximum object size for PutObj
 ## Chunked Transfer Encoding
 
 When handling chunked uploads (detected via `ctx.Request.Chunked` property), use `ctx.Request.ReadChunk()` to read chunks iteratively. Each chunk has a `Length`, `Data`, and `IsFinal` property. Continue reading until `IsFinal` is true. This is commonly used by AWS CLI for streaming uploads.
+
+## Recent Changes in v7.4.0
+
+- AuthenticatedRequestHandler, ValidateSignaturesBeforePreRequestHandler, RouteSuffixRangesToReadRange, PreserveWebserverDefaultHeaders settings
+- Object.Copy / Object.UploadPartCopy callbacks with CopyObjectResult / CopyPartResult
+- ErrorCode.NotModified (304, headers only); conditional request headers parsed into S3Request
+- S3 XML namespace on responses; DeleteResult without nil values; ListBucketResult NextMarker/StartAfter/ContinuationToken; ListVersionsResult.Entries
+- See CHANGELOG.md for the full list and behavior changes
 
 ## Recent Changes in v6.0.x
 

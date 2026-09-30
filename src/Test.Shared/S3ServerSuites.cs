@@ -56,7 +56,9 @@ namespace Test.Shared
                     new RunnerSuiteSource("RequestStyle", "Request style compatibility", RequestStyleCompatibilityTests.RunAllAsync),
                     new RunnerSuiteSource("AdversarialHttp", "Adversarial HTTP", AdversarialHttpTests.RunAllAsync),
                     new RunnerSuiteSource("Fuzz", "Fuzz and generated inputs", FuzzTests.RunAllAsync),
-                    new RunnerSuiteSource("Lifecycle", "Lifecycle and concurrency", LifecycleTests.RunAllAsync)));
+                    new RunnerSuiteSource("Lifecycle", "Lifecycle and concurrency", LifecycleTests.RunAllAsync),
+                    new RunnerSuiteSource("RequestParsingFixes", "Request parsing fixes", RequestParsingFixTests.RunAllAsync),
+                    new RunnerSuiteSource("ResponseFixes", "Response fixes", ResponseFixTests.RunAllAsync)));
         }
 
         /// <summary>
@@ -74,7 +76,8 @@ namespace Test.Shared
                     suiteId,
                     new RunnerSuiteSource("CanonicalSignatureFixtures", "Canonical signature fixtures", CanonicalSignatureFixtureTests.RunAllAsync),
                     new RunnerSuiteSource("SignatureV4", "Signature V4", SignatureValidationTests.RunAllAsync, true),
-                    new RunnerSuiteSource("SignatureV2", "Signature V2", SignatureV2ValidationTests.RunAllAsync, true, true)));
+                    new RunnerSuiteSource("SignatureV2", "Signature V2", SignatureV2ValidationTests.RunAllAsync, true, true),
+                    new RunnerSuiteSource("RequestPipeline", "Request pipeline", RequestPipelineTests.RunAllAsync, true)));
         }
 
         /// <summary>
@@ -92,7 +95,8 @@ namespace Test.Shared
                 cases: BuildRunnerCases(
                     suiteId,
                     new RunnerOnlySource("Serialization", "Serialization", SerializationTests.RunAllAsync),
-                    new RunnerOnlySource("DataModel", "Data model", DataModelTests.RunAllAsync)));
+                    new RunnerOnlySource("DataModel", "Data model", DataModelTests.RunAllAsync),
+                    new RunnerOnlySource("ResponseSerializationFixes", "Response serialization fixes", ResponseSerializationFixTests.RunAllAsync)));
         }
 
         /// <summary>

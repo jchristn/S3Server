@@ -9,32 +9,33 @@
     [XmlRoot(ElementName = "Deleted", IsNullable = true)]
     public class Deleted
     {
-        // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
-
         #region Public-Members
 
         /// <summary>
         /// Object key.
         /// </summary>
-        [XmlElement(ElementName = "Key", IsNullable = true)]
+        [XmlElement(ElementName = "Key", IsNullable = false)]
         public string Key { get; set; } = null;
 
         /// <summary>
         /// The version identifier for the resource.
+        /// Null (the default) or empty omits the element, as Amazon S3 does for unversioned deletes.
         /// </summary>
-        [XmlElement(ElementName = "VersionId", IsNullable = true)]
+        [XmlElement(ElementName = "VersionId", IsNullable = false)]
         public string VersionId { get; set; } = null;
 
         /// <summary>
         /// Indicates if the key represents a delete marker for the resource.
+        /// The element is only serialized when the value is true.  Default is null.
         /// </summary>
-        [XmlElement(ElementName = "DeleteMarker", IsNullable = true)]
-        public bool? DeleteMarker { get; set; } = false;
+        [XmlElement(ElementName = "DeleteMarker")]
+        public bool? DeleteMarker { get; set; } = null;
 
         /// <summary>
         /// The version ID associated with the delete marker.
+        /// Null (the default) or empty omits the element.
         /// </summary>
-        [XmlElement(ElementName = "DeleteMarkerVersionId", IsNullable = true)]
+        [XmlElement(ElementName = "DeleteMarkerVersionId", IsNullable = false)]
         public string DeleteMarkerVersionId { get; set; } = null;
 
         #endregion
@@ -73,6 +74,33 @@
         #endregion
 
         #region Public-Methods
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeVersionId()
+        {
+            return !String.IsNullOrEmpty(VersionId);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeDeleteMarker()
+        {
+            return DeleteMarker == true;
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeDeleteMarkerVersionId()
+        {
+            return !String.IsNullOrEmpty(DeleteMarkerVersionId);
+        }
 
         #endregion
 

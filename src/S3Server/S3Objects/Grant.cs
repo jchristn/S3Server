@@ -8,8 +8,6 @@
     [XmlRoot(ElementName = "Grant")]
     public class Grant
     {
-        // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
-
         #region Public-Members
 
         /// <summary>

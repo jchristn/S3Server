@@ -1,13 +1,15 @@
 ﻿namespace S3ServerLibrary
 {
-    using PrettyId;
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
+    using System.Linq;
     using System.Net;
     using System.Text.Json.Serialization;
-
     using System.Threading.Tasks;
+    using PrettyId;
+    using S3ServerLibrary.S3Objects;
     using WatsonWebserver.Core;
 
     /// <summary>
@@ -253,9 +255,149 @@
         }
 
         /// <summary>
+        /// Suffix length from a suffix Range header (<c>bytes=-N</c>), meaning the last N bytes of the object.
+        /// When set, RangeStart and RangeEnd are null.  Null when the Range header is absent, unparseable, or not a suffix range.
+        /// Minimum value is 0.
+        /// </summary>
+        public long? RangeSuffixLength
+        {
+            get
+            {
+                return _RangeSuffixLength;
+            }
+            set
+            {
+                if (value != null && value.Value < 0)
+                    throw new ArgumentOutOfRangeException(nameof(RangeSuffixLength));
+                _RangeSuffixLength = value;
+            }
+        }
+
+        /// <summary>
         /// Continuation token.
         /// </summary>
         public string ContinuationToken { get; set; } = null;
+
+        /// <summary>
+        /// Start-after key from a ListObjectsV2 request (the <c>start-after</c> querystring parameter), URL-decoded.
+        /// Null when not supplied.
+        /// </summary>
+        public string StartAfter { get; set; } = null;
+
+        /// <summary>
+        /// Indicates whether a ListObjectsV2 request asked for owner information (<c>fetch-owner=true</c>).
+        /// Default is false.
+        /// </summary>
+        public bool FetchOwner { get; set; } = false;
+
+        /// <summary>
+        /// Source bucket parsed from the x-amz-copy-source header, URL-decoded.
+        /// Null unless the request is a copy (ObjectCopy or ObjectUploadPartCopy).
+        /// </summary>
+        public string CopySourceBucket { get; set; } = null;
+
+        /// <summary>
+        /// Source object key parsed from the x-amz-copy-source header, URL-decoded.
+        /// Null unless the request is a copy (ObjectCopy or ObjectUploadPartCopy).
+        /// </summary>
+        public string CopySourceKey { get; set; } = null;
+
+        /// <summary>
+        /// Source version ID parsed from the <c>versionId</c> parameter of the x-amz-copy-source header.
+        /// Null when the header does not name a version.
+        /// </summary>
+        public string CopySourceVersionId { get; set; } = null;
+
+        /// <summary>
+        /// First byte of the source range from the x-amz-copy-source-range header (UploadPartCopy).
+        /// Null when the header is absent.  Minimum value is 0.
+        /// </summary>
+        public long? CopySourceRangeStart
+        {
+            get
+            {
+                return _CopySourceRangeStart;
+            }
+            set
+            {
+                if (value != null && value.Value < 0)
+                    throw new ArgumentOutOfRangeException(nameof(CopySourceRangeStart));
+                _CopySourceRangeStart = value;
+            }
+        }
+
+        /// <summary>
+        /// Last byte (inclusive) of the source range from the x-amz-copy-source-range header (UploadPartCopy).
+        /// Null when the header is absent.  Minimum value is 0.
+        /// </summary>
+        public long? CopySourceRangeEnd
+        {
+            get
+            {
+                return _CopySourceRangeEnd;
+            }
+            set
+            {
+                if (value != null && value.Value < 0)
+                    throw new ArgumentOutOfRangeException(nameof(CopySourceRangeEnd));
+                _CopySourceRangeEnd = value;
+            }
+        }
+
+        /// <summary>
+        /// Entity tags from the If-Match header, exactly as sent (quotes and any <c>W/</c> prefix preserved), or a single <c>*</c>.
+        /// Null when the header is absent.
+        /// Evaluation is the responsibility of the callback.  Per RFC 9110 section 13.2.2, evaluate in this order:
+        /// If-Match (failure: 412 PreconditionFailed), then If-Unmodified-Since only when If-Match is absent (failure: 412),
+        /// then If-None-Match (failure: 304 NotModified for GET and HEAD, otherwise 412),
+        /// then If-Modified-Since only when If-None-Match is absent and the method is GET or HEAD (failure: 304 NotModified).
+        /// If-Match uses strong comparison; If-None-Match uses weak comparison.
+        /// </summary>
+        public List<string> IfMatch { get; set; } = null;
+
+        /// <summary>
+        /// Entity tags from the If-None-Match header, exactly as sent (quotes and any <c>W/</c> prefix preserved), or a single <c>*</c>.
+        /// Null when the header is absent.  See IfMatch for the evaluation order.
+        /// </summary>
+        public List<string> IfNoneMatch { get; set; } = null;
+
+        /// <summary>
+        /// Timestamp (UTC) from the If-Modified-Since header.
+        /// Null when the header is absent or not a valid HTTP date (RFC 9110 requires an invalid date to be ignored).
+        /// See IfMatch for the evaluation order.
+        /// </summary>
+        public DateTime? IfModifiedSince { get; set; } = null;
+
+        /// <summary>
+        /// Timestamp (UTC) from the If-Unmodified-Since header.
+        /// Null when the header is absent or not a valid HTTP date (RFC 9110 requires an invalid date to be ignored).
+        /// See IfMatch for the evaluation order.
+        /// </summary>
+        public DateTime? IfUnmodifiedSince { get; set; } = null;
+
+        /// <summary>
+        /// Entity tags from the x-amz-copy-source-if-match header.  Null when absent.
+        /// Applies to the copy source.  A failed condition should be answered with 412 PreconditionFailed.
+        /// </summary>
+        public List<string> CopySourceIfMatch { get; set; } = null;
+
+        /// <summary>
+        /// Entity tags from the x-amz-copy-source-if-none-match header.  Null when absent.
+        /// Applies to the copy source.  A failed condition should be answered with 412 PreconditionFailed.
+        /// </summary>
+        public List<string> CopySourceIfNoneMatch { get; set; } = null;
+
+        /// <summary>
+        /// Timestamp (UTC) from the x-amz-copy-source-if-modified-since header.  Null when absent or not a valid HTTP date.
+        /// Applies to the copy source.  A failed condition should be answered with 412 PreconditionFailed.
+        /// </summary>
+        public DateTime? CopySourceIfModifiedSince { get; set; } = null;
+
+        /// <summary>
+        /// Timestamp (UTC) from the x-amz-copy-source-if-unmodified-since header.  Null when absent or not a valid HTTP date.
+        /// Applies to the copy source.  A failed condition should be answered with 412 PreconditionFailed.
+        /// </summary>
+        public DateTime? CopySourceIfUnmodifiedSince { get; set; } = null;
 
         /// <summary>
         /// Indicates if the request is a service request.
@@ -332,7 +474,8 @@
                     || RequestType == S3RequestType.ObjectWriteAcl
                     || RequestType == S3RequestType.ObjectWriteLegalHold
                     || RequestType == S3RequestType.ObjectWriteRetention
-                    || RequestType == S3RequestType.ObjectWriteTags)
+                    || RequestType == S3RequestType.ObjectWriteTags
+                    || RequestType == S3RequestType.ObjectCopy)
                 {
                     return true;
                 }
@@ -356,7 +499,8 @@
                     || RequestType == S3RequestType.ObjectCreateMultipartUpload
                     || RequestType == S3RequestType.ObjectDeleteMultiple
                     || RequestType == S3RequestType.ObjectReadParts
-                    || RequestType == S3RequestType.ObjectUploadPart)
+                    || RequestType == S3RequestType.ObjectUploadPart
+                    || RequestType == S3RequestType.ObjectUploadPartCopy)
                 {
                     return true;
                 }
@@ -416,6 +560,7 @@
                     case S3RequestType.ObjectDeleteTags:
                     case S3RequestType.ObjectRestore:
                     case S3RequestType.ObjectWrite:
+                    case S3RequestType.ObjectCopy:
                     case S3RequestType.ObjectWriteLegalHold:
                     case S3RequestType.ObjectWriteRetention:
                     case S3RequestType.ObjectWriteTags:
@@ -503,6 +648,9 @@
         private int _PartNumberMarker = 1;
         private long? _RangeStart = null;
         private long? _RangeEnd = null;
+        private long? _RangeSuffixLength = null;
+        private long? _CopySourceRangeStart = null;
+        private long? _CopySourceRangeEnd = null;
 
         private Func<string, string> _FindMatchingBaseDomain = null;
 
@@ -591,10 +739,12 @@
         }
 
         /// <summary>
-        /// Retrieve a querystring value.
+        /// Retrieve a querystring value, URL-decoded (for example, <c>a%2Fb%20c</c> is returned as <c>a/b c</c>).
+        /// Use this method rather than reading <c>ctx.Http.Request.Query.Elements</c>, which holds the raw, percent-encoded values.
         /// </summary>
-        /// <param name="key">Key.</param>
-        /// <returns>Value.</returns>
+        /// <param name="key">Key.  Cannot be null or empty.</param>
+        /// <returns>Decoded value, or null if the key is not present.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if key is null or empty.</exception>
         public string RetrieveQueryValue(string key)
         {
             if (String.IsNullOrEmpty(key)) throw new ArgumentNullException(nameof(key));
@@ -643,7 +793,19 @@
             if (String.IsNullOrEmpty(stringValue))
                 return false;
 
-            return Int32.TryParse(stringValue, out value);
+            if (!Int32.TryParse(stringValue, NumberStyles.None, CultureInfo.InvariantCulture, out value))
+            {
+                string name = keys[0];
+                if (_HttpRequest != null && _HttpRequest.Query != null && _HttpRequest.Query.Elements != null)
+                {
+                    string sent = _HttpRequest.Query.Elements.AllKeys.FirstOrDefault(k => k != null && keys.Any(a => a.Equals(k, StringComparison.OrdinalIgnoreCase)));
+                    if (!String.IsNullOrEmpty(sent)) name = sent;
+                }
+
+                throw InvalidArgument("Querystring parameter '" + name + "' must be a non-negative integer; received '" + stringValue + "'.");
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -684,6 +846,8 @@
             {
                 AccessKey = RetrieveFirstQueryValue("awsaccesskeyid", "AWSAccessKeyId");
                 ContinuationToken = RetrieveQueryValue("continuation-token");
+                StartAfter = RetrieveQueryValue("start-after");
+                FetchOwner = String.Equals(RetrieveQueryValue("fetch-owner"), "true", StringComparison.OrdinalIgnoreCase);
                 Delimiter = RetrieveQueryValue("delimiter");
                 Expires = RetrieveFirstQueryValue("expires", "Expires");
                 Marker = RetrieveQueryValue("marker");
@@ -741,12 +905,39 @@
                     {
                         long? start = null;
                         long? end = null;
-                        ParseRangeHeader(rangeHeaderValue, out start, out end);
+                        long? suffixLength = null;
 
-                        RangeStart = start;
-                        RangeEnd = end;
+                        if (TryParseRangeHeader(rangeHeaderValue, out start, out end, out suffixLength))
+                        {
+                            RangeStart = start;
+                            RangeEnd = end;
+                            RangeSuffixLength = suffixLength;
+                        }
+                        else
+                        {
+                            // RFC 9110 section 14.2: a server may ignore a Range header it cannot or will not satisfy.
+                            // Amazon S3 serves the full object in this case, so the request routes as ObjectRead.
+                            _Logger?.Invoke(_Header + "ignoring unsupported or malformed Range header: " + rangeHeaderValue);
+                        }
                     }
                 }
+
+                if (_HttpRequest.Method == HttpMethod.PUT && HeaderExists("x-amz-copy-source"))
+                {
+                    ParseCopySourceHeader(RetrieveHeaderValue("x-amz-copy-source"));
+
+                    if (HeaderExists("x-amz-copy-source-range"))
+                        ParseCopySourceRangeHeader(RetrieveHeaderValue("x-amz-copy-source-range"));
+                }
+
+                IfMatch = ConditionalHeaderParser.ParseEntityTagList(RetrieveHeaderValueIfExists("if-match"));
+                IfNoneMatch = ConditionalHeaderParser.ParseEntityTagList(RetrieveHeaderValueIfExists("if-none-match"));
+                IfModifiedSince = ConditionalHeaderParser.ParseHttpDate(RetrieveHeaderValueIfExists("if-modified-since"));
+                IfUnmodifiedSince = ConditionalHeaderParser.ParseHttpDate(RetrieveHeaderValueIfExists("if-unmodified-since"));
+                CopySourceIfMatch = ConditionalHeaderParser.ParseEntityTagList(RetrieveHeaderValueIfExists("x-amz-copy-source-if-match"));
+                CopySourceIfNoneMatch = ConditionalHeaderParser.ParseEntityTagList(RetrieveHeaderValueIfExists("x-amz-copy-source-if-none-match"));
+                CopySourceIfModifiedSince = ConditionalHeaderParser.ParseHttpDate(RetrieveHeaderValueIfExists("x-amz-copy-source-if-modified-since"));
+                CopySourceIfUnmodifiedSince = ConditionalHeaderParser.ParseHttpDate(RetrieveHeaderValueIfExists("x-amz-copy-source-if-unmodified-since"));
 
                 if (HeaderExists("content-md5")) ContentMd5 = RetrieveHeaderValue("content-md5");
                 if (HeaderExists("content-type")) ContentType = RetrieveHeaderValue("content-type");
@@ -1039,19 +1230,144 @@
             return;
         }
 
-        private void ParseRangeHeader(string header, out long? start, out long? end)
+        /// <summary>
+        /// Reclassify a suffix range request (bytes=-N) as ObjectRead.
+        /// Used when S3ServerSettings.RouteSuffixRangesToReadRange is false.
+        /// </summary>
+        internal void RouteSuffixRangeAsObjectRead()
+        {
+            if (RequestType == S3RequestType.ObjectReadRange
+                && _RangeStart == null
+                && _RangeSuffixLength != null)
+            {
+                RequestType = S3RequestType.ObjectRead;
+            }
+        }
+
+        private string RetrieveHeaderValueIfExists(string key)
+        {
+            if (!HeaderExists(key)) return null;
+            return RetrieveHeaderValue(key);
+        }
+
+        internal static bool TryParseRangeHeader(string header, out long? start, out long? end, out long? suffixLength)
         {
             start = null;
             end = null;
+            suffixLength = null;
 
-            if (String.IsNullOrEmpty(header)) throw new ArgumentNullException(nameof(header));
-            header = header.ToLower();
-            if (header.StartsWith("bytes=")) header = header.Substring(6);
-            string[] vals = header.Split('-');
-            if (vals.Length != 2) throw new ArgumentException("Invalid range header: " + header);
+            if (String.IsNullOrWhiteSpace(header)) return false;
 
-            if (!String.IsNullOrEmpty(vals[0])) start = Convert.ToInt64(vals[0]);
-            if (!String.IsNullOrEmpty(vals[1])) end = Convert.ToInt64(vals[1]);
+            string value = header.Trim();
+            if (!value.StartsWith("bytes=", StringComparison.OrdinalIgnoreCase)) return false;
+
+            value = value.Substring(6).Trim();
+            if (value.IndexOf(',') >= 0) return false;
+
+            int dash = value.IndexOf('-');
+            if (dash < 0 || dash != value.LastIndexOf('-')) return false;
+
+            string first = value.Substring(0, dash).Trim();
+            string last = value.Substring(dash + 1).Trim();
+
+            if (first.Length == 0 && last.Length == 0) return false;
+
+            if (first.Length == 0)
+            {
+                if (!Int64.TryParse(last, NumberStyles.None, CultureInfo.InvariantCulture, out long suffix)) return false;
+                suffixLength = suffix;
+                return true;
+            }
+
+            if (!Int64.TryParse(first, NumberStyles.None, CultureInfo.InvariantCulture, out long firstPos)) return false;
+
+            if (last.Length == 0)
+            {
+                start = firstPos;
+                return true;
+            }
+
+            if (!Int64.TryParse(last, NumberStyles.None, CultureInfo.InvariantCulture, out long lastPos)) return false;
+            if (lastPos < firstPos) return false;
+
+            start = firstPos;
+            end = lastPos;
+            return true;
+        }
+
+        private void ParseCopySourceHeader(string header)
+        {
+            if (String.IsNullOrWhiteSpace(header))
+                throw InvalidArgument("The x-amz-copy-source header is empty.");
+
+            string value = header.Trim();
+            string query = null;
+
+            // Split the query on the raw value, since a literal '?' in a key is sent percent-encoded.
+            int queryIndex = value.IndexOf('?');
+            if (queryIndex >= 0)
+            {
+                query = value.Substring(queryIndex + 1);
+                value = value.Substring(0, queryIndex);
+            }
+
+            // Decode before splitting: some clients (including the AWS SDK for .NET) percent-encode the slash
+            // between the bucket and the key.  Bucket names cannot contain '/', so the first '/' is the separator.
+            value = Uri.UnescapeDataString(value).TrimStart('/');
+
+            int slash = value.IndexOf('/');
+            if (slash <= 0 || slash == value.Length - 1)
+                throw InvalidArgument("The x-amz-copy-source header must be in the form 'bucket/key': '" + header + "'.");
+
+            string bucket = value.Substring(0, slash);
+            string key = value.Substring(slash + 1);
+
+            CopySourceBucket = bucket;
+            CopySourceKey = key;
+
+            if (!String.IsNullOrEmpty(query))
+            {
+                foreach (string pair in query.Split('&'))
+                {
+                    if (String.IsNullOrEmpty(pair)) continue;
+
+                    int equals = pair.IndexOf('=');
+                    string name = equals >= 0 ? pair.Substring(0, equals) : pair;
+                    string val = equals >= 0 ? pair.Substring(equals + 1) : null;
+
+                    if (name.Equals("versionId", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (String.IsNullOrEmpty(val))
+                            throw InvalidArgument("The x-amz-copy-source header has an empty versionId.");
+
+                        CopySourceVersionId = Uri.UnescapeDataString(val);
+                    }
+                }
+            }
+        }
+
+        private void ParseCopySourceRangeHeader(string header)
+        {
+            long? start;
+            long? end;
+            long? suffixLength;
+
+            if (!TryParseRangeHeader(header, out start, out end, out suffixLength)
+                || start == null
+                || end == null)
+            {
+                throw InvalidArgument("The x-amz-copy-source-range header must be in the form 'bytes=first-last': '" + header + "'.");
+            }
+
+            CopySourceRangeStart = start;
+            CopySourceRangeEnd = end;
+        }
+
+        private static S3Exception InvalidArgument(string message)
+        {
+            Error error = new Error(ErrorCode.InvalidArgument);
+            error.Message = message;
+            return new S3Exception(error);
         }
 
         private void SetRequestType()
@@ -1101,7 +1417,7 @@
                     }
                     else if (!String.IsNullOrEmpty(Bucket) && !String.IsNullOrEmpty(Key))
                     {
-                        if (HeaderExists("range") && _RangeStart != null)
+                        if (HeaderExists("range") && (_RangeStart != null || _RangeSuffixLength != null))
                             RequestType = S3RequestType.ObjectReadRange;
                         else if (QuerystringExists("acl"))
                             RequestType = S3RequestType.ObjectReadAcl;
@@ -1149,7 +1465,9 @@
                         else if (QuerystringExists("retention"))
                             RequestType = S3RequestType.ObjectWriteRetention;
                         else if (QuerystringExistsAny("partnumber", "partNumber", "PartNumber") && QuerystringExistsAny("uploadid", "uploadId", "UploadId"))
-                            RequestType = S3RequestType.ObjectUploadPart;
+                            RequestType = (CopySourceKey != null) ? S3RequestType.ObjectUploadPartCopy : S3RequestType.ObjectUploadPart;
+                        else if (CopySourceKey != null)
+                            RequestType = S3RequestType.ObjectCopy;
                         else
                             RequestType = S3RequestType.ObjectWrite;
                     }

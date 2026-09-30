@@ -9,8 +9,6 @@
     [XmlRoot(ElementName = "TargetGrants")]
     public class TargetGrants
     {
-        // Namespace = "http://doc.s3.amazonaws.com/2006-03-01"
-
         #region Public-Members
 
         /// <summary>

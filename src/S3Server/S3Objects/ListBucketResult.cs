@@ -10,8 +10,6 @@
     [XmlRoot(ElementName = "ListBucketResult", IsNullable = true)]
     public class ListBucketResult
     {
-        // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
-
         #region Public-Members
 
         /// <summary>
@@ -42,6 +40,21 @@
         /// </summary>
         [XmlElement(ElementName = "Marker")]
         public string Marker { get; set; } = null;
+
+        /// <summary>
+        /// ListObjects (v1) resume point.  Set when the response is truncated and a delimiter was supplied, because the
+        /// last Contents key is not the correct resume point when a page ends on a common prefix.
+        /// Omitted from the XML when null or empty (the default).
+        /// </summary>
+        [XmlElement(ElementName = "NextMarker")]
+        public string NextMarker { get; set; } = null;
+
+        /// <summary>
+        /// ListObjectsV2 echo of the continuation-token supplied in the request.
+        /// Omitted from the XML when null or empty (the default).
+        /// </summary>
+        [XmlElement(ElementName = "ContinuationToken")]
+        public string ContinuationToken { get; set; } = null;
 
         /// <summary>
         /// Number of keys.
@@ -110,6 +123,13 @@
         /// </summary>
         [XmlElement(ElementName = "NextContinuationToken")]
         public string NextContinuationToken { get; set; } = null;
+
+        /// <summary>
+        /// ListObjectsV2 echo of the start-after value supplied in the request.
+        /// Omitted from the XML when null or empty (the default).
+        /// </summary>
+        [XmlElement(ElementName = "StartAfter")]
+        public string StartAfter { get; set; } = null;
 
         /// <summary>
         /// Bucket contents.
@@ -216,6 +236,33 @@
         public bool ShouldSerializeNextContinuationToken()
         {
             return !String.IsNullOrEmpty(NextContinuationToken);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean</returns>
+        public bool ShouldSerializeNextMarker()
+        {
+            return !String.IsNullOrEmpty(NextMarker);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean</returns>
+        public bool ShouldSerializeContinuationToken()
+        {
+            return !String.IsNullOrEmpty(ContinuationToken);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean</returns>
+        public bool ShouldSerializeStartAfter()
+        {
+            return !String.IsNullOrEmpty(StartAfter);
         }
 
         /// <summary>

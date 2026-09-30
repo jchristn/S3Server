@@ -89,6 +89,9 @@
 
         /// <summary>
         /// Write an ACL to a bucket, deleting the previous ACL.
+        /// The AccessControlPolicy argument is null when the request has no body, which is the case for canned ACLs
+        /// (the x-amz-acl header) and explicit grant headers (x-amz-grant-*); read those from ctx.Request.RetrieveHeaderValue.
+        /// A body that is present but not valid XML is rejected with MalformedXML before this callback is invoked.
         /// </summary>
         public Func<S3Context, AccessControlPolicy, Task> WriteAcl { get; set; } = null;
 

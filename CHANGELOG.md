@@ -2,6 +2,54 @@
 
 ## Current Version
 
+v7.4.0
+
+Security, data integrity, and protocol accuracy fixes found while building Less3's S3 compatibility suite. The minor version is bumped because the release adds public API and changes some existing behavior. Every behavior change is listed under "Behavior changes" below, with its opt-out setting where one exists.
+
+Security and data integrity
+
+- Added `S3ServerSettings.AuthenticatedRequestHandler` (`Func<S3Context, Task<bool>>`, default `null`). It runs after signature validation and before routing, and has the same contract as `PreRequestHandler` (return `true` when the handler has sent the response). Forged, unsigned, and unknown-key requests never reach it; unsigned requests permitted by `Service.IsAnonymousRequestAllowed` do
+- Added `S3ServerSettings.ValidateSignaturesBeforePreRequestHandler` (`bool`, default `false`). When `true`, signature validation runs before `PreRequestHandler`. The default keeps the existing order so consumers that populate `ctx.Metadata` in `PreRequestHandler` for `Service.GetSecretKey` keep working. The XML documentation now states that `PreRequestHandler` sees unauthenticated input under the default order and must not act on or disclose data
+- Canned ACL writes (`PUT ?acl` with `x-amz-acl` or `x-amz-grant-*` headers and no body) now reach `Bucket.WriteAcl` and `Object.WriteAcl` with a `null` policy. Previously they failed with `500 InternalError`, which pushed consumers into answering them from `PreRequestHandler` without signature validation. A body that is present but not valid XML still returns `MalformedXML`
+- Signature validation now fails closed with `AccessDenied` when `EnableSignatures` is `true` and `Service.GetSecretKey` has been set to `null` after `Start()`. Previously such requests were processed without signature validation
+- CopyObject (`PUT` with `x-amz-copy-source`) is now `S3RequestType.ObjectCopy` and routes to the new `Object.Copy` callback, which returns the new `CopyObjectResult`. UploadPartCopy is now `S3RequestType.ObjectUploadPartCopy` and routes to the new `Object.UploadPartCopy` callback, which returns the new `CopyPartResult`. Both results are serialized as the response body with status 200. Previously both arrived at `Object.Write` or `Object.UploadPart` with an empty body, which stored a 0-byte object and could lose data (for example `aws s3 mv` deleted the source afterward)
+- `S3Request` parses `x-amz-copy-source` into `CopySourceBucket`, `CopySourceKey`, and `CopySourceVersionId` (URL-decoded; a percent-encoded separator slash, as the AWS SDK for .NET sends, is accepted), `x-amz-copy-source-range` into `CopySourceRangeStart` and `CopySourceRangeEnd`, and the `x-amz-copy-source-if-*` headers into `CopySourceIfMatch`, `CopySourceIfNoneMatch`, `CopySourceIfModifiedSince`, and `CopySourceIfUnmodifiedSince`. A malformed copy source or copy range returns `400 InvalidArgument`
+- Requests that fail while being parsed now receive an S3 XML error body instead of the webserver's HTML "It's me, not you" 500 page
+- Negative or non-numeric `max-keys`, `max-parts`, `part-number-marker`, and `partNumber` values now return `400 InvalidArgument` with a message naming the parameter, as Amazon S3 does. The `S3Request` property setters keep their `ArgumentOutOfRangeException` contract for programmatic use
+- Malformed `Range` headers (a unit other than `bytes`, multiple ranges, non-numeric bounds, both bounds empty, or `last < first`) are now ignored per RFC 9110 section 14.2 and the request routes to `Object.Read` with `200` and the full object, as Amazon S3 does. Previously they produced the HTML 500 page
+
+Protocol accuracy
+
+- Response bodies are now serialized in the Amazon S3 namespace (`http://s3.amazonaws.com/doc/2006-03-01/`), including nested elements. A top-level `Error` keeps no namespace and `BucketLoggingStatus` uses `http://doc.s3.amazonaws.com/2006-03-01`, both matching Amazon S3. Added `SerializationHelper.S3XmlNamespace` and `SerializationHelper.S3LoggingXmlNamespace`. `DeserializeXml` accepts bare, S3-namespaced, and other-namespaced XML, and now honors `xsi:nil` in namespaced XML
+- `Deleted` (inside `DeleteResult`) no longer serializes `xsi:nil` elements or `<DeleteMarker>false</DeleteMarker>`. `VersionId` and `DeleteMarkerVersionId` are omitted when empty, `DeleteMarker` is omitted unless `true`, and `DeleteMarker` now defaults to `null` instead of `false`
+- `ListBucketResult` adds `NextMarker` (ListObjects v1 resume point when a delimiter is used), `ContinuationToken`, and `StartAfter` (ListObjectsV2 echoes), each omitted when empty. `S3Request` adds `StartAfter` (from `start-after`) and `FetchOwner` (from `fetch-owner=true`)
+- `ListVersionsResult` adds `Entries`, a single list of `ObjectVersion` and `DeleteMarker` items serialized in list order so versions and delete markers can be interleaved by key, newest first, as Amazon S3 returns them. When `Entries` is empty, `Versions` and `DeleteMarkers` serialize exactly as before. Deserialization fills all three lists. Serialization goes through a new `ListVersionsEntryCollection` surface property, `XmlEntries`
+- Suffix ranges (`Range: bytes=-N`) now set the new `S3Request.RangeSuffixLength` (with `RangeStart` and `RangeEnd` null), route to `Object.ReadRange`, and return `206` with `Content-Range: bytes start-end/total` computed from `S3Object.TotalSize`, which is required for suffix ranges. A missing `TotalSize` fails the request with `InternalError`, and a zero-length suffix or a suffix of an empty object returns `416 InvalidRange`
+- Added `ErrorCode.NotModified` (HTTP 304). `S3Response.Send(Error)` and `S3Response.Send(ErrorCode)` send it with headers only, with no body and no `Content-Type`, and preserve headers such as `ETag` and `Last-Modified` already added by the callback
+- `S3Request` parses `If-Match` and `If-None-Match` (entity tags as sent, including `*` and weak `W/` tags) and `If-Modified-Since` and `If-Unmodified-Since` (IMF-fixdate, RFC 850, and asctime; unparseable dates are ignored per RFC 9110) into `IfMatch`, `IfNoneMatch`, `IfModifiedSince`, and `IfUnmodifiedSince`. Evaluation stays in the callback; the property documentation describes the RFC 9110 section 13.2.2 evaluation order
+- Request-only headers `Host`, `Accept`, and `Accept-Language`, and the blanket `Cache-Control: no-cache`, are no longer added to every response from the webserver's default headers. `Cache-Control` set by a callback now appears once. The CORS `Access-Control-*` defaults and `Accept-Charset` are kept. Added `S3ServerSettings.PreserveWebserverDefaultHeaders` (`bool`, default `false`) to restore the previous headers
+
+Clarity
+
+- `S3Request.RetrieveQueryValue` is documented as returning URL-decoded values (it already did), and the README notes that `ctx.Http.Request.Query.Elements` holds raw, percent-encoded values
+- `VersionedEntity.cs` was split so `ObjectVersion` and `DeleteMarker` each have their own file, and the commented-out `// Namespace = ...` lines were removed from the S3 models
+- `S3Response.Send(Error)` now throws `ArgumentNullException` for a `null` error up front (it previously failed inside serialization)
+
+Behavior changes
+
+- CopyObject and UploadPartCopy requests no longer reach `Object.Write` or `Object.UploadPart`. Without `Object.Copy` or `Object.UploadPartCopy` they go to `DefaultRequestHandler` or return `NotImplemented`
+- `Bucket.WriteAcl` and `Object.WriteAcl` can now receive a `null` policy. Callbacks that dereference the policy without a null check must add one
+- Suffix ranges now reach `Object.ReadRange` instead of `Object.Read`, and `RangeEnd` no longer carries the suffix length. Set `RouteSuffixRangesToReadRange = false` to keep the previous routing
+- Malformed `Range` headers now return `200` with the full object instead of an error
+- Invalid numeric querystring values now return `400 InvalidArgument`; non-numeric values were previously ignored and negative values produced an HTML 500 page
+- Every response body except a top-level `Error` now declares an XML namespace, and responses carry fewer headers. Standard S3 clients are unaffected, but anything that string-matches S3Server output may need updating. Set `PreserveWebserverDefaultHeaders = true` to restore the previous headers
+- `Deleted.DeleteMarker` defaults to `null` instead of `false`
+
+Tests
+
+- Added `RequestParsingFixTests`, `ResponseFixTests`, `RequestPipelineTests`, and `ResponseSerializationFixTests` with positive and negative cases for every item above, wired through `S3ServerSuites` so `Test.Automated`, `Test.Xunit`, and `Test.Nunit` all run them
+- Updated the adversarial HTTP tests for the new `InvalidArgument` and ignored-range behavior
+
 v7.3.2
 
 - Upgraded to Watson `7.1.0` and refreshed the remaining dependencies to their latest stable versions (AWSSDK.S3, RestWrapper, Microsoft.NET.Test.Sdk, NUnit, NUnit3TestAdapter, coverlet.collector, and related test packages)

@@ -9,8 +9,6 @@
     [XmlRoot(ElementName = "Bucket", IsNullable = true)]
     public class Bucket
     {
-        // Namespace = "http://s3.amazonaws.com/doc/2006-03-01/"
-
         #region Public-Members
 
         /// <summary>
