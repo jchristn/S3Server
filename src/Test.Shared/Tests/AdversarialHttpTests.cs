@@ -95,7 +95,7 @@ namespace Test.Shared.Tests
             {
                 await AssertRejectedOrDisconnected(async () =>
                 {
-                    return await server.HttpClient.GetAsync(server.BaseUrl + "/" + server.Bucket + "?max-parts=nope", ct).ConfigureAwait(false);
+                    return await server.HttpClient.GetAsync(server.BaseUrl + "/" + server.Bucket + "?max-keys=nope", ct).ConfigureAwait(false);
                 }, "bad query setup").ConfigureAwait(false);
 
                 HttpResponseMessage response = await server.HttpClient.GetAsync(server.BaseUrl + "/", ct).ConfigureAwait(false);

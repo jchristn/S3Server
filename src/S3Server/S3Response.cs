@@ -140,6 +140,7 @@
 
         private HttpResponseBase _HttpResponse = null;
         private S3Request _S3Request = null;
+        private bool _IsHead = false;
 
         #endregion
 
@@ -163,6 +164,7 @@
 
             _HttpResponse = ctx.Http.Response;
             _S3Request = ctx.Request;
+            _IsHead = ctx.Http != null && ctx.Http.Request != null && ctx.Http.Request.Method == HttpMethod.HEAD;
         }
 
         #endregion
@@ -277,6 +279,16 @@
 
             PopulateErrorIdentifiers(error);
 
+            if (_IsHead)
+            {
+                // A HEAD response never carries a body; Amazon S3 sends only the status and headers.
+                StatusCode = error.HttpStatusCode;
+                ContentType = Constants.ContentTypeXml;
+                _HttpResponse.ContentLength = 0;
+                SetResponseHeaders();
+                return await _HttpResponse.Send().ConfigureAwait(false);
+            }
+
             byte[] bytes = Encoding.UTF8.GetBytes(SerializationHelper.SerializeXml(error));
 
             using (MemoryStream ms = new MemoryStream(bytes))
@@ -301,26 +313,7 @@
         /// <returns>True if successful.</returns>
         public async Task<bool> Send(ErrorCode error)
         {
-            ChunkedTransfer = false;
-            if (error == ErrorCode.NotModified) return await SendNotModified().ConfigureAwait(false);
-
-            Error errorBody = new Error(error);
-            PopulateErrorIdentifiers(errorBody);
-
-            byte[] bytes = Encoding.UTF8.GetBytes(SerializationHelper.SerializeXml(errorBody));
-
-            using (MemoryStream ms = new MemoryStream(bytes))
-            {
-                ms.Seek(0, SeekOrigin.Begin);
-
-                ContentLength = bytes.Length;
-                StatusCode = errorBody.HttpStatusCode;
-                ContentType = Constants.ContentTypeXml;
-
-                SetResponseHeaders();
-
-                return await _HttpResponse.Send(ContentLength, ms).ConfigureAwait(false);
-            }
+            return await Send(new Error(error)).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -377,6 +370,19 @@
 
             if (String.IsNullOrEmpty(error.HostId))
                 error.HostId = _S3Request.TraceId;
+
+            // Amazon S3 names the missing or invalid resource in these error bodies.
+            if (error.Code == ErrorCode.NoSuchKey && String.IsNullOrEmpty(error.Key))
+                error.Key = _S3Request.Key;
+
+            if (error.Code == ErrorCode.NoSuchBucket && String.IsNullOrEmpty(error.BucketName))
+                error.BucketName = _S3Request.Bucket;
+
+            if (error.Code == ErrorCode.NoSuchUpload && String.IsNullOrEmpty(error.UploadId))
+                error.UploadId = _S3Request.UploadId;
+
+            if (error.Code == ErrorCode.InvalidRange && String.IsNullOrEmpty(error.RangeRequested) && _S3Request.HeaderExists("range"))
+                error.RangeRequested = _S3Request.RetrieveHeaderValue("range");
         }
 
         #endregion

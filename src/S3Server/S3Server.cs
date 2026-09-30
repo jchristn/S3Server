@@ -84,8 +84,11 @@
             "Host",
             "Accept",
             "Accept-Language",
+            "Accept-Charset",
             "Cache-Control"
         };
+
+        private Dictionary<string, string> _CorsHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         private string _Header = "[S3Server] ";
         private bool _Disposed = false;
@@ -117,18 +120,23 @@
                     string key = header.Key;
                     if (String.IsNullOrEmpty(key)) continue;
 
-                    // Host and Accept* are request headers, and a blanket Cache-Control would override the value
-                    // stored with each object, so none of them belong on every S3 response.
-                    if (!_Settings.PreserveWebserverDefaultHeaders && _RequestOnlyDefaultHeaders.Contains(key)) continue;
+                    if (_Settings.PreserveWebserverDefaultHeaders)
+                    {
+                        if (key.ToLower().Equals("accept-charset")) updatedHeaders.Add("Accept-Charset", "utf8");
+                        else updatedHeaders.Add(header.Key, header.Value);
+                        continue;
+                    }
 
-                    if (key.ToLower().Equals("accept-charset"))
+                    // Amazon S3 only sends CORS headers for cross-origin requests; keep them for EmitCorsHeaders.
+                    if (key.StartsWith("Access-Control-", StringComparison.OrdinalIgnoreCase))
                     {
-                        updatedHeaders.Add("Accept-Charset", "utf8"); // Minio support
+                        _CorsHeaders[key] = header.Value;
+                        continue;
                     }
-                    else
-                    {
-                        updatedHeaders.Add(header.Key, header.Value);
-                    }
+
+                    if (IsNonS3DefaultHeader(key)) continue;
+
+                    updatedHeaders.Add(header.Key, header.Value);
                 }
 
                 _Settings.Webserver.Headers.DefaultHeaders = updatedHeaders;
@@ -139,8 +147,8 @@
             // The webserver adds a Host default header during construction, so filter again afterward.
             if (!_Settings.PreserveWebserverDefaultHeaders)
             {
-                RemoveRequestOnlyDefaultHeaders(_Settings.Webserver);
-                RemoveRequestOnlyDefaultHeaders(_Webserver.Settings);
+                RemoveNonS3DefaultHeaders(_Settings.Webserver);
+                RemoveNonS3DefaultHeaders(_Webserver.Settings);
             }
         }
 
@@ -246,13 +254,27 @@
                 {
                     s3ctx.Response.Headers.Add(Constants.HeaderRequestId, s3ctx.Request.RequestId);
                     s3ctx.Response.Headers.Add(Constants.HeaderTraceId, s3ctx.Request.TraceId);
-                    s3ctx.Response.Headers.Add(Constants.HeaderConnection, "close");
+                    if (!IsKeepAliveEnabled()) s3ctx.Response.Headers.Add(Constants.HeaderConnection, "close");
+
+                    if (_Settings.EmitCorsHeaders && s3ctx.Request.HeaderExists("origin"))
+                    {
+                        foreach (KeyValuePair<string, string> cors in _CorsHeaders)
+                        {
+                            if (s3ctx.Response.Headers.Get(cors.Key) == null) s3ctx.Response.Headers.Add(cors.Key, cors.Value);
+                        }
+                    }
 
                     if (_Settings.Logging.HttpRequests && _Settings.Logger != null)
                         _Settings.Logger(_Header + "HTTP request: " + Environment.NewLine + SerializationHelper.SerializeJson(s3ctx.Http, true));
 
                     if (_Settings.Logging.S3Requests && _Settings.Logger != null)
                         _Settings.Logger(_Header + "S3 request: " + Environment.NewLine + SerializationHelper.SerializeJson(s3ctx.Request, true));
+
+                    if (s3ctx.Request.ValidationError != null)
+                    {
+                        _Settings.Logger?.Invoke(_Header + "request failed validation: " + s3ctx.Request.ValidationError.Error?.Message);
+                        throw s3ctx.Request.ValidationError;
+                    }
 
                     if (!_Settings.RouteSuffixRangesToReadRange)
                         s3ctx.Request.RouteSuffixRangeAsObjectRead();
@@ -381,13 +403,30 @@
                             if (Bucket.Read != null)
                             {
                                 listBucketResult = await Bucket.Read(s3ctx).ConfigureAwait(false);
-                                
+                                if (listBucketResult == null) throw new S3Exception(new Error(ErrorCode.NoSuchBucket));
+
                                 if (!String.IsNullOrEmpty(listBucketResult.BucketRegion))
                                     s3ctx.Response.Headers.Add("x-amz-bucket-region", listBucketResult.BucketRegion);
 
+                                int listType = String.Equals(s3ctx.Request.RetrieveQueryValue("list-type"), "2", StringComparison.Ordinal) ? 2 : 1;
+                                bool suppressOwner = listType == 2 && !s3ctx.Request.FetchOwner;
+                                bool encodeList = s3ctx.Request.EncodingType == "url" && String.IsNullOrEmpty(listBucketResult.EncodingType);
+                                string priorEncoding = listBucketResult.EncodingType;
+                                string listXml;
+
+                                try
+                                {
+                                    if (encodeList) listBucketResult.EncodingType = "url";
+                                    listXml = ResponseSerializationContext.Run(listType, suppressOwner, false, () => SerializationHelper.SerializeXml(listBucketResult, false, encodeList));
+                                }
+                                finally
+                                {
+                                    listBucketResult.EncodingType = priorEncoding;
+                                }
+
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
-                                await s3ctx.Response.Send(SerializationHelper.SerializeXml(listBucketResult)).ConfigureAwait(false);
+                                await s3ctx.Response.Send(listXml).ConfigureAwait(false);
                                 return;
                             }
                             break;
@@ -429,9 +468,25 @@
                             if (Bucket.ReadMultipartUploads != null)
                             {
                                 listMultipartUploads = await Bucket.ReadMultipartUploads(s3ctx).ConfigureAwait(false);
+                                if (listMultipartUploads == null) throw new S3Exception(new Error(ErrorCode.NoSuchBucket));
+
+                                bool encodeUploads = s3ctx.Request.EncodingType == "url" && String.IsNullOrEmpty(listMultipartUploads.EncodingType);
+                                string priorUploadsEncoding = listMultipartUploads.EncodingType;
+                                string uploadsXml;
+
+                                try
+                                {
+                                    if (encodeUploads) listMultipartUploads.EncodingType = "url";
+                                    uploadsXml = SerializationHelper.SerializeXml(listMultipartUploads, false, encodeUploads);
+                                }
+                                finally
+                                {
+                                    listMultipartUploads.EncodingType = priorUploadsEncoding;
+                                }
+
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
-                                await s3ctx.Response.Send(SerializationHelper.SerializeXml(listMultipartUploads)).ConfigureAwait(false);
+                                await s3ctx.Response.Send(uploadsXml).ConfigureAwait(false);
                                 return;
                             }
                             break;
@@ -462,9 +517,25 @@
                             if (Bucket.ReadVersions != null)
                             {
                                 listVersionResult = await Bucket.ReadVersions(s3ctx).ConfigureAwait(false);
+                                if (listVersionResult == null) throw new S3Exception(new Error(ErrorCode.NoSuchBucket));
+
+                                bool encodeVersions = s3ctx.Request.EncodingType == "url" && String.IsNullOrEmpty(listVersionResult.EncodingType);
+                                string priorVersionsEncoding = listVersionResult.EncodingType;
+                                string versionsXml;
+
+                                try
+                                {
+                                    if (encodeVersions) listVersionResult.EncodingType = "url";
+                                    versionsXml = SerializationHelper.SerializeXml(listVersionResult, false, encodeVersions);
+                                }
+                                finally
+                                {
+                                    listVersionResult.EncodingType = priorVersionsEncoding;
+                                }
+
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
-                                await s3ctx.Response.Send(SerializationHelper.SerializeXml(listVersionResult)).ConfigureAwait(false);
+                                await s3ctx.Response.Send(versionsXml).ConfigureAwait(false);
                                 return;
                             }
                             break;
@@ -506,7 +577,7 @@
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
                                     _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + ioe.ToString());
-                                    await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
+                                    await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedACLError).ConfigureAwait(false);
                                     return;
                                 }
 
@@ -703,9 +774,14 @@
                                 }
 
                                 delResult = await Object.DeleteMultiple(s3ctx, delMultiple).ConfigureAwait(false);
+                                if (delResult == null) delResult = new DeleteResult();
+
+                                bool quiet = delMultiple != null && delMultiple.Quiet;
+                                string deleteXml = ResponseSerializationContext.Run(0, false, quiet, () => SerializationHelper.SerializeXml(delResult));
+
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
-                                await s3ctx.Response.Send(SerializationHelper.SerializeXml(delResult)).ConfigureAwait(false);
+                                await s3ctx.Response.Send(deleteXml).ConfigureAwait(false);
                                 return;
                             }
                             break;
@@ -727,6 +803,20 @@
                                 md = await Object.Exists(s3ctx).ConfigureAwait(false);
                                 if (md != null)
                                 {
+                                    // Amazon S3 honors a Range header on HEAD: 206 with the Content-Range and the length of the
+                                    // range, or 416 when the range cannot be satisfied.  A suffix range on an empty object is a 200.
+                                    long headStart = 0;
+                                    long headEnd = 0;
+                                    bool headRange = (s3ctx.Request.RangeStart != null || s3ctx.Request.RangeSuffixLength != null)
+                                        && !(s3ctx.Request.RangeSuffixLength != null && md.Size == 0);
+
+                                    if (headRange && !TryResolveRange(s3ctx.Request, md.Size, out headStart, out headEnd))
+                                    {
+                                        Error rangeError = new Error(ErrorCode.InvalidRange);
+                                        rangeError.ActualObjectSize = md.Size;
+                                        throw new S3Exception(rangeError);
+                                    }
+
                                     if (!String.IsNullOrEmpty(md.ETag)) s3ctx.Response.Headers.Add(Constants.HeaderETag, md.ETag);
 
                                     s3ctx.Response.Headers.Add(Constants.HeaderLastModified, md.LastModified.ToString(Constants.AmazonTimestampFormatVerbose, CultureInfo.InvariantCulture));
@@ -734,8 +824,18 @@
                                     s3ctx.Response.Headers.Add(Constants.HeaderAcceptRanges, "bytes");
                                     AddRestoreHeader(s3ctx.Response.Headers, md.RestoreStatus);
 
-                                    s3ctx.Response.StatusCode = 200;
-                                    s3ctx.Response.ContentLength = md.Size;
+                                    if (headRange)
+                                    {
+                                        s3ctx.Response.Headers.Add("Content-Range", "bytes " + headStart + "-" + headEnd + "/" + md.Size);
+                                        s3ctx.Response.StatusCode = 206;
+                                        s3ctx.Response.ContentLength = headEnd - headStart + 1;
+                                    }
+                                    else
+                                    {
+                                        s3ctx.Response.StatusCode = 200;
+                                        s3ctx.Response.ContentLength = md.Size;
+                                    }
+
                                     s3ctx.Response.ContentType = md.ContentType;
                                     await s3ctx.Response.Send().ConfigureAwait(false);
                                 }
@@ -818,18 +918,27 @@
                                 if (s3obj != null)
                                 {
                                     bool isSuffixRange = s3ctx.Request.RangeStart == null && s3ctx.Request.RangeSuffixLength != null;
-                                    if (isSuffixRange)
-                                    {
-                                        if (s3obj.TotalSize == null)
-                                        {
-                                            _Settings.Logger?.Invoke(_Header + "Object.ReadRange did not set S3Object.TotalSize for suffix range; unable to compute Content-Range");
-                                            throw new S3Exception(new Error(ErrorCode.InternalError));
-                                        }
+                                    bool servePartial = true;
 
-                                        // RFC 9110 section 14.1.3: a zero-length suffix, or any suffix of an empty
-                                        // representation, is unsatisfiable.
-                                        if (s3obj.TotalSize.Value < 1 || s3obj.Size < 1 || s3obj.Size > s3obj.TotalSize.Value)
-                                            throw new S3Exception(new Error(ErrorCode.InvalidRange));
+                                    if (isSuffixRange && s3obj.TotalSize == null)
+                                    {
+                                        _Settings.Logger?.Invoke(_Header + "Object.ReadRange did not set S3Object.TotalSize for suffix range; unable to compute Content-Range");
+                                        throw new S3Exception(new Error(ErrorCode.InternalError));
+                                    }
+
+                                    if (s3obj.TotalSize != null)
+                                    {
+                                        if (isSuffixRange && s3obj.TotalSize.Value == 0)
+                                        {
+                                            // Amazon S3 answers a suffix range on an empty object with 200 and an empty body.
+                                            servePartial = false;
+                                        }
+                                        else if (!TryResolveRange(s3ctx.Request, s3obj.TotalSize.Value, out _, out _))
+                                        {
+                                            Error rangeError = new Error(ErrorCode.InvalidRange);
+                                            rangeError.ActualObjectSize = s3obj.TotalSize.Value;
+                                            throw new S3Exception(rangeError);
+                                        }
                                     }
 
                                     if (!String.IsNullOrEmpty(s3obj.ETag)) s3ctx.Response.Headers.Add(Constants.HeaderETag, s3obj.ETag);
@@ -839,23 +948,29 @@
                                     s3ctx.Response.Headers.Add(Constants.HeaderAcceptRanges, "bytes");
                                     AddRestoreHeader(s3ctx.Response.Headers, s3obj.RestoreStatus);
 
-                                    if (isSuffixRange)
+                                    if (!servePartial)
+                                    {
+                                        s3ctx.Response.StatusCode = 200;
+                                    }
+                                    else if (isSuffixRange)
                                     {
                                         long totalSize = s3obj.TotalSize.Value;
                                         long suffixStart = totalSize - s3obj.Size;
                                         long suffixEnd = totalSize - 1;
                                         s3ctx.Response.Headers.Add("Content-Range", "bytes " + suffixStart + "-" + suffixEnd + "/" + totalSize);
+                                        s3ctx.Response.StatusCode = 206;
                                     }
-                                    else if (s3ctx.Request.RangeStart != null)
+                                    else
                                     {
-                                        long rangeEnd = s3ctx.Request.RangeEnd ?? (s3ctx.Request.RangeStart.Value + s3obj.Size - 1);
-                                        // Emit the full object size as the Content-Range total when the callback supplies it
-                                        // (S3Object.TotalSize); otherwise fall back to '*' (unknown total) for compatibility.
+                                        // Describe the bytes actually returned; the requested end may exceed the object, as in bytes=0-100
+                                        // on a 10-byte object, which Amazon S3 answers with bytes 0-9/10.  Emit the full object size as
+                                        // the total when the callback supplies S3Object.TotalSize, otherwise '*' (unknown).
+                                        long rangeEnd = s3ctx.Request.RangeStart.Value + s3obj.Size - 1;
                                         string total = s3obj.TotalSize != null ? s3obj.TotalSize.Value.ToString(CultureInfo.InvariantCulture) : "*";
                                         s3ctx.Response.Headers.Add("Content-Range", "bytes " + s3ctx.Request.RangeStart.Value + "-" + rangeEnd + "/" + total);
+                                        s3ctx.Response.StatusCode = 206;
                                     }
 
-                                    s3ctx.Response.StatusCode = 206;
                                     s3ctx.Response.ContentType = s3obj.ContentType;
                                     s3ctx.Response.ContentLength = s3obj.Size;
 
@@ -1038,7 +1153,7 @@
                                     ioe.Data.Add("Context", s3ctx);
                                     ioe.Data.Add("RequestBody", s3ctx.Request.DataAsString);
                                     _Settings.Logger?.Invoke(_Header + "XML exception: " + Environment.NewLine + ioe.ToString());
-                                    await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedXML).ConfigureAwait(false);
+                                    await s3ctx.Response.Send(S3Objects.ErrorCode.MalformedACLError).ConfigureAwait(false);
                                     return;
                                 }
 
@@ -1200,17 +1315,58 @@
             }
         }
 
-        private static void RemoveRequestOnlyDefaultHeaders(WebserverSettings settings)
+        private bool IsNonS3DefaultHeader(string key)
+        {
+            if (String.IsNullOrEmpty(key)) return false;
+            if (_RequestOnlyDefaultHeaders.Contains(key)) return true;
+            if (key.StartsWith("Access-Control-", StringComparison.OrdinalIgnoreCase)) return true;
+            if (key.Equals("Connection", StringComparison.OrdinalIgnoreCase) && IsKeepAliveEnabled()) return true;
+            return false;
+        }
+
+        private void RemoveNonS3DefaultHeaders(WebserverSettings settings)
         {
             if (settings == null || settings.Headers == null || settings.Headers.DefaultHeaders == null) return;
 
             List<string> remove = new List<string>();
             foreach (string key in settings.Headers.DefaultHeaders.Keys)
             {
-                if (!String.IsNullOrEmpty(key) && _RequestOnlyDefaultHeaders.Contains(key)) remove.Add(key);
+                if (IsNonS3DefaultHeader(key)) remove.Add(key);
             }
 
             foreach (string key in remove) settings.Headers.DefaultHeaders.Remove(key);
+        }
+
+        private bool IsKeepAliveEnabled()
+        {
+            return _Settings.Webserver != null
+                && _Settings.Webserver.IO != null
+                && _Settings.Webserver.IO.EnableKeepAlive;
+        }
+
+        private static bool TryResolveRange(S3Request request, long totalSize, out long start, out long end)
+        {
+            start = 0;
+            end = 0;
+
+            if (request.RangeSuffixLength != null)
+            {
+                if (request.RangeSuffixLength.Value < 1 || totalSize < 1) return false;
+                long length = Math.Min(request.RangeSuffixLength.Value, totalSize);
+                start = totalSize - length;
+                end = totalSize - 1;
+                return true;
+            }
+
+            if (request.RangeStart != null)
+            {
+                if (request.RangeStart.Value >= totalSize) return false;
+                start = request.RangeStart.Value;
+                end = Math.Min(request.RangeEnd ?? (totalSize - 1), totalSize - 1);
+                return true;
+            }
+
+            return false;
         }
 
         private async Task SendRawError(HttpContextBase ctx, Error error)
@@ -1219,14 +1375,23 @@
             {
                 if (ctx == null || ctx.Response == null || ctx.Response.ResponseSent) return;
 
+                // Amazon S3 identifies every error; generate identifiers since no S3Request exists for this request.
+                S3Request ids = new S3Request();
+                if (String.IsNullOrEmpty(error.RequestId)) error.RequestId = ids.RequestId;
+                if (String.IsNullOrEmpty(error.HostId)) error.HostId = ids.TraceId;
+
                 byte[] bytes = Encoding.UTF8.GetBytes(SerializationHelper.SerializeXml(error));
 
                 ctx.Response.ChunkedTransfer = false;
                 ctx.Response.StatusCode = error.HttpStatusCode;
                 ctx.Response.ContentType = Constants.ContentTypeXml;
                 ctx.Response.ContentLength = bytes.Length;
-                if (ctx.Response.Headers != null && ctx.Response.Headers.Get("Server") == null)
-                    ctx.Response.Headers.Add("Server", "AmazonS3");
+                if (ctx.Response.Headers != null)
+                {
+                    if (ctx.Response.Headers.Get("Server") == null) ctx.Response.Headers.Add("Server", "AmazonS3");
+                    ctx.Response.Headers.Add(Constants.HeaderRequestId, error.RequestId);
+                    ctx.Response.Headers.Add(Constants.HeaderTraceId, error.HostId);
+                }
 
                 await ctx.Response.Send(bytes).ConfigureAwait(false);
             }

@@ -2,6 +2,74 @@
 
 ## Current Version
 
+v8.0.0
+
+S3Server's responses now match Amazon S3 in the details 7.4.0 left out. Every behavior below was recorded from Amazon S3 (us-west-1), and a new compatibility suite enforces it. This is a major version because several changes alter existing behavior; see "Breaking changes" and "Migrating from 7.x".
+
+Request validation
+
+- Querystring parameters are validated only by the operations that use them, as Amazon S3 does. 7.4.0 rejected an invalid `max-keys` or `partNumber` on any request; now, for example, `GET /bucket/key?max-keys=abc` returns the object. The operations and parameters are: `max-keys` (ListObjects, ListObjectsV2, ListObjectVersions), `max-uploads` (ListMultipartUploads), `max-parts` and `part-number-marker` (ListParts), `partNumber` (GetObject, HeadObject, UploadPart, UploadPartCopy), and `encoding-type` (the listing operations)
+- Errors match Amazon S3 exactly, including its per-operation wording (for example `Argument maxKeys must be an integer between 0 and 2147483647` for ListObjects, but `max-keys cannot be negative` for ListObjectVersions), and carry `ArgumentName` and `ArgumentValue`
+- `partNumber` must be an integer from 1 to 10000 (0 was previously accepted), and `encoding-type` must be `url`
+- Copy-source errors use Amazon S3's messages (`Invalid copy source object key`, `Version id cannot be the empty string`, and the `x-amz-copy-source-range` form message) with `ArgumentName` and `ArgumentValue`
+- Validation errors are now returned after the request context is created, so they carry `x-amz-request-id`, `RequestId`, and `HostId`, and `PostRequestHandler` runs for them. The error is exposed as `S3Request.ValidationError`. Errors written when a request cannot be parsed at all also carry generated request identifiers
+- Added `S3Request.KeyMarker`, `VersionIdMarker`, `UploadIdMarker` (from `key-marker`, `version-id-marker`, `upload-id-marker`), `MaxUploads` (from `max-uploads`, default 1000), and `EncodingType` (from `encoding-type`, normalized to `url`)
+- `S3Request.PartNumberMarker` now defaults to 0, Amazon S3's default, instead of 1
+
+Ranges
+
+- `HEAD` now honors `Range`: `206` with `Content-Range` and the length of the range, or `416`. Previously the header was ignored
+- When `S3Object.TotalSize` is set, S3Server applies Amazon S3's range rules after `Object.ReadRange` returns: a range starting at or past the end of the object and a zero-length suffix return `416 InvalidRange`, and a suffix range on an empty object returns `200` with an empty body (7.4.0 returned 416)
+- `Content-Range` now describes the bytes actually returned, so `bytes=0-100` on a 10-byte object is answered with `bytes 0-9/10` (previously `bytes 0-100/10`)
+- `InvalidRange` errors carry `RangeRequested` and `ActualObjectSize`
+
+Response bodies
+
+- `encoding-type=url` is now applied: `Key`, `Prefix`, `Delimiter`, `Marker`, `NextMarker`, `StartAfter`, `KeyMarker`, and `NextKeyMarker` are URL-encoded with Amazon S3's rules (a space becomes `+`, and `/`, letters, digits, `-`, `_`, `.`, and `*` are kept) in ListObjects, ListObjectsV2, ListObjectVersions, and ListMultipartUploads responses, and `EncodingType` is set to `url`. The AWS CLI and boto3 always request this. A callback that sets `EncodingType` itself is assumed to have encoded its values and is left alone
+- ListObjects v1 responses always include `Marker` (empty when not set) and never `KeyCount`, `ContinuationToken`, `StartAfter`, or `NextContinuationToken`. ListObjectsV2 responses never include `Marker` or `NextMarker`, and omit `Owner` from each object unless the request set `fetch-owner=true`
+- DeleteObjects honors `<Quiet>true</Quiet>`: `Deleted` entries are omitted and only errors are returned
+- `LastModified`, `Initiated`, `CreationDate`, and `RetainUntilDate` are written in UTC with exactly three fractional digits (`2026-01-02T03:04:05.000Z`) instead of up to seven
+- `Error` adds `BucketName`, `UploadId`, `ArgumentName`, `ArgumentValue`, `Condition`, `RangeRequested`, and `ActualObjectSize`, each written only when set. S3Server fills `Key` for `NoSuchKey`, `BucketName` for `NoSuchBucket`, `UploadId` for `NoSuchUpload`, and `RangeRequested` for `InvalidRange` from the request when the callback did not
+- The `InvalidRange`, `PreconditionFailed`, and `MalformedACLError` messages now use Amazon S3's wording
+- A malformed ACL body returns `MalformedACLError` instead of `MalformedXML`
+- Error responses to `HEAD` have no body
+- `CopyObjectResult` and `CopyPartResult` add optional `ChecksumCRC32`, `ChecksumCRC32C`, `ChecksumCRC64NVME`, `ChecksumSHA1`, `ChecksumSHA256`, and `ChecksumType`
+- `ListMultipartUploadsResult.MaxUploads` accepts 0, as Amazon S3 does
+- A `null` result from `Bucket.Read`, `Bucket.ReadVersions`, or `Bucket.ReadMultipartUploads` returns `NoSuchBucket` instead of `InternalError`, and a `null` result from `Object.DeleteMultiple` returns an empty `DeleteResult`
+- Serializing a model directly with `SerializationHelper.SerializeXml` outside a request keeps the model's own shape; the request-dependent behavior above applies only to responses S3Server sends
+
+Response headers
+
+- `Accept-Charset` and the CORS `Access-Control-*` headers are no longer sent by default. Amazon S3 sends no CORS headers for a bucket without a CORS configuration. Added `S3ServerSettings.EmitCorsHeaders` (default `false`), which sends the webserver's CORS headers on responses to requests that carry an `Origin` header, for browser-based clients. `PreserveWebserverDefaultHeaders = true` still restores every previous default header
+- `Connection: close` is added only when the webserver's keep-alive is disabled (`WebserverSettings.IO.EnableKeepAlive`, which is off by default), so enabling keep-alive is no longer defeated
+
+Tests
+
+- Added a `Compatibility` suite (63 scenarios) that sends raw SigV4-signed requests to S3Server running `ReferenceS3Backend`, an in-memory backend, with signature validation enabled. It covers ranges, `HEAD` ranges, parameter validation, listing shapes and pagination, `encoding-type=url`, conditional requests, response headers, CopyObject, multipart uploads including UploadPartCopy, DeleteObjects, ACLs, and error bodies. Every expectation was recorded from Amazon S3, and all 63 scenarios pass against both Amazon S3 and S3Server
+- Added `Test.Compatibility`, which runs the scenarios against Amazon S3 (`--target s3`, with credentials from `S3COMPAT_ACCESS_KEY` and `S3COMPAT_SECRET_KEY`), against S3Server (`--target local`), or hosts the reference server for external clients (`--serve`). Against Amazon S3 it only touches objects under a unique `s3server-compat-*` prefix
+- Checked with the AWS CLI 2.33 (including multipart upload, ranged download, server-side multipart copy, and `s3 sync`), boto3 1.42, and the MinIO client against the reference server
+- Added unit coverage for URL encoding, timestamp formatting, error detail elements, and copy result checksums, and updated tests whose expectations changed
+
+Breaking changes
+
+- `partNumber=0` is rejected
+- Numeric parameters are no longer rejected on operations that do not use them
+- ACL writes with a malformed body return `MalformedACLError`
+- `S3Request.PartNumberMarker` defaults to 0
+- Listing responses are URL-encoded when the request asks for `encoding-type=url`, and their elements now follow the ListObjects version
+- Timestamps have millisecond precision
+- CORS and `Accept-Charset` headers are not sent by default
+- `HEAD` with `Range` returns `206` or `416`
+- A suffix range on an empty object returns `200`
+- `Content-Range` reflects the bytes returned
+
+Migrating from 7.x
+
+- If a `ReadParts` callback treats `PartNumberMarker` as inclusive, or relies on the old default of 1, review its comparison: Amazon S3 lists parts after the marker, starting from 0
+- If a listing callback URL-encodes keys itself when `encoding-type=url` is requested, set `EncodingType = "url"` on the result so S3Server does not encode them again
+- Browser-based clients need `EmitCorsHeaders = true`
+- A `ReadRange` callback no longer needs to detect unsatisfiable ranges when it sets `TotalSize`
+
 v7.4.0
 
 Security, data integrity, and protocol accuracy fixes found while building Less3's S3 compatibility suite. The minor version is bumped because the release adds public API and changes some existing behavior. Every behavior change is listed under "Behavior changes" below, with its opt-out setting where one exists.

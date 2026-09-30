@@ -149,7 +149,8 @@ namespace Test.Shared.Tests
                     foreach (string removed in new[] { "Host", "Accept", "Accept-Language", "Cache-Control" })
                         AssertHelper.IsFalse(names.Contains(removed), "response should not contain " + removed);
 
-                    AssertHelper.IsTrue(names.Contains("Access-Control-Allow-Origin"), "CORS default header retained");
+                    foreach (string removed in new[] { "Accept-Charset", "Access-Control-Allow-Origin", "Access-Control-Allow-Methods" })
+                        AssertHelper.IsFalse(names.Contains(removed), "response should not contain " + removed);
                 }
             }, token).ConfigureAwait(false);
 

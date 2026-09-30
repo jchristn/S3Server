@@ -400,7 +400,8 @@ namespace Test.Shared.Tests
             await runner.RunTestAsync("ListMultipartUploadsResult validates arguments and MaxUploads", (ct) =>
             {
                 AssertThrows<ArgumentNullException>(() => new ListMultipartUploadsResult(null, "k", "u"), "null bucket");
-                AssertThrows<ArgumentOutOfRangeException>(() => new ListMultipartUploadsResult { MaxUploads = 0 }, "zero max uploads");
+                AssertThrows<ArgumentOutOfRangeException>(() => new ListMultipartUploadsResult { MaxUploads = -1 }, "negative max uploads");
+                AssertHelper.AreEqual(0, new ListMultipartUploadsResult { MaxUploads = 0 }.MaxUploads, "zero max uploads accepted, as Amazon S3 does");
                 return Task.CompletedTask;
             }, token).ConfigureAwait(false);
 

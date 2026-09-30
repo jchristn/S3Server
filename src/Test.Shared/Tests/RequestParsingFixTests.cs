@@ -31,23 +31,75 @@ namespace Test.Shared.Tests
         {
             #region Invalid-Querystring-Integers
 
-            foreach (string query in new[] { "max-keys=-1", "max-keys=abc", "max-parts=-5", "part-number-marker=x", "partNumber=x", "max-keys=99999999999" })
+            // Path (relative to the bucket), expected ArgumentName.  Each parameter is only validated by the operations
+            // that use it, as Amazon S3 does; values were recorded from Amazon S3.
+            string[][] invalidCases = new[]
             {
-                string captured = query;
+                new[] { "?max-keys=-1", "maxKeys" },
+                new[] { "?max-keys=abc", "max-keys" },
+                new[] { "?max-keys=99999999999", "max-keys" },
+                new[] { "?versions&max-keys=abc", "max-keys" },
+                new[] { "?uploads&max-uploads=abc", "max-uploads" },
+                new[] { "?uploads&max-uploads=-1", "max-uploads" },
+                new[] { "?encoding-type=xyz", "encoding-type" },
+                new[] { "?versions&max-keys=-1", "max-keys" },
+                new[] { "/test-object.txt?uploadId=u1&max-parts=-5", "max-parts" },
+                new[] { "/test-object.txt?uploadId=u1&part-number-marker=-1", "part-number-marker" },
+                new[] { "/test-object.txt?uploadId=u1&part-number-marker=x", "part-number-marker" },
+                new[] { "/test-object.txt?partNumber=x", "partNumber" },
+                new[] { "/test-object.txt?partNumber=0", "partNumber" },
+                new[] { "/test-object.txt?partNumber=10001", "partNumber" }
+            };
 
-                await runner.RunTestAsync("Invalid querystring integer returns XML InvalidArgument: " + captured, async (ct) =>
+            foreach (string[] invalid in invalidCases)
+            {
+                string[] captured = invalid;
+
+                await runner.RunTestAsync("Invalid querystring value returns XML InvalidArgument: " + captured[0], async (ct) =>
                 {
-                    string url = server.BaseUrl + "/" + server.Bucket + "/test-object.txt?" + captured;
-                    if (captured.StartsWith("max-keys", StringComparison.Ordinal)) url = server.BaseUrl + "/" + server.Bucket + "?" + captured;
+                    server.ClearObservedRequests();
+                    HttpResponseMessage response = await server.HttpClient.GetAsync(server.BaseUrl + "/" + server.Bucket + captured[0], ct).ConfigureAwait(false);
+                    await AssertXmlError(response, HttpStatusCode.BadRequest, "InvalidArgument", captured[0]).ConfigureAwait(false);
 
-                    HttpResponseMessage response = await server.HttpClient.GetAsync(url, ct).ConfigureAwait(false);
-                    await AssertXmlError(response, HttpStatusCode.BadRequest, "InvalidArgument", captured).ConfigureAwait(false);
-
-                    string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                    string parameterName = captured.Split('=')[0];
-                    AssertHelper.StringContains(body, parameterName, "error message names the parameter");
+                    XDocument doc = XDocument.Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false));
+                    AssertHelper.AreEqual(captured[1], doc.Root.Elements().First(e => e.Name.LocalName == "ArgumentName").Value, "ArgumentName");
+                    AssertHelper.IsNotNull(doc.Root.Elements().FirstOrDefault(e => e.Name.LocalName == "RequestId"), "RequestId");
+                    AssertHelper.IsNotNull(response.Headers.Contains("x-amz-request-id") ? "present" : null, "x-amz-request-id header");
+                    AssertHelper.IsNull(server.LastObservedRequest, "no handler invoked");
                 }, token).ConfigureAwait(false);
             }
+
+            foreach (string ignored in new[] { "/test-object.txt?max-keys=abc", "/test-object.txt?max-parts=-5", "/test-object.txt?part-number-marker=x", "/test-object.txt?encoding-type=xyz" })
+            {
+                string captured = ignored;
+
+                await runner.RunTestAsync("Parameter an operation does not use is ignored: " + captured, async (ct) =>
+                {
+                    HttpResponseMessage response = await server.HttpClient.GetAsync(server.BaseUrl + "/" + server.Bucket + captured, ct).ConfigureAwait(false);
+                    AssertHelper.StatusCodeEquals(HttpStatusCode.OK, response, captured);
+                    AssertHelper.AreEqual("hello", await response.Content.ReadAsStringAsync().ConfigureAwait(false), "object body");
+                }, token).ConfigureAwait(false);
+            }
+
+            await runner.RunTestAsync("New listing parameters are parsed", async (ct) =>
+            {
+                server.ClearObservedRequests();
+                HttpResponseMessage response = await server.HttpClient.GetAsync(server.BaseUrl + "/" + server.Bucket + "?versions&key-marker=a%20b&version-id-marker=v1&encoding-type=URL", ct).ConfigureAwait(false);
+                AssertHelper.StatusCodeEquals(HttpStatusCode.OK, response, "versions");
+                S3Request parsed = server.LastObservedRequest.Request;
+                AssertHelper.AreEqual("a b", parsed.KeyMarker, "KeyMarker");
+                AssertHelper.AreEqual("v1", parsed.VersionIdMarker, "VersionIdMarker");
+                AssertHelper.AreEqual("url", parsed.EncodingType, "EncodingType normalized");
+
+                server.ClearObservedRequests();
+                response = await server.HttpClient.GetAsync(server.BaseUrl + "/" + server.Bucket + "?uploads&max-uploads=7&upload-id-marker=u9", ct).ConfigureAwait(false);
+                AssertHelper.StatusCodeEquals(HttpStatusCode.OK, response, "uploads");
+                parsed = server.LastObservedRequest.Request;
+                AssertHelper.AreEqual(7, parsed.MaxUploads, "MaxUploads");
+                AssertHelper.AreEqual("u9", parsed.UploadIdMarker, "UploadIdMarker");
+                AssertHelper.AreEqual(0, new S3Request().PartNumberMarker, "PartNumberMarker default");
+                AssertHelper.AreEqual(1000, new S3Request().MaxUploads, "MaxUploads default");
+            }, token).ConfigureAwait(false);
 
             await runner.RunTestAsync("Boundary max-keys values still route normally", async (ct) =>
             {
@@ -418,7 +470,7 @@ namespace Test.Shared.Tests
                 AssertHelper.AreEqual("public-read", server.LastObservedRequest.AclHeader, "x-amz-acl readable");
             }, token).ConfigureAwait(false);
 
-            await runner.RunTestAsync("Malformed ACL body still returns MalformedXML without invoking WriteAcl", async (ct) =>
+            await runner.RunTestAsync("Malformed ACL body returns MalformedACLError without invoking WriteAcl", async (ct) =>
             {
                 foreach (string path in new[] { "/" + server.Bucket + "?acl", "/" + server.Bucket + "/acl-object.txt?acl" })
                 {
@@ -427,7 +479,7 @@ namespace Test.Shared.Tests
                     request.Content = new StringContent("<not-xml", Encoding.UTF8, "application/xml");
 
                     HttpResponseMessage response = await server.HttpClient.SendAsync(request, ct).ConfigureAwait(false);
-                    await AssertXmlError(response, HttpStatusCode.BadRequest, "MalformedXML", "malformed ACL " + path).ConfigureAwait(false);
+                    await AssertXmlError(response, HttpStatusCode.BadRequest, "MalformedACLError", "malformed ACL " + path).ConfigureAwait(false);
                     AssertHelper.AreEqual(aclBefore, server.WriteAclCount, "WriteAcl not invoked for " + path);
                 }
             }, token).ConfigureAwait(false);

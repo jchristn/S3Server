@@ -47,6 +47,42 @@ namespace S3ServerLibrary.S3Objects
             }
         }
 
+        /// <summary>
+        /// CRC32 checksum, base64-encoded.  Omitted when null or empty (the default).
+        /// </summary>
+        [XmlElement(ElementName = "ChecksumCRC32")]
+        public string ChecksumCRC32 { get; set; } = null;
+
+        /// <summary>
+        /// CRC32C checksum, base64-encoded.  Omitted when null or empty (the default).
+        /// </summary>
+        [XmlElement(ElementName = "ChecksumCRC32C")]
+        public string ChecksumCRC32C { get; set; } = null;
+
+        /// <summary>
+        /// CRC64NVME checksum, base64-encoded.  Omitted when null or empty (the default).
+        /// </summary>
+        [XmlElement(ElementName = "ChecksumCRC64NVME")]
+        public string ChecksumCRC64NVME { get; set; } = null;
+
+        /// <summary>
+        /// SHA1 checksum, base64-encoded.  Omitted when null or empty (the default).
+        /// </summary>
+        [XmlElement(ElementName = "ChecksumSHA1")]
+        public string ChecksumSHA1 { get; set; } = null;
+
+        /// <summary>
+        /// SHA256 checksum, base64-encoded.  Omitted when null or empty (the default).
+        /// </summary>
+        [XmlElement(ElementName = "ChecksumSHA256")]
+        public string ChecksumSHA256 { get; set; } = null;
+
+        /// <summary>
+        /// Checksum type, for example FULL_OBJECT or COMPOSITE.  Omitted when null or empty (the default).
+        /// </summary>
+        [XmlElement(ElementName = "ChecksumType")]
+        public string ChecksumType { get; set; } = null;
+
         #endregion
 
         #region Private-Members
@@ -88,6 +124,60 @@ namespace S3ServerLibrary.S3Objects
         public bool ShouldSerializeETag()
         {
             return !String.IsNullOrEmpty(ETag);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeChecksumCRC32()
+        {
+            return !String.IsNullOrEmpty(ChecksumCRC32);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeChecksumCRC32C()
+        {
+            return !String.IsNullOrEmpty(ChecksumCRC32C);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeChecksumCRC64NVME()
+        {
+            return !String.IsNullOrEmpty(ChecksumCRC64NVME);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeChecksumSHA1()
+        {
+            return !String.IsNullOrEmpty(ChecksumSHA1);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeChecksumSHA256()
+        {
+            return !String.IsNullOrEmpty(ChecksumSHA256);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeChecksumType()
+        {
+            return !String.IsNullOrEmpty(ChecksumType);
         }
 
         #endregion

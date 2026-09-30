@@ -54,6 +54,16 @@
 
         #region Public-Methods
 
+        /// <summary>
+        /// Helper method for XML serialization.  Deleted entries are omitted when the DeleteObjects request set Quiet
+        /// to true, so only errors are returned, as Amazon S3 does.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeDeletedObjects()
+        {
+            return !ResponseSerializationContext.DeleteQuiet && DeletedObjects != null && DeletedObjects.Count > 0;
+        }
+
         #endregion
 
         #region Private-Methods

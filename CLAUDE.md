@@ -78,7 +78,9 @@ dotnet pack src/S3Server/S3Server.csproj -c Release
 HTTP Request → S3Server.RequestHandler()
   → S3Context created (wraps HTTP context)
   → S3Request parses request (determines type, style, bucket, key, copy source, ranges, conditionals)
-      (a parse failure, e.g. max-keys=-1, returns an S3 XML error written directly to the Watson context)
+      then validates operation-specific parameters into S3Request.ValidationError
+  → ValidationError (if any) is returned as an S3 XML error with request identifiers
+      (a failure to build the context at all is written directly to the Watson context)
   → PreRequestHandler (optional - logging/metadata; sees UNAUTHENTICATED input by default)
   → Signature validation (if enabled; runs before PreRequestHandler when
       ValidateSignaturesBeforePreRequestHandler = true)
@@ -112,7 +114,8 @@ Settings must be configured BEFORE starting the server:
 - `AuthenticatedRequestHandler`: Called after signature validation and before routing (return true to terminate)
 - `ValidateSignaturesBeforePreRequestHandler`: Run signature validation before PreRequestHandler (default false)
 - `RouteSuffixRangesToReadRange`: Route `bytes=-N` to Object.ReadRange (default true)
-- `PreserveWebserverDefaultHeaders`: Keep Watson's Host/Accept/Accept-Language/Cache-Control default response headers (default false)
+- `PreserveWebserverDefaultHeaders`: Keep Watson's Host/Accept/Accept-Language/Accept-Charset/Cache-Control/CORS default response headers on every response (default false)
+- `EmitCorsHeaders`: Send Watson's CORS headers only on responses to requests with an Origin header (default false)
 - `DefaultRequestHandler`: Called when no callback matches
 - `PostRequestHandler`: Called after response sent
 
@@ -200,6 +203,7 @@ src/
   Test.SignatureValidation/ - Signature validation testing
   Test.Shared/           - Shared test framework and test logic
   Test.Automated/        - Console-based automated test runner
+  Test.Compatibility/    - Amazon S3 compatibility runner (--target s3|local, --serve)
   Test.Xunit/            - xUnit test project for CI/CD
 ```
 
@@ -226,6 +230,15 @@ Request/response bodies use XML serialization via SerializationHelper:
 - Responses are serialized in the S3 namespace (`http://s3.amazonaws.com/doc/2006-03-01/`); a root `Error` has no namespace and `BucketLoggingStatus` uses `http://doc.s3.amazonaws.com/2006-03-01`
 - Deserialization tries bare XML, then the S3 namespace, then a namespace-agnostic reader
 - `ListVersionsResult` serializes through `XmlEntries` (a `ListVersionsEntryCollection`), because XmlSerializer cannot map two members to the same `Version` element name
+- `XmlWriterExtended` rewrites timestamp elements to `yyyy-MM-ddTHH:mm:ss.fffZ` and, for listings requested with `encoding-type=url`, URL-encodes listing values with Amazon S3's rules
+- `ResponseSerializationContext` (thread-static) tells models the ListObjects version, whether to omit Owner, and DeleteObjects quiet mode while S3Server serializes a response; outside a request, models serialize with their own shape
+
+## Amazon S3 Compatibility Testing
+
+- `Test.Shared/Compatibility/` holds wire-level scenarios whose expectations were recorded from Amazon S3, a SigV4 signer, and `ReferenceS3Backend` (in-memory storage attached to S3Server callbacks)
+- The `Compatibility` suite runs the scenarios against S3Server in CI
+- `dotnet run --project src/Test.Compatibility -- --target s3 --bucket <bucket>` re-checks them against Amazon S3, with credentials from `S3COMPAT_ACCESS_KEY` and `S3COMPAT_SECRET_KEY`; it only touches a unique `s3server-compat-*` prefix
+- When changing protocol behavior, verify it against Amazon S3 first, then encode it as a scenario
 
 ## Size Limits
 
@@ -234,6 +247,14 @@ OperationLimitsSettings.MaxPutObjectSize controls maximum object size for PutObj
 ## Chunked Transfer Encoding
 
 When handling chunked uploads (detected via `ctx.Request.Chunked` property), use `ctx.Request.ReadChunk()` to read chunks iteratively. Each chunk has a `Length`, `Data`, and `IsFinal` property. Continue reading until `IsFinal` is true. This is commonly used by AWS CLI for streaming uploads.
+
+## Recent Changes in v8.0.0
+
+- Operation-scoped parameter validation with Amazon S3's exact errors; new S3Request KeyMarker/VersionIdMarker/UploadIdMarker/MaxUploads/EncodingType/ValidationError; PartNumberMarker defaults to 0
+- encoding-type=url applied to listings; ListObjects v1/v2 shapes; DeleteObjects Quiet; millisecond timestamps
+- HEAD Range support; library-enforced 416 when TotalSize is known; Error detail elements; bodyless HEAD errors; MalformedACLError
+- CORS/Accept-Charset headers off by default (EmitCorsHeaders); Connection: close follows keep-alive
+- Compatibility suite and Test.Compatibility runner
 
 ## Recent Changes in v7.4.0
 

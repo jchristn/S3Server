@@ -55,7 +55,7 @@
         public string NextUploadIdMarker { get; set; } = null;
 
         /// <summary>
-        /// Max uploads.
+        /// Maximum number of uploads returned.  Minimum is 0, which Amazon S3 accepts.
         /// </summary>
         [XmlElement(ElementName = "MaxUploads", IsNullable = false)]
         public int MaxUploads
@@ -66,7 +66,7 @@
             }
             set
             {
-                if (value < 1) throw new ArgumentOutOfRangeException(nameof(MaxUploads));
+                if (value < 0) throw new ArgumentOutOfRangeException(nameof(MaxUploads));
                 _MaxUploads = value;
             }
         }

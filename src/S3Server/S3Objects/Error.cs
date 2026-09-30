@@ -95,7 +95,7 @@
                     case ErrorCode.InvalidPolicyDocument:
                         return "The content of the form does not meet the conditions specified in the policy document.";
                     case ErrorCode.InvalidRange:
-                        return "The requested range cannot be satisfied.";
+                        return "The requested range is not satisfiable";
                     case ErrorCode.InvalidRequest:
                         return "Your request is invalid.";
                     case ErrorCode.InvalidSecurity:
@@ -113,7 +113,7 @@
                     case ErrorCode.KeyTooLongError:
                         return "Your key is too long.";
                     case ErrorCode.MalformedACLError:
-                        return "The XML you provided was not well-formed or did not validate against our published schema.";
+                        return "The XML you provided was not well-formed or did not validate against our published schema";
                     case ErrorCode.MalformedPOSTRequest:
                         return "The body of your POST request is not well-formed multipart/form-data.";
                     case ErrorCode.MalformedXML:
@@ -165,7 +165,7 @@
                     case ErrorCode.PermanentRedirect:
                         return "The bucket you are attempting to access must be addressed using the specified endpoint. Send all future requests to this endpoint.";
                     case ErrorCode.PreconditionFailed:
-                        return "At least one of the preconditions you specified did not hold.";
+                        return "At least one of the pre-conditions you specified did not hold";
                     case ErrorCode.Redirect:
                         return "Temporary redirect.";
                     case ErrorCode.RestoreAlreadyInProgress:
@@ -219,6 +219,66 @@
         /// </summary>
         [XmlElement(ElementName = "VersionId")]
         public string VersionId { get; set; } = null;
+
+        /// <summary>
+        /// Bucket name, as Amazon S3 includes for NoSuchBucket.
+        /// Populated automatically from the request for NoSuchBucket when not set.  Omitted when null or empty.
+        /// </summary>
+        [XmlElement(ElementName = "BucketName")]
+        public string BucketName { get; set; } = null;
+
+        /// <summary>
+        /// Upload ID, as Amazon S3 includes for NoSuchUpload.
+        /// Populated automatically from the request for NoSuchUpload when not set.  Omitted when null or empty.
+        /// </summary>
+        [XmlElement(ElementName = "UploadId")]
+        public string UploadId { get; set; } = null;
+
+        /// <summary>
+        /// Name of the invalid argument, as Amazon S3 includes for InvalidArgument (for example max-keys or partNumber).
+        /// Omitted when null or empty.
+        /// </summary>
+        [XmlElement(ElementName = "ArgumentName")]
+        public string ArgumentName { get; set; } = null;
+
+        /// <summary>
+        /// Value of the invalid argument, as Amazon S3 includes for InvalidArgument.
+        /// Omitted when null (an empty string is serialized, as Amazon S3 does for an empty value).
+        /// </summary>
+        [XmlElement(ElementName = "ArgumentValue")]
+        public string ArgumentValue { get; set; } = null;
+
+        /// <summary>
+        /// Name of the condition that failed, as Amazon S3 includes for PreconditionFailed (for example If-Match).
+        /// Omitted when null or empty.
+        /// </summary>
+        [XmlElement(ElementName = "Condition")]
+        public string Condition { get; set; } = null;
+
+        /// <summary>
+        /// The Range header value that could not be satisfied, as Amazon S3 includes for InvalidRange.
+        /// Populated automatically from the request for InvalidRange when not set.  Omitted when null or empty.
+        /// </summary>
+        [XmlElement(ElementName = "RangeRequested")]
+        public string RangeRequested { get; set; } = null;
+
+        /// <summary>
+        /// Size of the object, as Amazon S3 includes for InvalidRange.
+        /// Omitted when null.  Minimum value is 0.
+        /// </summary>
+        [XmlElement(ElementName = "ActualObjectSize")]
+        public long? ActualObjectSize
+        {
+            get
+            {
+                return _ActualObjectSize;
+            }
+            set
+            {
+                if (value != null && value.Value < 0) throw new ArgumentOutOfRangeException(nameof(ActualObjectSize));
+                _ActualObjectSize = value;
+            }
+        }
 
         /// <summary>
         /// Unique identifier for the request.
@@ -429,6 +489,7 @@
         #region Private-Members
 
         private string _Message = null;
+        private long? _ActualObjectSize = null;
 
         #endregion
 
@@ -479,6 +540,69 @@
         public bool ShouldSerializeVersionId()
         {
             return !String.IsNullOrEmpty(VersionId);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeBucketName()
+        {
+            return !String.IsNullOrEmpty(BucketName);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeUploadId()
+        {
+            return !String.IsNullOrEmpty(UploadId);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeArgumentName()
+        {
+            return !String.IsNullOrEmpty(ArgumentName);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeArgumentValue()
+        {
+            return ArgumentValue != null;
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeCondition()
+        {
+            return !String.IsNullOrEmpty(Condition);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeRangeRequested()
+        {
+            return !String.IsNullOrEmpty(RangeRequested);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeActualObjectSize()
+        {
+            return ActualObjectSize != null;
         }
 
         /// <summary>

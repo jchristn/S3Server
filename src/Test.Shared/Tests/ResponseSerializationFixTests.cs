@@ -231,6 +231,83 @@ namespace Test.Shared.Tests
 
             #endregion
 
+            #region Amazon-S3-Fidelity
+
+            await runner.RunTestAsync("S3 URL encoding matches the Amazon S3 encoding-type=url rules", (ct) =>
+            {
+                AssertHelper.AreEqual("a+b%2Bc%26d%3De%3Ff%23g%25h%7E%C3%A9.txt", XmlWriterExtended.S3UrlEncode("a b+c&d=e?f#g%h~é.txt"), "mixed");
+                AssertHelper.AreEqual("semi%3Bcolon%2Ccomma%3A%40%24%21*%27%28%29%5B%5D.txt", XmlWriterExtended.S3UrlEncode("semi;colon,comma:@$!*'()[].txt"), "punctuation");
+                AssertHelper.AreEqual("dir/sub/A-z_0.9", XmlWriterExtended.S3UrlEncode("dir/sub/A-z_0.9"), "unreserved and slash");
+                AssertHelper.AreEqual("tab%09key", XmlWriterExtended.S3UrlEncode("tab\tkey"), "control character");
+                AssertHelper.AreEqual("", XmlWriterExtended.S3UrlEncode(""), "empty");
+                AssertHelper.IsNull(XmlWriterExtended.S3UrlEncode(null), "null");
+                return Task.CompletedTask;
+            }, token).ConfigureAwait(false);
+
+            await runner.RunTestAsync("Timestamps serialize with exactly three fractional digits in UTC", (ct) =>
+            {
+                CopyObjectResult withTicks = new CopyObjectResult("e", new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc).AddTicks(1234567));
+                AssertHelper.AreEqual("2026-01-02T03:04:05.123Z", Root(withTicks).Elements().Single(e => e.Name.LocalName == "LastModified").Value, "fractional");
+
+                CopyObjectResult whole = new CopyObjectResult("e", new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc));
+                AssertHelper.AreEqual("2026-01-02T03:04:05.000Z", Root(whole).Elements().Single(e => e.Name.LocalName == "LastModified").Value, "whole second");
+
+                Upload upload = new Upload { Key = "k", UploadId = "u", Initiated = new DateTime(2026, 1, 2, 3, 4, 5, 678, DateTimeKind.Utc) };
+                ListMultipartUploadsResult uploads = new ListMultipartUploadsResult();
+                uploads.Bucket = "b";
+                uploads.Uploads = new List<Upload> { upload };
+                AssertHelper.AreEqual("2026-01-02T03:04:05.678Z", Root(uploads).Descendants().Single(e => e.Name.LocalName == "Initiated").Value, "Initiated");
+
+                CopyObjectResult back = SerializationHelper.DeserializeXml<CopyObjectResult>(SerializationHelper.SerializeXml(withTicks));
+                AssertHelper.AreEqual(new DateTime(2026, 1, 2, 3, 4, 5, 123, DateTimeKind.Utc), back.LastModified, "round-trip");
+                return Task.CompletedTask;
+            }, token).ConfigureAwait(false);
+
+            await runner.RunTestAsync("Error detail elements serialize only when set, before RequestId", (ct) =>
+            {
+                Error bare = new Error(ErrorCode.InvalidRange);
+                XElement bareRoot = Root(bare);
+                foreach (string name in new[] { "ArgumentName", "ArgumentValue", "Condition", "RangeRequested", "ActualObjectSize", "UploadId", "BucketName" })
+                    AssertHelper.IsNull(bareRoot.Elements().FirstOrDefault(e => e.Name.LocalName == name), name + " omitted");
+
+                Error detailed = new Error(ErrorCode.InvalidRange) { RangeRequested = "bytes=-0", ActualObjectSize = 10, RequestId = "r1", HostId = "h1" };
+                AssertHelper.AreEqual("Code,Message,RangeRequested,ActualObjectSize,RequestId,HostId", String.Join(",", Root(detailed).Elements().Select(e => e.Name.LocalName)), "element order");
+
+                Error emptyValue = new Error(ErrorCode.InvalidArgument) { ArgumentName = "x-amz-copy-source", ArgumentValue = "" };
+                AssertHelper.IsNotNull(Root(emptyValue).Elements().FirstOrDefault(e => e.Name.LocalName == "ArgumentValue"), "empty ArgumentValue kept");
+
+                AssertHelper.AreEqual("The requested range is not satisfiable", new Error(ErrorCode.InvalidRange).Message, "InvalidRange message");
+                AssertHelper.AreEqual(400, new Error(ErrorCode.MalformedACLError).HttpStatusCode, "MalformedACLError status");
+                return Task.CompletedTask;
+            }, token).ConfigureAwait(false);
+
+            await runner.RunTestAsync("Direct serialization keeps the model-defined shape outside S3Server", (ct) =>
+            {
+                ListBucketResult list = new ListBucketResult();
+                list.Name = "b";
+                list.Contents.Add(new ObjectMetadata("k", DateTime.UtcNow, "e", 1, new Owner("o", "O")));
+                XElement listRoot = Root(list);
+                AssertHelper.IsNull(listRoot.Elements().FirstOrDefault(e => e.Name.LocalName == "Marker"), "null Marker omitted");
+                AssertHelper.IsNotNull(listRoot.Elements().FirstOrDefault(e => e.Name.LocalName == "KeyCount"), "KeyCount kept");
+                AssertHelper.IsNotNull(listRoot.Descendants().FirstOrDefault(e => e.Name.LocalName == "Owner"), "Owner kept");
+
+                DeleteResult deletes = new DeleteResult(new List<Deleted> { new Deleted("k", null, null) }, null);
+                AssertHelper.IsNotNull(Root(deletes).Elements().FirstOrDefault(e => e.Name.LocalName == "Deleted"), "Deleted kept");
+                return Task.CompletedTask;
+            }, token).ConfigureAwait(false);
+
+            await runner.RunTestAsync("CopyObjectResult checksums serialize only when set", (ct) =>
+            {
+                CopyObjectResult plain = new CopyObjectResult("e", DateTime.UtcNow);
+                AssertHelper.AreEqual("LastModified,ETag", String.Join(",", Root(plain).Elements().Select(e => e.Name.LocalName)), "plain");
+
+                CopyPartResult withChecksum = new CopyPartResult("e", DateTime.UtcNow) { ChecksumCRC64NVME = "Ffmx7kz9nB0=", ChecksumType = "FULL_OBJECT" };
+                AssertHelper.AreEqual("LastModified,ETag,ChecksumCRC64NVME,ChecksumType", String.Join(",", Root(withChecksum).Elements().Select(e => e.Name.LocalName)), "with checksum");
+                return Task.CompletedTask;
+            }, token).ConfigureAwait(false);
+
+            #endregion
+
             #region Header-Parsers
 
             await runner.RunTestAsync("Range header parser accepts valid forms", (ct) =>
@@ -333,6 +410,11 @@ namespace Test.Shared.Tests
                 .Single(m => m.Name == "DeserializeXml" && m.GetParameters()[0].ParameterType == typeof(string));
 
             return method.MakeGenericMethod(type).Invoke(null, new object[] { xml });
+        }
+
+        private static XElement Root(object obj)
+        {
+            return XDocument.Parse(SerializationHelper.SerializeXml(obj)).Root;
         }
 
         private static XElement SerializeDeleted(Deleted deleted)

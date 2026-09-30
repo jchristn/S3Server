@@ -111,16 +111,18 @@ namespace Test.Shared.Tests
 
             foreach (string endpoint in malformedXmlEndpoints)
             {
-                string testName = "MalformedXML returns 400 for PUT " + endpoint;
+                // Amazon S3 reports a malformed ACL body as MalformedACLError and every other malformed body as MalformedXML.
+                string expectedCode = endpoint.EndsWith("?acl", StringComparison.Ordinal) ? "MalformedACLError" : "MalformedXML";
+                string testName = expectedCode + " returns 400 for PUT " + endpoint;
                 await runner.RunTestAsync(testName, async (ct) =>
                 {
                     HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Put, server.BaseUrl + endpoint);
                     request.Content = new StringContent("this is not valid xml <><>!!!", Encoding.UTF8, "application/xml");
 
                     HttpResponseMessage response = await server.HttpClient.SendAsync(request, ct).ConfigureAwait(false);
-                    AssertHelper.StatusCodeEquals(HttpStatusCode.BadRequest, response, "MalformedXML");
+                    AssertHelper.StatusCodeEquals(HttpStatusCode.BadRequest, response, expectedCode);
                     string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                    AssertHelper.StringContains(body, "MalformedXML", "error body");
+                    AssertHelper.StringContains(body, "<Code>" + expectedCode + "</Code>", "error body");
                 }, token).ConfigureAwait(false);
             }
 

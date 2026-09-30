@@ -26,6 +26,7 @@ namespace Test.Shared
                     ServerApiSuite(),
                     SignatureValidationSuite(),
                     SerializationSuite(),
+                    CompatibilitySuite(),
                     UtilitySuite()
                 };
             }
@@ -97,6 +98,23 @@ namespace Test.Shared
                     new RunnerOnlySource("Serialization", "Serialization", SerializationTests.RunAllAsync),
                     new RunnerOnlySource("DataModel", "Data model", DataModelTests.RunAllAsync),
                     new RunnerOnlySource("ResponseSerializationFixes", "Response serialization fixes", ResponseSerializationFixTests.RunAllAsync)));
+        }
+
+        /// <summary>
+        /// Amazon S3 compatibility suite.  Runs wire-level scenarios whose expectations were recorded from Amazon S3
+        /// against S3Server with the reference backend and signature validation enabled.
+        /// </summary>
+        /// <returns>Suite descriptor.</returns>
+        public static TestSuiteDescriptor CompatibilitySuite()
+        {
+            const string suiteId = "Compatibility";
+
+            return new TestSuiteDescriptor(
+                suiteId: suiteId,
+                displayName: "Amazon S3 Compatibility",
+                cases: BuildRunnerCases(
+                    suiteId,
+                    new RunnerOnlySource("Compatibility", "S3 compatibility", CompatibilityTests.RunAllAsync)));
         }
 
         /// <summary>

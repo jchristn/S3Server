@@ -213,6 +213,15 @@
         /// <exception cref="ArgumentNullException">Thrown if obj is null.</exception>
         public static string SerializeXml(object obj, bool pretty = false)
         {
+            return SerializeXml(obj, pretty, false);
+        }
+
+        #endregion
+
+        #region Internal-Methods
+
+        internal static string SerializeXml(object obj, bool pretty, bool urlEncodeListingValues)
+        {
             if (obj == null) throw new ArgumentNullException(nameof(obj));
 
             string defaultNamespace = GetXmlNamespace(obj.GetType());
@@ -230,7 +239,7 @@
                 {
                     XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
                     ns.Add("", defaultNamespace);
-                    xmlSerializer.Serialize(new XmlWriterExtended(writer), obj, ns);
+                    xmlSerializer.Serialize(new XmlWriterExtended(writer, urlEncodeListingValues), obj, ns);
                     byte[] bytes = stream.ToArray();
                     string ret = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
 

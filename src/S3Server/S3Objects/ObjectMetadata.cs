@@ -134,6 +134,16 @@
 
         #region Public-Methods
 
+        /// <summary>
+        /// Helper method for XML serialization.  Owner is omitted when null, and from ListObjectsV2 responses unless the
+        /// request specified fetch-owner=true, as Amazon S3 does.
+        /// </summary>
+        /// <returns>Boolean.</returns>
+        public bool ShouldSerializeOwner()
+        {
+            return Owner != null && !ResponseSerializationContext.SuppressListOwner;
+        }
+
         #endregion
 
         #region Private-Methods

@@ -36,10 +36,23 @@
         }
 
         /// <summary>
-        /// Marker.
+        /// ListObjects (v1) echo of the marker supplied in the request.
+        /// When S3Server serializes a ListObjects v1 response, the element is always written (empty when null), as Amazon S3 does;
+        /// it is never written for a ListObjectsV2 response.
         /// </summary>
         [XmlElement(ElementName = "Marker")]
-        public string Marker { get; set; } = null;
+        public string Marker
+        {
+            get
+            {
+                if (_Marker == null && ResponseSerializationContext.ListType == 1) return "";
+                return _Marker;
+            }
+            set
+            {
+                _Marker = value;
+            }
+        }
 
         /// <summary>
         /// ListObjects (v1) resume point.  Set when the response is truncated and a delimiter was supplied, because the
@@ -157,6 +170,7 @@
         private int _MaxKeys = 1000;
         private string _Prefix = "";
         private string _Delimiter = null;
+        private string _Marker = null;
 
         #endregion
 
@@ -226,7 +240,18 @@
     /// <returns>Boolean</returns>
     public bool ShouldSerializeMarker()
         {
+            if (ResponseSerializationContext.ListType == 1) return true;
+            if (ResponseSerializationContext.ListType == 2) return false;
             return !String.IsNullOrEmpty(Marker);
+        }
+
+        /// <summary>
+        /// Helper method for XML serialization.  KeyCount is omitted from ListObjects v1 responses, as Amazon S3 does.
+        /// </summary>
+        /// <returns>Boolean</returns>
+        public bool ShouldSerializeKeyCount()
+        {
+            return ResponseSerializationContext.ListType != 1;
         }
 
         /// <summary>
@@ -235,7 +260,7 @@
         /// <returns>Boolean</returns>
         public bool ShouldSerializeNextContinuationToken()
         {
-            return !String.IsNullOrEmpty(NextContinuationToken);
+            return ResponseSerializationContext.ListType != 1 && !String.IsNullOrEmpty(NextContinuationToken);
         }
 
         /// <summary>
@@ -244,7 +269,7 @@
         /// <returns>Boolean</returns>
         public bool ShouldSerializeNextMarker()
         {
-            return !String.IsNullOrEmpty(NextMarker);
+            return ResponseSerializationContext.ListType != 2 && !String.IsNullOrEmpty(NextMarker);
         }
 
         /// <summary>
@@ -253,7 +278,7 @@
         /// <returns>Boolean</returns>
         public bool ShouldSerializeContinuationToken()
         {
-            return !String.IsNullOrEmpty(ContinuationToken);
+            return ResponseSerializationContext.ListType != 1 && !String.IsNullOrEmpty(ContinuationToken);
         }
 
         /// <summary>
@@ -262,7 +287,7 @@
         /// <returns>Boolean</returns>
         public bool ShouldSerializeStartAfter()
         {
-            return !String.IsNullOrEmpty(StartAfter);
+            return ResponseSerializationContext.ListType != 1 && !String.IsNullOrEmpty(StartAfter);
         }
 
         /// <summary>

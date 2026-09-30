@@ -106,7 +106,8 @@
         }
 
         /// <summary>
-        /// Part number arker.
+        /// Part number marker from the part-number-marker querystring parameter (ListParts).
+        /// Default is 0, which lists parts from the beginning, matching Amazon S3.  Minimum value is 0.
         /// </summary>
         public int PartNumberMarker
         {
@@ -277,6 +278,56 @@
         /// Continuation token.
         /// </summary>
         public string ContinuationToken { get; set; } = null;
+
+        /// <summary>
+        /// Key marker from the key-marker querystring parameter (ListObjectVersions and ListMultipartUploads), URL-decoded.
+        /// Null when not supplied.
+        /// </summary>
+        public string KeyMarker { get; set; } = null;
+
+        /// <summary>
+        /// Version ID marker from the version-id-marker querystring parameter (ListObjectVersions), URL-decoded.
+        /// Null when not supplied.
+        /// </summary>
+        public string VersionIdMarker { get; set; } = null;
+
+        /// <summary>
+        /// Upload ID marker from the upload-id-marker querystring parameter (ListMultipartUploads), URL-decoded.
+        /// Null when not supplied.
+        /// </summary>
+        public string UploadIdMarker { get; set; } = null;
+
+        /// <summary>
+        /// Maximum number of uploads to return, from the max-uploads querystring parameter (ListMultipartUploads).
+        /// Default is 1000.  Minimum value is 0.
+        /// </summary>
+        public int MaxUploads
+        {
+            get
+            {
+                return _MaxUploads;
+            }
+            set
+            {
+                if (value < 0) throw new ArgumentOutOfRangeException(nameof(MaxUploads));
+                _MaxUploads = value;
+            }
+        }
+
+        /// <summary>
+        /// Encoding type requested for a listing, from the encoding-type querystring parameter.
+        /// The only value Amazon S3 accepts is "url"; any other value on a listing request is rejected with InvalidArgument.
+        /// When "url", S3Server URL-encodes the keys, prefixes, delimiters, and markers in the listing response and sets
+        /// EncodingType in the response, unless the callback already set EncodingType on its result.  Null when not supplied.
+        /// </summary>
+        public string EncodingType { get; set; } = null;
+
+        /// <summary>
+        /// Error found while validating the request (for example an invalid max-keys value or a malformed x-amz-copy-source header).
+        /// S3Server returns it to the client before invoking any handler.  Null when the request is valid.
+        /// </summary>
+        [JsonIgnore]
+        public S3Exception ValidationError { get; private set; } = null;
 
         /// <summary>
         /// Start-after key from a ListObjectsV2 request (the <c>start-after</c> querystring parameter), URL-decoded.
@@ -645,7 +696,9 @@
         private int _MaxKeys = 1000;
         private int _MaxParts = 1000;
         private int _PartNumber = 1;
-        private int _PartNumberMarker = 1;
+        private int _PartNumberMarker = 0;
+        private int _MaxUploads = 1000;
+        private bool _CopySourceHeaderPresent = false;
         private long? _RangeStart = null;
         private long? _RangeEnd = null;
         private long? _RangeSuffixLength = null;
@@ -793,19 +846,9 @@
             if (String.IsNullOrEmpty(stringValue))
                 return false;
 
-            if (!Int32.TryParse(stringValue, NumberStyles.None, CultureInfo.InvariantCulture, out value))
-            {
-                string name = keys[0];
-                if (_HttpRequest != null && _HttpRequest.Query != null && _HttpRequest.Query.Elements != null)
-                {
-                    string sent = _HttpRequest.Query.Elements.AllKeys.FirstOrDefault(k => k != null && keys.Any(a => a.Equals(k, StringComparison.OrdinalIgnoreCase)));
-                    if (!String.IsNullOrEmpty(sent)) name = sent;
-                }
-
-                throw InvalidArgument("Querystring parameter '" + name + "' must be a non-negative integer; received '" + stringValue + "'.");
-            }
-
-            return true;
+            // Parsing is lenient here; values that are invalid for the operation are rejected by ValidateQueryParameters
+            // once the request type is known, because Amazon S3 ignores parameters an operation does not use.
+            return Int32.TryParse(stringValue, NumberStyles.None, CultureInfo.InvariantCulture, out value);
         }
 
         /// <summary>
@@ -876,6 +919,18 @@
                     PartNumberMarker = partNumMarker;
                 }
 
+                if (TryRetrieveQueryInt(out int maxUploads, "max-uploads"))
+                {
+                    MaxUploads = maxUploads;
+                }
+
+                KeyMarker = RetrieveQueryValue("key-marker");
+                VersionIdMarker = RetrieveQueryValue("version-id-marker");
+                UploadIdMarker = RetrieveQueryValue("upload-id-marker");
+
+                string encodingType = RetrieveQueryValue("encoding-type");
+                if (!String.IsNullOrEmpty(encodingType)) EncodingType = encodingType;
+
                 if (!String.IsNullOrEmpty(AccessKey)
                     && !String.IsNullOrEmpty(Expires)
                     && !String.IsNullOrEmpty(Signature))
@@ -924,10 +979,19 @@
 
                 if (_HttpRequest.Method == HttpMethod.PUT && HeaderExists("x-amz-copy-source"))
                 {
-                    ParseCopySourceHeader(RetrieveHeaderValue("x-amz-copy-source"));
+                    _CopySourceHeaderPresent = true;
 
-                    if (HeaderExists("x-amz-copy-source-range"))
-                        ParseCopySourceRangeHeader(RetrieveHeaderValue("x-amz-copy-source-range"));
+                    try
+                    {
+                        ParseCopySourceHeader(RetrieveHeaderValue("x-amz-copy-source"));
+
+                        if (HeaderExists("x-amz-copy-source-range"))
+                            ParseCopySourceRangeHeader(RetrieveHeaderValue("x-amz-copy-source-range"));
+                    }
+                    catch (S3Exception e)
+                    {
+                        Defer(e);
+                    }
                 }
 
                 IfMatch = ConditionalHeaderParser.ParseEntityTagList(RetrieveHeaderValueIfExists("if-match"));
@@ -985,7 +1049,95 @@
 
             SetRequestType();
 
-            #endregion 
+            #endregion
+
+            #region Validate
+
+            try
+            {
+                ValidateQueryParameters();
+            }
+            catch (S3Exception e)
+            {
+                Defer(e);
+            }
+
+            #endregion
+        }
+
+        private void Defer(S3Exception e)
+        {
+            if (ValidationError == null) ValidationError = e;
+        }
+
+        private void ValidateQueryParameters()
+        {
+            switch (RequestType)
+            {
+                // Amazon S3 words the negative-value error differently per operation; these match it exactly.
+                case S3RequestType.BucketRead:
+                    ValidateInt("max-keys", "maxKeys", "Argument maxKeys must be an integer between 0 and 2147483647", true, "max-keys");
+                    ValidateEncodingType();
+                    break;
+
+                case S3RequestType.BucketReadVersions:
+                    ValidateInt("max-keys", "max-keys", "max-keys cannot be negative", false, "max-keys");
+                    ValidateEncodingType();
+                    break;
+
+                case S3RequestType.BucketReadMultipartUploads:
+                    ValidateInt("max-uploads", "max-uploads", "Argument max-uploads must be an integer between 0 and 2147483647", true, "max-uploads");
+                    ValidateEncodingType();
+                    break;
+
+                case S3RequestType.ObjectReadParts:
+                    ValidateInt("max-parts", "max-parts", "Argument max-parts must be an integer between 0 and 2147483647", true, "max-parts", "maxParts", "MaxParts");
+                    ValidateInt("part-number-marker", "part-number-marker", "Argument part-number-marker must be an integer between 0 and 2147483647", true, "part-number-marker", "partNumberMarker", "PartNumberMarker");
+                    break;
+
+                case S3RequestType.ObjectRead:
+                case S3RequestType.ObjectReadRange:
+                case S3RequestType.ObjectExists:
+                case S3RequestType.ObjectUploadPart:
+                case S3RequestType.ObjectUploadPartCopy:
+                    ValidatePartNumber();
+                    break;
+            }
+        }
+
+        private void ValidateInt(string name, string negativeArgumentName, string negativeMessage, bool negativeIncludesValue, params string[] keys)
+        {
+            string raw = RetrieveFirstQueryValue(keys);
+            if (String.IsNullOrEmpty(raw)) return;
+
+            if (Int64.TryParse(raw, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out long parsed)
+                && parsed >= Int32.MinValue
+                && parsed <= Int32.MaxValue)
+            {
+                if (parsed < 0 && negativeArgumentName != null)
+                    throw InvalidArgument(negativeMessage, negativeArgumentName, negativeIncludesValue ? raw : null);
+
+                return;
+            }
+
+            throw InvalidArgument("Provided " + name + " not an integer or within integer range", name, raw);
+        }
+
+        private void ValidatePartNumber()
+        {
+            string raw = RetrieveFirstQueryValue("partnumber", "partNumber", "PartNumber");
+            if (raw == null) return;
+
+            if (!Int32.TryParse(raw, NumberStyles.None, CultureInfo.InvariantCulture, out int value) || value < 1 || value > 10000)
+                throw InvalidArgument("Part number must be an integer between 1 and 10000, inclusive", "partNumber", raw);
+        }
+
+        private void ValidateEncodingType()
+        {
+            if (EncodingType == null) return;
+            if (!EncodingType.Equals("url", StringComparison.OrdinalIgnoreCase))
+                throw InvalidArgument("Invalid Encoding Method specified in Request", "encoding-type", EncodingType);
+            EncodingType = "url";
         }
 
         private void ParseAuthorizationHeader()
@@ -1298,7 +1450,7 @@
         private void ParseCopySourceHeader(string header)
         {
             if (String.IsNullOrWhiteSpace(header))
-                throw InvalidArgument("The x-amz-copy-source header is empty.");
+                throw InvalidArgument("Copy Source must mention the source bucket and key: sourcebucket/sourcekey", "x-amz-copy-source", header ?? "");
 
             string value = header.Trim();
             string query = null;
@@ -1317,7 +1469,7 @@
 
             int slash = value.IndexOf('/');
             if (slash <= 0 || slash == value.Length - 1)
-                throw InvalidArgument("The x-amz-copy-source header must be in the form 'bucket/key': '" + header + "'.");
+                throw InvalidArgument("Invalid copy source object key", "x-amz-copy-source", header);
 
             string bucket = value.Substring(0, slash);
             string key = value.Substring(slash + 1);
@@ -1338,7 +1490,7 @@
                     if (name.Equals("versionId", StringComparison.OrdinalIgnoreCase))
                     {
                         if (String.IsNullOrEmpty(val))
-                            throw InvalidArgument("The x-amz-copy-source header has an empty versionId.");
+                            throw InvalidArgument("Version id cannot be the empty string", "x-amz-copy-source", "");
 
                         CopySourceVersionId = Uri.UnescapeDataString(val);
                     }
@@ -1356,17 +1508,22 @@
                 || start == null
                 || end == null)
             {
-                throw InvalidArgument("The x-amz-copy-source-range header must be in the form 'bytes=first-last': '" + header + "'.");
+                throw InvalidArgument(
+                    "The x-amz-copy-source-range value must be of the form bytes=first-last where first and last are the zero-based offsets of the first and last bytes to copy",
+                    "x-amz-copy-source-range",
+                    header);
             }
 
             CopySourceRangeStart = start;
             CopySourceRangeEnd = end;
         }
 
-        private static S3Exception InvalidArgument(string message)
+        private static S3Exception InvalidArgument(string message, string argumentName, string argumentValue)
         {
             Error error = new Error(ErrorCode.InvalidArgument);
             error.Message = message;
+            error.ArgumentName = argumentName;
+            error.ArgumentValue = argumentValue;
             return new S3Exception(error);
         }
 
@@ -1465,8 +1622,8 @@
                         else if (QuerystringExists("retention"))
                             RequestType = S3RequestType.ObjectWriteRetention;
                         else if (QuerystringExistsAny("partnumber", "partNumber", "PartNumber") && QuerystringExistsAny("uploadid", "uploadId", "UploadId"))
-                            RequestType = (CopySourceKey != null) ? S3RequestType.ObjectUploadPartCopy : S3RequestType.ObjectUploadPart;
-                        else if (CopySourceKey != null)
+                            RequestType = _CopySourceHeaderPresent ? S3RequestType.ObjectUploadPartCopy : S3RequestType.ObjectUploadPart;
+                        else if (_CopySourceHeaderPresent)
                             RequestType = S3RequestType.ObjectCopy;
                         else
                             RequestType = S3RequestType.ObjectWrite;

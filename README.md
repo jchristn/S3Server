@@ -188,9 +188,14 @@ S3ServerSettings settings = new S3ServerSettings
     // Optional: Route suffix ranges (bytes=-N) to Object.ReadRange (default true)
     RouteSuffixRangesToReadRange = true,
 
-    // Optional: Keep the webserver's default Host, Accept, Accept-Language, and
-    // Cache-Control response headers (default false, which removes them)
+    // Optional: Keep the webserver's default Host, Accept, Accept-Language, Accept-Charset,
+    // Cache-Control, and CORS response headers on every response (default false, which removes them)
     PreserveWebserverDefaultHeaders = false,
+
+    // Optional: Send the webserver's CORS (Access-Control-*) headers on responses to requests
+    // that carry an Origin header, for browser-based clients (default false, as Amazon S3 does
+    // for a bucket without a CORS configuration)
+    EmitCorsHeaders = false,
 
     // Note: UseTcpServer is deprecated in v7.0; Watson now uses TCP natively
     UseTcpServer = false
@@ -475,9 +480,17 @@ server.Object.Write = async (ctx) =>
 
 In a `ReadRange` callback, set `S3Object.Size` to the number of bytes in the returned range and `S3Object.TotalSize` to the full object size. S3Server then emits `Content-Range: bytes start-end/total` on the `206 Partial Content` response; ranged/multipart download clients (for example the AWS CLI) require this numeric total. If `TotalSize` is left null, the total is emitted as `*` (unknown).
 
-For a suffix range (`Range: bytes=-N`, the last N bytes), `RangeStart` and `RangeEnd` are null and `ctx.Request.RangeSuffixLength` is set. Return the last N bytes (or the whole object if it is shorter) and set `TotalSize`, which is required: S3Server computes `Content-Range` from it, and fails the request with `InternalError` if it is missing. A zero-length suffix, or a suffix range on an empty object, returns `416 InvalidRange`. Set `RouteSuffixRangesToReadRange = false` to send suffix ranges to `Object.Read` as versions before 7.4.0 did.
+For a suffix range (`Range: bytes=-N`, the last N bytes), `RangeStart` and `RangeEnd` are null and `ctx.Request.RangeSuffixLength` is set. Return the last N bytes (or the whole object if it is shorter) and set `TotalSize`, which is required: S3Server computes `Content-Range` from it, and fails the request with `InternalError` if it is missing. Set `RouteSuffixRangesToReadRange = false` to send suffix ranges to `Object.Read` as versions before 7.4.0 did.
 
-`Object.WriteAcl` and `Bucket.WriteAcl` receive a `null` policy when the request has no body, which is how canned ACLs (`x-amz-acl`) and grant headers (`x-amz-grant-*`) arrive. Read those headers with `ctx.Request.RetrieveHeaderValue`. A body that is present but not valid XML is still rejected with `MalformedXML`.
+When `TotalSize` is set, S3Server applies Amazon S3's range rules itself, so a `ReadRange` callback can simply clamp and return what it has:
+
+- A range that starts at or past the end of the object (`bytes=10-` on a 10-byte object) and a zero-length suffix (`bytes=-0`) return `416 InvalidRange` with `RangeRequested` and `ActualObjectSize` in the error body.
+- A suffix range on an empty object returns `200` with an empty body.
+- `Content-Range` describes the bytes actually returned, so `bytes=0-100` on a 10-byte object is answered with `bytes 0-9/10`.
+
+`HEAD` honors `Range` the same way: `206` with `Content-Range` and the length of the range, or `416`.
+
+`Object.WriteAcl` and `Bucket.WriteAcl` receive a `null` policy when the request has no body, which is how canned ACLs (`x-amz-acl`) and grant headers (`x-amz-grant-*`) arrive. Read those headers with `ctx.Request.RetrieveHeaderValue`. A body that is present but not valid XML is rejected with `MalformedACLError`, as Amazon S3 does.
 
 `Object.Copy` receives a PUT carrying `x-amz-copy-source`. The source is parsed into `ctx.Request.CopySourceBucket`, `CopySourceKey`, and `CopySourceVersionId`. If `Object.Copy` is not set, the request goes to `DefaultRequestHandler` or returns `NotImplemented`. It is never delivered to `Object.Write`.
 
@@ -596,7 +609,19 @@ Task<Chunk> ReadChunk()       // Read chunk for chunked transfer encoding
 
 Use `RetrieveQueryValue` for querystring parameters S3Server does not parse. It returns decoded values (`a%2Fb%20c` becomes `a/b c`). `ctx.Http.Request.Query.Elements` holds the raw, percent-encoded values.
 
-Numeric querystring parameters (`max-keys`, `max-parts`, `part-number-marker`, `partNumber`) that are negative or not integers are rejected with `400 InvalidArgument` before any handler runs.
+Querystring parameters are validated only by the operations that use them, with the error Amazon S3 returns (`400 InvalidArgument` with `ArgumentName` and `ArgumentValue`), before any handler runs:
+
+| Parameter | Operations | Rejected values |
+|-----------|------------|-----------------|
+| `max-keys` | ListObjects, ListObjectsV2, ListObjectVersions | negative, non-integer, out of range |
+| `max-uploads` | ListMultipartUploads | negative, non-integer, out of range |
+| `max-parts`, `part-number-marker` | ListParts | negative, non-integer, out of range |
+| `partNumber` | GetObject, HeadObject, UploadPart, UploadPartCopy | anything other than 1 to 10000 |
+| `encoding-type` | the listing operations | anything other than `url` |
+
+Other operations ignore these parameters, as Amazon S3 does (for example, `GET /bucket/key?max-keys=abc` returns the object). The error is also available to handlers as `ctx.Request.ValidationError`.
+
+`ctx.Request` also parses `KeyMarker`, `VersionIdMarker`, `UploadIdMarker`, `MaxUploads`, and `EncodingType`. `PartNumberMarker` defaults to `0`, as Amazon S3's does.
 
 ### S3Response
 
@@ -682,9 +707,20 @@ server.Object.Read = async (ctx) =>
 
 A failed `If-Match` or `If-Unmodified-Since` should throw `PreconditionFailed` (412).
 
-### XML Namespace
+### Response Format
 
-Response bodies are serialized in the Amazon S3 namespace (`http://s3.amazonaws.com/doc/2006-03-01/`), as Amazon S3 sends them. A top-level `Error` has no namespace, and `BucketLoggingStatus` uses `http://doc.s3.amazonaws.com/2006-03-01`. Request bodies are accepted with or without a namespace.
+S3Server shapes response bodies the way Amazon S3 does, so callbacks can return plain models:
+
+- **Namespace.** Response bodies are serialized in the Amazon S3 namespace (`http://s3.amazonaws.com/doc/2006-03-01/`). A top-level `Error` has no namespace, and `BucketLoggingStatus` uses `http://doc.s3.amazonaws.com/2006-03-01`. Request bodies are accepted with or without a namespace.
+- **Timestamps.** `LastModified`, `Initiated`, `CreationDate`, and `RetainUntilDate` are written in UTC with exactly three fractional digits (`2026-01-02T03:04:05.000Z`).
+- **ListObjects v1 and v2.** A v1 response always has `Marker` (empty when not set) and never `KeyCount`, `ContinuationToken`, `StartAfter`, or `NextContinuationToken`. A v2 response never has `Marker` or `NextMarker`, and omits `Owner` from each object unless the request set `fetch-owner=true`.
+- **`encoding-type=url`.** When a listing request asks for it (the AWS CLI and boto3 always do), S3Server URL-encodes `Key`, `Prefix`, `Delimiter`, `Marker`, `NextMarker`, `StartAfter`, `KeyMarker`, and `NextKeyMarker` the way Amazon S3 does, and sets `EncodingType` to `url`. If a callback already set `EncodingType` on its result, S3Server assumes the callback encoded the values itself and leaves them alone.
+- **DeleteObjects quiet mode.** When the request sets `<Quiet>true</Quiet>`, `Deleted` entries are omitted and only errors are returned.
+- **Error details.** `Error` carries `ArgumentName`, `ArgumentValue`, `Condition`, `RangeRequested`, `ActualObjectSize`, `UploadId`, and `BucketName`, each written only when set. S3Server fills `Key` for `NoSuchKey`, `BucketName` for `NoSuchBucket`, `UploadId` for `NoSuchUpload`, and `RangeRequested` for `InvalidRange` from the request. Set `Condition` (for example `If-Match`) when throwing `PreconditionFailed`.
+- **HEAD errors.** An error response to `HEAD` has a status and headers but no body.
+- **Headers.** Responses carry no request-only or CORS headers by default; see `PreserveWebserverDefaultHeaders` and `EmitCorsHeaders`. `Connection: close` is sent only when the webserver's keep-alive is disabled (`WebserverSettings.IO.EnableKeepAlive`, which is off by default).
+
+Serializing a model directly with `SerializationHelper.SerializeXml` (outside a request) keeps the model's own shape: nothing is omitted or encoded based on a request.
 
 ## Client Configuration
 
@@ -885,6 +921,7 @@ When exceeded, S3Server automatically returns `EntityTooLarge` error.
 ## Known Limitations
 
 - **Chunk signature validation**: Not yet supported for chunked transfer encoding with AWS Signature V4
+- **Behavior that depends on stored data is left to callbacks**: for example, `GET /bucket/key?partNumber=N` on a multipart object (Amazon S3 returns that part with `206` and `x-amz-mp-parts-count`), versioning semantics, and bucket CORS configurations
 
 The following S3 operations are not exposed through callbacks (may be added in future releases):
 
@@ -906,6 +943,7 @@ Comprehensive examples are available in the repository:
 - **`Test.Shared`**: Touchstone descriptor source of truth for automated, xUnit, and NUnit tests, including parser/routing, compatibility, adversarial, fuzz, lifecycle, and signature coverage
 - **`Test.Xunit`**: xUnit test project using `Touchstone.XunitAdapter`
 - **`Test.Nunit`**: NUnit test project using `Touchstone.NunitAdapter`
+- **`Test.Compatibility`**: Runs the Amazon S3 compatibility scenarios against S3Server or Amazon S3, or hosts the reference server for external clients
 
 Run the test server (requires admin on Windows for wildcard listeners):
 
@@ -923,6 +961,25 @@ dotnet test src/Test.Nunit/Test.Nunit.csproj
 ```
 
 The xUnit and NUnit adapter projects execute these socket-bound integration descriptors serially to avoid local listener port races.
+
+### Amazon S3 Compatibility Tests
+
+The `Compatibility` suite runs wire-level scenarios (ranges, `HEAD` ranges, parameter validation, listing shapes and pagination, `encoding-type=url`, conditional requests, response headers, CopyObject, multipart uploads including UploadPartCopy, DeleteObjects, ACLs, and error bodies). They are sent as raw SigV4-signed requests to S3Server running `Test.Shared.Compatibility.ReferenceS3Backend`, an in-memory backend, with signature validation enabled. Every expectation was recorded from Amazon S3, and `Test.Compatibility` can send the same scenarios to Amazon S3 to confirm they still hold:
+
+```bash
+# Against S3Server with the reference backend
+dotnet run --project src/Test.Compatibility/Test.Compatibility.csproj -- --target local
+
+# Against Amazon S3 (credentials are read from the environment, never from arguments)
+export S3COMPAT_ACCESS_KEY=...
+export S3COMPAT_SECRET_KEY=...
+dotnet run --project src/Test.Compatibility/Test.Compatibility.csproj -- --target s3 --bucket my-bucket --region us-west-1
+
+# Host the reference server for external clients (AWS CLI, boto3, MinIO client)
+dotnet run --project src/Test.Compatibility/Test.Compatibility.csproj -- --serve 8000 --bucket compat-bucket
+```
+
+Against Amazon S3, the scenarios create objects only under a unique `s3server-compat-*` prefix and delete only that prefix afterward. They never change bucket settings or touch other objects.
 
 Collect coverage for the library with the shared runsettings file:
 
@@ -964,6 +1021,20 @@ Have a feature request or found an issue? Please [file an issue on GitHub](https
 ## Version History
 
 Refer to [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
+
+## New in v8.0.0
+
+This major release makes S3Server's responses match Amazon S3 in the details that 7.4.0 left out. Each behavior was checked against Amazon S3, and the new `Compatibility` suite enforces it. See [CHANGELOG.md](CHANGELOG.md) for breaking changes and migration notes.
+
+- Querystring parameters are validated only by the operations that use them, with Amazon S3's exact errors (`ArgumentName`, `ArgumentValue`, and messages). `partNumber` must be 1 to 10000, and `encoding-type` must be `url`
+- `encoding-type=url` listings are URL-encoded automatically, and ListObjects v1 and v2 responses take their exact Amazon S3 shapes
+- `HEAD` honors `Range`, unsatisfiable ranges return `416` with `RangeRequested` and `ActualObjectSize`, and a suffix range on an empty object returns `200`
+- Error bodies carry Amazon S3's detail elements, and errors on `HEAD` have no body
+- Timestamps are written with millisecond precision, as Amazon S3 does
+- DeleteObjects honors `Quiet`, and malformed ACL bodies return `MalformedACLError`
+- CORS and `Accept-Charset` headers are no longer sent by default (`EmitCorsHeaders` restores CORS for browser clients), and `Connection: close` follows the keep-alive setting
+- New `S3Request` properties: `KeyMarker`, `VersionIdMarker`, `UploadIdMarker`, `MaxUploads`, `EncodingType`, and `ValidationError`
+- New compatibility test tooling: the `Compatibility` suite and the `Test.Compatibility` runner
 
 ## New in v7.4.0
 

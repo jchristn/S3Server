@@ -156,11 +156,28 @@ namespace Test.Shared
         /// <param name="enableSignatureV2">True to enable legacy AWS signature V2 validation.</param>
         public S3TestServer(int port = 0, bool enableSignatures = false, bool startServer = true, bool enableSignatureV2 = false)
         {
-            Port = port == 0 ? GetAvailablePort() : port;
             EnableSignatures = enableSignatures;
             EnableSignatureV2 = enableSignatureV2;
 
-            InitializeServer(startServer);
+            // An automatically selected port can be claimed by another test process between selection and bind
+            // (the net8.0 and net10.0 test hosts run concurrently), so retry with a new port when the bind fails.
+            for (int attempt = 1; ; attempt++)
+            {
+                Port = port == 0 ? GetAvailablePort() : port;
+
+                try
+                {
+                    InitializeServer(startServer);
+                    break;
+                }
+                catch (SocketException) when (port == 0 && attempt < 5)
+                {
+                    Server?.Dispose();
+                    Server = null;
+                    _Started = false;
+                }
+            }
+
             InitializeClient();
         }
 

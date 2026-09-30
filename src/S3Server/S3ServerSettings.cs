@@ -105,12 +105,22 @@
         public bool RouteSuffixRangesToReadRange { get; set; } = true;
 
         /// <summary>
-        /// When false, the request-only headers Host, Accept, Accept-Language, and Cache-Control are removed from the
-        /// webserver's default response headers when the server is constructed, so they are not echoed on every response.
-        /// When true, the webserver's default headers are used unmodified, as in versions prior to 7.4.0.
-        /// This value is only read when the S3Server is constructed.  Default is false.
+        /// When false, headers Amazon S3 does not send are removed from the webserver's default response headers when the
+        /// server is constructed: the request-only headers Host, Accept, Accept-Language, and Accept-Charset, the blanket
+        /// Cache-Control, the CORS Access-Control-* headers (see EmitCorsHeaders), and Connection when the webserver has
+        /// keep-alive enabled.  When true, the webserver's default headers are sent unmodified on every response, as in
+        /// versions prior to 7.4.0.  This value is only read when the S3Server is constructed.  Default is false.
         /// </summary>
         public bool PreserveWebserverDefaultHeaders { get; set; } = false;
+
+        /// <summary>
+        /// When true, the webserver's default CORS headers (Access-Control-*) are added to responses for requests that carry
+        /// an Origin header, which is what browsers send for cross-origin requests.  When false, no CORS headers are sent,
+        /// which matches Amazon S3 for a bucket without a CORS configuration.  Enable this for browser-based clients.
+        /// Has no effect when PreserveWebserverDefaultHeaders is true (the CORS headers are then sent on every response).
+        /// This value is only read when the S3Server is constructed and for each request.  Default is false.
+        /// </summary>
+        public bool EmitCorsHeaders { get; set; } = false;
 
         /// <summary>
         /// Callback method to call when no matching AWS S3 API callback could be found. 
