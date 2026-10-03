@@ -1034,11 +1034,11 @@ dotnet pack src/S3Server/S3Server.csproj -c Release
 
 ## Dependencies
 
-- **Watson** (7.1.0): HTTP server framework (supports HTTP/1.1, HTTP/2, and HTTP/3)
+- **Watson** (7.2.2): HTTP server framework (supports HTTP/1.1, HTTP/2, and HTTP/3)
 - **AWSSignatureGenerator** (1.1.0): AWS Signature V4 validation, streaming signature support, and legacy S3 Signature V2 helpers
 - **PrettyId** (2.0.1): Request ID generation
-- **System.Diagnostics.DiagnosticSource** (8.0.1, `netstandard2.1` only): `Meter` and `ActivitySource` for telemetry (inbox on `net8.0` and `net10.0`)
-- **Touchstone** (0.1.12): Shared test descriptors and console/xUnit/NUnit test runners
+- **System.Diagnostics.DiagnosticSource** (10.0.12, `netstandard2.1` only): `Meter` and `ActivitySource` for telemetry (inbox on `net8.0` and `net10.0`)
+- **Touchstone** (0.2.0): Shared test descriptors and console/xUnit/NUnit test runners
 
 ## Resources
 
@@ -1053,6 +1053,10 @@ Have a feature request or found an issue? Please [file an issue on GitHub](https
 ## Version History
 
 Refer to [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
+
+## New in v8.1.1
+
+- Dependency refresh: Watson 7.2.2, System.Diagnostics.DiagnosticSource 10.0.12 (`netstandard2.1` only), and updated test tooling. No public API or behavior changes
 
 ## New in v8.1.0
 

@@ -2,6 +2,23 @@
 
 ## Current Version
 
+v8.1.1
+
+Dependency refresh. No public API is removed or changed, and no response behavior changes.
+
+Dependencies
+
+- Watson 7.1.0 to 7.2.2
+- `System.Diagnostics.DiagnosticSource` (`netstandard2.1` only) 8.0.1 to 10.0.12
+
+Test tooling
+
+- Touchstone (Core, Cli, XunitAdapter, NunitAdapter) 0.1.12 to 0.2.0
+- AWSSDK.S3 4.0.102.1 to 4.0.104.1, RestWrapper 3.2.0 to 3.3.1
+- Microsoft.NET.Test.Sdk 18.9.0 to 18.10.1, coverlet.collector 10.0.1 to 10.1.0
+- NUnit 4.6.1 to 5.0.0, NUnit.Analyzers 4.14.0 to 4.15.0, NUnit3TestAdapter 6.2.0 to 6.3.0
+- All suites pass unchanged on `net8.0` and `net10.0` under the console, xUnit, and NUnit runners
+
 v8.1.0
 
 Built-in observability. S3Server now emits metrics and traces so an operator can see, from dashboards and traces alone, which S3 operations are slow or failing and whether the time went to signature validation, the application's storage callback, XML serialization, or sending the response. No public API is removed or changed, and no exporter or SDK dependency is added.

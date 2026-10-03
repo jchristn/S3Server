@@ -189,10 +189,10 @@ AWS Signature V4 validation can be enabled:
 
 ## Notable Dependencies
 
-- **Watson** (7.1.x): HTTP server framework (HTTP/1.1, HTTP/2, HTTP/3)
+- **Watson** (7.2.x): HTTP server framework (HTTP/1.1, HTTP/2, HTTP/3)
 - **AWSSignatureGenerator** (1.1.0): AWS signature validation
 - **PrettyId** (2.0.1): Request ID generation
-- **System.Diagnostics.DiagnosticSource** (8.0.1, netstandard2.1 only): Meter/ActivitySource
+- **System.Diagnostics.DiagnosticSource** (10.0.12, netstandard2.1 only): Meter/ActivitySource
 
 ## Project Structure
 
