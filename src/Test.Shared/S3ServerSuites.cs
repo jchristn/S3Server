@@ -1,4 +1,4 @@
-namespace Test.Shared
+﻿namespace Test.Shared
 {
     using System;
     using System.Collections.Generic;
@@ -27,6 +27,7 @@ namespace Test.Shared
                     SignatureValidationSuite(),
                     SerializationSuite(),
                     CompatibilitySuite(),
+                    TelemetrySuite(),
                     UtilitySuite()
                 };
             }
@@ -115,6 +116,23 @@ namespace Test.Shared
                 cases: BuildRunnerCases(
                     suiteId,
                     new RunnerOnlySource("Compatibility", "S3 compatibility", CompatibilityTests.RunAllAsync)));
+        }
+
+        /// <summary>
+        /// Telemetry suite.  Proves the S3Server meter and activity source emit the documented metrics and spans,
+        /// using an in-memory listener and a uniquely named meter and source per test.
+        /// </summary>
+        /// <returns>Suite descriptor.</returns>
+        public static TestSuiteDescriptor TelemetrySuite()
+        {
+            const string suiteId = "Telemetry";
+
+            return new TestSuiteDescriptor(
+                suiteId: suiteId,
+                displayName: "Telemetry",
+                cases: BuildRunnerCases(
+                    suiteId,
+                    new RunnerOnlySource("Telemetry", "Telemetry", TelemetryTests.RunAllAsync)));
         }
 
         /// <summary>

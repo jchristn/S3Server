@@ -65,6 +65,12 @@ Want a complete S3-compatible storage server built using S3Server? Check out **[
 - Pre-request hooks for custom validation
 - Post-request hooks for logging and metrics
 
+✅ **Observability**
+- OpenTelemetry-shaped metrics and traces on a `Meter` and `ActivitySource` named `S3Server`, with no exporter dependency
+- Per-operation request rate, latency, and errors; per-stage timing (signature validation, your storage callback, XML serialization, send)
+- Callback, signature-validation, and error-type metrics, plus one span per request with stage and callback child spans nested under Watson's HTTP span
+- Ready-to-import Grafana dashboard in `assets/grafana/s3server.json`; see [TELEMETRY.md](TELEMETRY.md)
+
 ✅ **Developer Friendly**
 - Strongly-typed request/response objects
 - Comprehensive error handling with S3-compliant error codes
@@ -200,7 +206,32 @@ S3ServerSettings settings = new S3ServerSettings
     // Note: UseTcpServer is deprecated in v7.0; Watson now uses TCP natively
     UseTcpServer = false
 };
+
+// Optional: Telemetry (on by default; nothing is exported until your host subscribes)
+settings.Telemetry.Enable = true;
+settings.Telemetry.IncludeObjectKeys = false; // object keys on spans are opt-in
 ```
+
+### Telemetry
+
+S3Server emits metrics and traces through a `System.Diagnostics.Metrics.Meter` and an `ActivitySource`, both named `S3Server`. Watson, the underlying webserver, emits the HTTP layer under the name `Watson`. Subscribe your collector to both. With [Radiant](https://www.nuget.org/packages/Radiant):
+
+```csharp
+RadiantSettings telemetry = new RadiantSettings("my-s3-service");
+telemetry.Sources.AddMeter("Watson");
+telemetry.Sources.AddActivitySource("Watson");
+telemetry.Sources.AddMeter("S3Server");
+telemetry.Sources.AddActivitySource("S3Server");
+
+using (RadiantHost host = RadiantHost.Start(telemetry))
+using (S3Server server = new S3Server(settings))
+{
+    server.Start();
+    // ...
+}
+```
+
+Or with the OpenTelemetry SDK: `.AddMeter("Watson", "S3Server")` and `.AddSource("Watson", "S3Server")`. Key metrics include `s3server.requests`, `s3server.request.duration`, `s3server.stage.duration`, `s3server.callback.duration`, `s3server.signature.validations`, and `s3server.errors`. Every request gets an `S3 {operation}` span with `stage:*` and `callback *` children, so a slow request resolves to the stage or storage callback that caused it. See [TELEMETRY.md](TELEMETRY.md) for the full metrics and spans catalog, configuration, histogram buckets, recommended alerts, and the Grafana dashboard in `assets/grafana/s3server.json`.
 
 ### Request Handlers
 
@@ -1006,6 +1037,7 @@ dotnet pack src/S3Server/S3Server.csproj -c Release
 - **Watson** (7.1.0): HTTP server framework (supports HTTP/1.1, HTTP/2, and HTTP/3)
 - **AWSSignatureGenerator** (1.1.0): AWS Signature V4 validation, streaming signature support, and legacy S3 Signature V2 helpers
 - **PrettyId** (2.0.1): Request ID generation
+- **System.Diagnostics.DiagnosticSource** (8.0.1, `netstandard2.1` only): `Meter` and `ActivitySource` for telemetry (inbox on `net8.0` and `net10.0`)
 - **Touchstone** (0.1.12): Shared test descriptors and console/xUnit/NUnit test runners
 
 ## Resources
@@ -1021,6 +1053,13 @@ Have a feature request or found an issue? Please [file an issue on GitHub](https
 ## Version History
 
 Refer to [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
+
+## New in v8.1.0
+
+- Built-in observability: metrics and traces on a `Meter` and `ActivitySource` named `S3Server`, configured with `S3ServerSettings.Telemetry`. Covers S3 operations, pipeline stages, application callbacks, signature validation outcomes, errors by type and stage, object sizes, lifecycle, and build and config gauges
+- Spans nest under Watson's per-request server span and join an inbound W3C `traceparent`
+- Grafana dashboard in `assets/grafana/s3server.json`, and [TELEMETRY.md](TELEMETRY.md) documenting every telemetry point
+- No public API is removed or changed; no exporter dependency is added
 
 ## New in v8.0.1
 

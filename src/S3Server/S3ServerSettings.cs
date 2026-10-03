@@ -52,6 +52,24 @@
         }
 
         /// <summary>
+        /// Telemetry settings for the S3Server meter and activity source (S3 operations, pipeline stages, callbacks, signatures).
+        /// Read when the S3Server is constructed.  The webserver's own HTTP telemetry is configured under Webserver.Telemetry.
+        /// Setting null restores the defaults.  See TELEMETRY.md.
+        /// </summary>
+        public S3ServerTelemetrySettings Telemetry
+        {
+            get
+            {
+                return _Telemetry;
+            }
+            set
+            {
+                if (value == null) _Telemetry = new S3ServerTelemetrySettings();
+                else _Telemetry = value;
+            }
+        }
+
+        /// <summary>
         /// Webserver settings.
         /// </summary>
         public WebserverSettings Webserver
@@ -154,6 +172,7 @@
         private LoggingSettings _Logging = new LoggingSettings();
         private WebserverSettings _Webserver = new WebserverSettings("localhost", 8000, false);
         private OperationLimitsSettings _Limits = new OperationLimitsSettings();
+        private S3ServerTelemetrySettings _Telemetry = new S3ServerTelemetrySettings();
 
         #endregion
 

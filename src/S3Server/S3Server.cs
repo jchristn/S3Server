@@ -5,6 +5,7 @@
     using System;
     using System.Collections.Specialized;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Globalization;
     using System.Net.NetworkInformation;
     using System.Security.Cryptography;
@@ -95,6 +96,7 @@
 
         private WebserverBase _Webserver = null;
         private S3ServerSettings _Settings = new S3ServerSettings();
+        private S3ServerTelemetry _Telemetry = null;
 
         #endregion
 
@@ -110,6 +112,7 @@
             if (settings.Webserver == null) throw new ArgumentNullException(nameof(settings.Webserver));
 
             _Settings = settings;
+            _Telemetry = new S3ServerTelemetry(_Settings.Telemetry, () => _Settings, () => _Webserver != null && _Webserver.IsListening);
 
             if (_Settings.Webserver.Headers != null && _Settings.Webserver.Headers.DefaultHeaders != null)
             {
@@ -179,6 +182,7 @@
                     + "Please set Service.GetSecretKey before starting the server.");
 
             _Webserver.Start();
+            _Telemetry.RecordLifecycle(S3ServerTelemetryNames.LifecycleStart);
         }
 
         /// <summary>
@@ -187,6 +191,7 @@
         public void Stop()
         {
             _Webserver.Stop();
+            _Telemetry.RecordLifecycle(S3ServerTelemetryNames.LifecycleStop);
         }
 
         #endregion
@@ -209,6 +214,12 @@
                 _Settings.Logger?.Invoke(_Header + "dispose requested");
 
                 if (_Webserver != null) _Webserver.Dispose();
+
+                if (_Telemetry != null)
+                {
+                    _Telemetry.RecordLifecycle(S3ServerTelemetryNames.LifecycleDispose);
+                    _Telemetry.Dispose();
+                }
             }
 
             _Webserver = null;
@@ -247,10 +258,26 @@
             RestoreObjectResult restoreResult = null;
 
             S3Context s3ctx = null;
+            RequestTelemetry rt = _Telemetry?.BeginRequest();
+            RequestTelemetry.Current = rt;
 
             try
             {
-                using (s3ctx = new S3Context(ctx, Service.FindMatchingBaseDomain, null, (_Settings.Logging.S3Requests ? _Settings.Logger : null)))
+                using (TelemetryStage parseStage = rt?.StartStage(S3ServerTelemetryNames.StageParse))
+                {
+                    try
+                    {
+                        s3ctx = new S3Context(ctx, Service.FindMatchingBaseDomain, null, (_Settings.Logging.S3Requests ? _Settings.Logger : null));
+                    }
+                    catch (Exception e) when (TelemetryStage.Fail(parseStage, e))
+                    {
+                        throw;
+                    }
+                }
+
+                rt?.Describe(s3ctx);
+
+                using (s3ctx)
                 {
                     s3ctx.Response.Headers.Add(Constants.HeaderRequestId, s3ctx.Request.RequestId);
                     s3ctx.Response.Headers.Add(Constants.HeaderTraceId, s3ctx.Request.TraceId);
@@ -273,6 +300,7 @@
                     if (s3ctx.Request.ValidationError != null)
                     {
                         _Settings.Logger?.Invoke(_Header + "request failed validation: " + s3ctx.Request.ValidationError.Error?.Message);
+                        rt?.MarkException(s3ctx.Request.ValidationError, S3ServerTelemetryNames.StageParse);
                         throw s3ctx.Request.ValidationError;
                     }
 
@@ -280,26 +308,28 @@
                         s3ctx.Request.RouteSuffixRangeAsObjectRead();
 
                     if (_Settings.ValidateSignaturesBeforePreRequestHandler)
-                        await ValidateSignatureAsync(s3ctx).ConfigureAwait(false);
+                        await ValidateSignatureInstrumentedAsync(s3ctx, rt).ConfigureAwait(false);
 
                     if (_Settings.PreRequestHandler != null)
                     {
-                        success = await _Settings.PreRequestHandler(s3ctx).ConfigureAwait(false);
+                        success = await InvokeHookAsync(rt, S3ServerTelemetryNames.StagePreRequestHandler, _Settings.PreRequestHandler, s3ctx).ConfigureAwait(false);
                         if (success)
                         {
+                            if (rt != null) rt.Handler = S3ServerTelemetryNames.HandlerPreRequest;
                             await s3ctx.Response.Send().ConfigureAwait(false);
                             return;
                         }
                     }
 
                     if (!_Settings.ValidateSignaturesBeforePreRequestHandler)
-                        await ValidateSignatureAsync(s3ctx).ConfigureAwait(false);
+                        await ValidateSignatureInstrumentedAsync(s3ctx, rt).ConfigureAwait(false);
 
                     if (_Settings.AuthenticatedRequestHandler != null)
                     {
-                        success = await _Settings.AuthenticatedRequestHandler(s3ctx).ConfigureAwait(false);
+                        success = await InvokeHookAsync(rt, S3ServerTelemetryNames.StageAuthenticatedRequestHandler, _Settings.AuthenticatedRequestHandler, s3ctx).ConfigureAwait(false);
                         if (success)
                         {
+                            if (rt != null) rt.Handler = S3ServerTelemetryNames.HandlerAuthenticatedRequest;
                             await s3ctx.Response.Send().ConfigureAwait(false);
                             return;
                         }
@@ -312,7 +342,7 @@
                         case S3RequestType.ServiceExists:
                             if (Service.ServiceExists != null)
                             {
-                                string region = await Service.ServiceExists(s3ctx).ConfigureAwait(false);
+                                string region = await InvokeCallbackAsync(s3ctx, "Service.ServiceExists", () => Service.ServiceExists(s3ctx)).ConfigureAwait(false);
                                 if (!String.IsNullOrEmpty(region)) s3ctx.Response.Headers.Add(Constants.HeaderBucketRegion, region);
 
                                 s3ctx.Response.StatusCode = 200;
@@ -324,7 +354,7 @@
                         case S3RequestType.ListBuckets:
                             if (Service.ListBuckets != null)
                             {
-                                buckets = await Service.ListBuckets(s3ctx).ConfigureAwait(false);
+                                buckets = await InvokeCallbackAsync(s3ctx, "Service.ListBuckets", () => Service.ListBuckets(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
                                 await s3ctx.Response.Send(SerializationHelper.SerializeXml(buckets)).ConfigureAwait(false);
@@ -339,7 +369,7 @@
                         case S3RequestType.BucketDelete:
                             if (Bucket.Delete != null)
                             {
-                                await Bucket.Delete(s3ctx).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Bucket.Delete", () => Bucket.Delete(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 204;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -350,7 +380,7 @@
                         case S3RequestType.BucketDeleteAcl:
                             if (Bucket.DeleteAcl != null)
                             {
-                                await Bucket.DeleteAcl(s3ctx).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Bucket.DeleteAcl", () => Bucket.DeleteAcl(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 204;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -361,7 +391,7 @@
                         case S3RequestType.BucketDeleteTags:
                             if (Bucket.DeleteTagging != null)
                             {
-                                await Bucket.DeleteTagging(s3ctx).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Bucket.DeleteTagging", () => Bucket.DeleteTagging(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 204;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -372,7 +402,7 @@
                         case S3RequestType.BucketDeleteWebsite:
                             if (Bucket.DeleteWebsite != null)
                             {
-                                await Bucket.DeleteWebsite(s3ctx).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Bucket.DeleteWebsite", () => Bucket.DeleteWebsite(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 204;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -383,7 +413,7 @@
                         case S3RequestType.BucketExists:
                             if (Bucket.Exists != null)
                             {
-                                exists = await Bucket.Exists(s3ctx).ConfigureAwait(false);
+                                exists = await InvokeCallbackAsync(s3ctx, "Bucket.Exists", () => Bucket.Exists(s3ctx)).ConfigureAwait(false);
                                 if (exists)
                                 {
                                     s3ctx.Response.StatusCode = 200;
@@ -402,7 +432,7 @@
                         case S3RequestType.BucketRead:
                             if (Bucket.Read != null)
                             {
-                                listBucketResult = await Bucket.Read(s3ctx).ConfigureAwait(false);
+                                listBucketResult = await InvokeCallbackAsync(s3ctx, "Bucket.Read", () => Bucket.Read(s3ctx)).ConfigureAwait(false);
                                 if (listBucketResult == null) throw new S3Exception(new Error(ErrorCode.NoSuchBucket));
 
                                 if (!String.IsNullOrEmpty(listBucketResult.BucketRegion))
@@ -434,7 +464,7 @@
                         case S3RequestType.BucketReadAcl:
                             if (Bucket.ReadAcl != null)
                             {
-                                acp = await Bucket.ReadAcl(s3ctx).ConfigureAwait(false);
+                                acp = await InvokeCallbackAsync(s3ctx, "Bucket.ReadAcl", () => Bucket.ReadAcl(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
                                 await s3ctx.Response.Send(SerializationHelper.SerializeXml(acp)).ConfigureAwait(false);
@@ -445,7 +475,7 @@
                         case S3RequestType.BucketReadLocation:
                             if (Bucket.ReadLocation != null)
                             {
-                                location = await Bucket.ReadLocation(s3ctx).ConfigureAwait(false);
+                                location = await InvokeCallbackAsync(s3ctx, "Bucket.ReadLocation", () => Bucket.ReadLocation(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
                                 await s3ctx.Response.Send(SerializationHelper.SerializeXml(location)).ConfigureAwait(false);
@@ -456,7 +486,7 @@
                         case S3RequestType.BucketReadLogging:
                             if (Bucket.ReadLogging != null)
                             {
-                                bucketLogging = await Bucket.ReadLogging(s3ctx).ConfigureAwait(false);
+                                bucketLogging = await InvokeCallbackAsync(s3ctx, "Bucket.ReadLogging", () => Bucket.ReadLogging(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
                                 await s3ctx.Response.Send(SerializationHelper.SerializeXml(bucketLogging)).ConfigureAwait(false);
@@ -467,7 +497,7 @@
                         case S3RequestType.BucketReadMultipartUploads:
                             if (Bucket.ReadMultipartUploads != null)
                             {
-                                listMultipartUploads = await Bucket.ReadMultipartUploads(s3ctx).ConfigureAwait(false);
+                                listMultipartUploads = await InvokeCallbackAsync(s3ctx, "Bucket.ReadMultipartUploads", () => Bucket.ReadMultipartUploads(s3ctx)).ConfigureAwait(false);
                                 if (listMultipartUploads == null) throw new S3Exception(new Error(ErrorCode.NoSuchBucket));
 
                                 bool encodeUploads = s3ctx.Request.EncodingType == "url" && String.IsNullOrEmpty(listMultipartUploads.EncodingType);
@@ -494,7 +524,7 @@
                         case S3RequestType.BucketReadTags:
                             if (Bucket.ReadTagging != null)
                             {
-                                tagging = await Bucket.ReadTagging(s3ctx).ConfigureAwait(false);
+                                tagging = await InvokeCallbackAsync(s3ctx, "Bucket.ReadTagging", () => Bucket.ReadTagging(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
                                 await s3ctx.Response.Send(SerializationHelper.SerializeXml(tagging)).ConfigureAwait(false);
@@ -505,7 +535,7 @@
                         case S3RequestType.BucketReadVersioning:
                             if (Bucket.ReadVersioning != null)
                             {
-                                versionConfig = await Bucket.ReadVersioning(s3ctx).ConfigureAwait(false);
+                                versionConfig = await InvokeCallbackAsync(s3ctx, "Bucket.ReadVersioning", () => Bucket.ReadVersioning(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
                                 await s3ctx.Response.Send(SerializationHelper.SerializeXml(versionConfig)).ConfigureAwait(false);
@@ -516,7 +546,7 @@
                         case S3RequestType.BucketReadVersions:
                             if (Bucket.ReadVersions != null)
                             {
-                                listVersionResult = await Bucket.ReadVersions(s3ctx).ConfigureAwait(false);
+                                listVersionResult = await InvokeCallbackAsync(s3ctx, "Bucket.ReadVersions", () => Bucket.ReadVersions(s3ctx)).ConfigureAwait(false);
                                 if (listVersionResult == null) throw new S3Exception(new Error(ErrorCode.NoSuchBucket));
 
                                 bool encodeVersions = s3ctx.Request.EncodingType == "url" && String.IsNullOrEmpty(listVersionResult.EncodingType);
@@ -543,7 +573,7 @@
                         case S3RequestType.BucketReadWebsite:
                             if (Bucket.ReadWebsite != null)
                             {
-                                wc = await Bucket.ReadWebsite(s3ctx).ConfigureAwait(false);
+                                wc = await InvokeCallbackAsync(s3ctx, "Bucket.ReadWebsite", () => Bucket.ReadWebsite(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
                                 await s3ctx.Response.Send(SerializationHelper.SerializeXml(wc)).ConfigureAwait(false);
@@ -554,7 +584,7 @@
                         case S3RequestType.BucketWrite:
                             if (Bucket.Write != null)
                             {
-                                await Bucket.Write(s3ctx).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Bucket.Write", () => Bucket.Write(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -581,7 +611,7 @@
                                     return;
                                 }
 
-                                await Bucket.WriteAcl(s3ctx, acp).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Bucket.WriteAcl", () => Bucket.WriteAcl(s3ctx, acp)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -605,7 +635,7 @@
                                     return;
                                 }
 
-                                await Bucket.WriteLogging(s3ctx, bucketLogging).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Bucket.WriteLogging", () => Bucket.WriteLogging(s3ctx, bucketLogging)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -629,7 +659,7 @@
                                     return;
                                 }
 
-                                await Bucket.WriteTagging(s3ctx, tagging).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Bucket.WriteTagging", () => Bucket.WriteTagging(s3ctx, tagging)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -653,7 +683,7 @@
                                     return;
                                 }
 
-                                await Bucket.WriteVersioning(s3ctx, versionConfig).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Bucket.WriteVersioning", () => Bucket.WriteVersioning(s3ctx, versionConfig)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -677,7 +707,7 @@
                                     return;
                                 }
 
-                                await Bucket.WriteWebsite(s3ctx, wc).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Bucket.WriteWebsite", () => Bucket.WriteWebsite(s3ctx, wc)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -692,7 +722,7 @@
                         case S3RequestType.ObjectAbortMultipartUpload:
                             if (Object.AbortMultipartUpload != null)
                             {
-                                await Object.AbortMultipartUpload(s3ctx).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Object.AbortMultipartUpload", () => Object.AbortMultipartUpload(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 204;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -716,7 +746,7 @@
                                     return;
                                 }
 
-                                completeMultipartResult = await Object.CompleteMultipartUpload(s3ctx, completeMultipartRequest).ConfigureAwait(false);
+                                completeMultipartResult = await InvokeCallbackAsync(s3ctx, "Object.CompleteMultipartUpload", () => Object.CompleteMultipartUpload(s3ctx, completeMultipartRequest)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
                                 await s3ctx.Response.Send(SerializationHelper.SerializeXml(completeMultipartResult)).ConfigureAwait(false);
@@ -727,7 +757,7 @@
                         case S3RequestType.ObjectCreateMultipartUpload:
                             if (Object.CreateMultipartUpload != null)
                             {
-                                initiateMultipart = await Object.CreateMultipartUpload(s3ctx).ConfigureAwait(false);
+                                initiateMultipart = await InvokeCallbackAsync(s3ctx, "Object.CreateMultipartUpload", () => Object.CreateMultipartUpload(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
                                 await s3ctx.Response.Send(SerializationHelper.SerializeXml(initiateMultipart)).ConfigureAwait(false);
@@ -738,7 +768,7 @@
                         case S3RequestType.ObjectDelete:
                             if (Object.Delete != null)
                             {
-                                await Object.Delete(s3ctx).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Object.Delete", () => Object.Delete(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 204;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -749,7 +779,7 @@
                         case S3RequestType.ObjectDeleteAcl:
                             if (Object.DeleteAcl != null)
                             {
-                                await Object.DeleteAcl(s3ctx).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Object.DeleteAcl", () => Object.DeleteAcl(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 204;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -773,7 +803,7 @@
                                     return;
                                 }
 
-                                delResult = await Object.DeleteMultiple(s3ctx, delMultiple).ConfigureAwait(false);
+                                delResult = await InvokeCallbackAsync(s3ctx, "Object.DeleteMultiple", () => Object.DeleteMultiple(s3ctx, delMultiple)).ConfigureAwait(false);
                                 if (delResult == null) delResult = new DeleteResult();
 
                                 bool quiet = delMultiple != null && delMultiple.Quiet;
@@ -789,7 +819,7 @@
                         case S3RequestType.ObjectDeleteTags:
                             if (Object.DeleteTagging != null)
                             {
-                                await Object.DeleteTagging(s3ctx).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Object.DeleteTagging", () => Object.DeleteTagging(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 204;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -800,7 +830,7 @@
                         case S3RequestType.ObjectExists:
                             if (Object.Exists != null)
                             {
-                                md = await Object.Exists(s3ctx).ConfigureAwait(false);
+                                md = await InvokeCallbackAsync(s3ctx, "Object.Exists", () => Object.Exists(s3ctx)).ConfigureAwait(false);
                                 if (md != null)
                                 {
                                     // Amazon S3 honors a Range header on HEAD: 206 with the Content-Range and the length of the
@@ -851,7 +881,7 @@
                         case S3RequestType.ObjectRead:
                             if (Object.Read != null)
                             {
-                                s3obj = await Object.Read(s3ctx).ConfigureAwait(false);
+                                s3obj = await InvokeCallbackAsync(s3ctx, "Object.Read", () => Object.Read(s3ctx)).ConfigureAwait(false);
 
                                 if (s3obj != null)
                                 {
@@ -866,6 +896,7 @@
                                     s3ctx.Response.ContentType = s3obj.ContentType;
                                     s3ctx.Response.ContentLength = s3obj.Size;
 
+                                    rt?.RecordObjectSize(s3obj.Size);
                                     await s3ctx.Response.Send(s3obj.Size, s3obj.Data).ConfigureAwait(false);
                                 }
                                 else
@@ -880,7 +911,7 @@
                         case S3RequestType.ObjectReadAcl:
                             if (Object.ReadAcl != null)
                             {
-                                acp = await Object.ReadAcl(s3ctx).ConfigureAwait(false);
+                                acp = await InvokeCallbackAsync(s3ctx, "Object.ReadAcl", () => Object.ReadAcl(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
                                 await s3ctx.Response.Send(SerializationHelper.SerializeXml(acp)).ConfigureAwait(false);
@@ -891,7 +922,7 @@
                         case S3RequestType.ObjectReadLegalHold:
                             if (Object.ReadLegalHold != null)
                             {
-                                legalHold = await Object.ReadLegalHold(s3ctx).ConfigureAwait(false);
+                                legalHold = await InvokeCallbackAsync(s3ctx, "Object.ReadLegalHold", () => Object.ReadLegalHold(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
                                 await s3ctx.Response.Send(SerializationHelper.SerializeXml(legalHold)).ConfigureAwait(false);
@@ -902,7 +933,7 @@
                         case S3RequestType.ObjectReadParts:
                             if (Object.ReadParts != null)
                             {
-                                listParts = await Object.ReadParts(s3ctx).ConfigureAwait(false);
+                                listParts = await InvokeCallbackAsync(s3ctx, "Object.ReadParts", () => Object.ReadParts(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
                                 await s3ctx.Response.Send(SerializationHelper.SerializeXml(listParts)).ConfigureAwait(false);
@@ -913,7 +944,7 @@
                         case S3RequestType.ObjectReadRange:
                             if (Object.ReadRange != null)
                             {
-                                s3obj = await Object.ReadRange(s3ctx).ConfigureAwait(false);
+                                s3obj = await InvokeCallbackAsync(s3ctx, "Object.ReadRange", () => Object.ReadRange(s3ctx)).ConfigureAwait(false);
 
                                 if (s3obj != null)
                                 {
@@ -974,6 +1005,7 @@
                                     s3ctx.Response.ContentType = s3obj.ContentType;
                                     s3ctx.Response.ContentLength = s3obj.Size;
 
+                                    rt?.RecordObjectSize(s3obj.Size);
                                     await s3ctx.Response.Send(s3obj.Size, s3obj.Data).ConfigureAwait(false);
                                 }
                                 else
@@ -988,7 +1020,7 @@
                         case S3RequestType.ObjectReadRetention:
                             if (Object.ReadRetention != null)
                             {
-                                retention = await Object.ReadRetention(s3ctx).ConfigureAwait(false);
+                                retention = await InvokeCallbackAsync(s3ctx, "Object.ReadRetention", () => Object.ReadRetention(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
                                 await s3ctx.Response.Send(SerializationHelper.SerializeXml(retention)).ConfigureAwait(false);
@@ -999,7 +1031,7 @@
                         case S3RequestType.ObjectReadTags:
                             if (Object.ReadTagging != null)
                             {
-                                tagging = await Object.ReadTagging(s3ctx).ConfigureAwait(false);
+                                tagging = await InvokeCallbackAsync(s3ctx, "Object.ReadTagging", () => Object.ReadTagging(s3ctx)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeXml;
                                 await s3ctx.Response.Send(SerializationHelper.SerializeXml(tagging)).ConfigureAwait(false);
@@ -1041,7 +1073,7 @@
                                 if (restoreRequest.Days == null)
                                     throw new S3Exception(new Error(ErrorCode.InvalidRequest));
 
-                                restoreResult = await Object.Restore(s3ctx, restoreRequest).ConfigureAwait(false);
+                                restoreResult = await InvokeCallbackAsync(s3ctx, "Object.Restore", () => Object.Restore(s3ctx, restoreRequest)).ConfigureAwait(false);
                                 if (restoreResult == null) restoreResult = new RestoreObjectResult();
 
                                 if (!String.IsNullOrEmpty(restoreResult.RestoreOutputPath))
@@ -1070,7 +1102,7 @@
                                     return;
                                 }
 
-                                await Object.SelectContent(s3ctx, selectRequest).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Object.SelectContent", () => Object.SelectContent(s3ctx, selectRequest)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -1081,7 +1113,7 @@
                         case S3RequestType.ObjectCopy:
                             if (Object.Copy != null)
                             {
-                                CopyObjectResult copyResult = await Object.Copy(s3ctx).ConfigureAwait(false);
+                                CopyObjectResult copyResult = await InvokeCallbackAsync(s3ctx, "Object.Copy", () => Object.Copy(s3ctx)).ConfigureAwait(false);
                                 if (copyResult == null) copyResult = new CopyObjectResult();
 
                                 s3ctx.Response.StatusCode = 200;
@@ -1094,7 +1126,7 @@
                         case S3RequestType.ObjectUploadPartCopy:
                             if (Object.UploadPartCopy != null)
                             {
-                                CopyPartResult copyPartResult = await Object.UploadPartCopy(s3ctx).ConfigureAwait(false);
+                                CopyPartResult copyPartResult = await InvokeCallbackAsync(s3ctx, "Object.UploadPartCopy", () => Object.UploadPartCopy(s3ctx)).ConfigureAwait(false);
                                 if (copyPartResult == null) copyPartResult = new CopyPartResult();
 
                                 s3ctx.Response.StatusCode = 200;
@@ -1107,7 +1139,8 @@
                         case S3RequestType.ObjectUploadPart:
                             if (Object.UploadPart != null)
                             {
-                                await Object.UploadPart(s3ctx).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Object.UploadPart", () => Object.UploadPart(s3ctx)).ConfigureAwait(false);
+                                rt?.RecordObjectSize(s3ctx.Request.ContentLength);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -1130,7 +1163,8 @@
                                     return;
                                 }
 
-                                await Object.Write(s3ctx).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Object.Write", () => Object.Write(s3ctx)).ConfigureAwait(false);
+                                rt?.RecordObjectSize(effectiveContentLength);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -1157,7 +1191,7 @@
                                     return;
                                 }
 
-                                await Object.WriteAcl(s3ctx, acp).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Object.WriteAcl", () => Object.WriteAcl(s3ctx, acp)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -1181,7 +1215,7 @@
                                     return;
                                 }
 
-                                await Object.WriteLegalHold(s3ctx, legalHold).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Object.WriteLegalHold", () => Object.WriteLegalHold(s3ctx, legalHold)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -1205,7 +1239,7 @@
                                     return;
                                 }
 
-                                await Object.WriteRetention(s3ctx, retention).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Object.WriteRetention", () => Object.WriteRetention(s3ctx, retention)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -1229,7 +1263,7 @@
                                     return;
                                 }
 
-                                await Object.WriteTagging(s3ctx, tagging).ConfigureAwait(false);
+                                await InvokeCallbackAsync(s3ctx, "Object.WriteTagging", () => Object.WriteTagging(s3ctx, tagging)).ConfigureAwait(false);
                                 s3ctx.Response.StatusCode = 200;
                                 s3ctx.Response.ContentType = Constants.ContentTypeText;
                                 await s3ctx.Response.Send().ConfigureAwait(false);
@@ -1242,9 +1276,24 @@
 
                     if (_Settings.DefaultRequestHandler != null)
                     {
-                        await _Settings.DefaultRequestHandler(s3ctx).ConfigureAwait(false);
+                        if (rt != null) rt.Handler = S3ServerTelemetryNames.HandlerDefault;
+
+                        using (TelemetryStage defaultStage = rt?.StartStage(S3ServerTelemetryNames.StageDefaultRequestHandler))
+                        {
+                            try
+                            {
+                                await _Settings.DefaultRequestHandler(s3ctx).ConfigureAwait(false);
+                            }
+                            catch (Exception e) when (TelemetryStage.Fail(defaultStage, e))
+                            {
+                                throw;
+                            }
+                        }
+
                         return;
                     }
+
+                    if (rt != null) rt.Handler = S3ServerTelemetryNames.HandlerUnhandled;
 
                     if (s3ctx.Request.RequestType != S3RequestType.Unknown)
                     {
@@ -1261,6 +1310,7 @@
             catch (S3Exception s3e)
             {
                 _Settings.Logger?.Invoke(_Header + "S3 exception:" + Environment.NewLine + s3e.ToString());
+                rt?.MarkException(s3e, S3ServerTelemetryNames.StageInternal);
 
                 if (s3ctx != null)
                 {
@@ -1280,6 +1330,7 @@
             catch (Exception e)
             {
                 _Settings.Logger?.Invoke(_Header + "exception:" + Environment.NewLine + e.ToString());
+                rt?.MarkException(e, S3ServerTelemetryNames.StageInternal);
 
                 if (s3ctx != null)
                 {
@@ -1302,17 +1353,128 @@
 
                     if (_Settings.PostRequestHandler != null)
                     {
-                        try
+                        using (TelemetryStage postStage = rt?.StartStage(S3ServerTelemetryNames.StagePostRequestHandler))
                         {
-                            await _Settings.PostRequestHandler(s3ctx).ConfigureAwait(false);
-                        }
-                        catch (Exception e)
-                        {
-                            _Settings.Logger?.Invoke(_Header + "post-request handler exception:" + Environment.NewLine + e.ToString());
+                            try
+                            {
+                                await _Settings.PostRequestHandler(s3ctx).ConfigureAwait(false);
+                            }
+                            catch (Exception e)
+                            {
+                                _Settings.Logger?.Invoke(_Header + "post-request handler exception:" + Environment.NewLine + e.ToString());
+                                TelemetryStage.Fail(postStage, e);
+                                _Telemetry?.RecordError(S3ServerTelemetry.ErrorTypeOf(e), S3ServerTelemetryNames.StagePostRequestHandler);
+                            }
                         }
                     }
                 }
+
+                if (rt != null)
+                {
+                    rt.Complete(ctx.Response != null ? ctx.Response.StatusCode : 0);
+                    RequestTelemetry.Current = null;
+                }
             }
+        }
+
+        private async Task InvokeCallbackAsync(S3Context s3ctx, string callback, Func<Task> invoke)
+        {
+            RequestTelemetry rt = RequestTelemetry.Current;
+            if (rt != null) rt.Handler = S3ServerTelemetryNames.HandlerCallback;
+
+            using (TelemetryStage stage = rt?.StartCallback(callback))
+            {
+                try
+                {
+                    await invoke().ConfigureAwait(false);
+                }
+                catch (Exception e) when (TelemetryStage.Fail(stage, e))
+                {
+                    throw;
+                }
+            }
+        }
+
+        private async Task<T> InvokeCallbackAsync<T>(S3Context s3ctx, string callback, Func<Task<T>> invoke)
+        {
+            RequestTelemetry rt = RequestTelemetry.Current;
+            if (rt != null) rt.Handler = S3ServerTelemetryNames.HandlerCallback;
+
+            using (TelemetryStage stage = rt?.StartCallback(callback))
+            {
+                try
+                {
+                    return await invoke().ConfigureAwait(false);
+                }
+                catch (Exception e) when (TelemetryStage.Fail(stage, e))
+                {
+                    throw;
+                }
+            }
+        }
+
+        private async Task<bool> InvokeHookAsync(RequestTelemetry rt, string stageName, Func<S3Context, Task<bool>> hook, S3Context s3ctx)
+        {
+            using (TelemetryStage stage = rt?.StartStage(stageName))
+            {
+                try
+                {
+                    return await hook(s3ctx).ConfigureAwait(false);
+                }
+                catch (Exception e) when (TelemetryStage.Fail(stage, e))
+                {
+                    throw;
+                }
+            }
+        }
+
+        private async Task ValidateSignatureInstrumentedAsync(S3Context s3ctx, RequestTelemetry rt)
+        {
+            if (!_Settings.EnableSignatures) return;
+
+            if (rt == null)
+            {
+                await ValidateSignatureAsync(s3ctx).ConfigureAwait(false);
+                return;
+            }
+
+            long start = Stopwatch.GetTimestamp();
+            string version = RequestTelemetry.SignatureVersionOf(s3ctx.Request);
+            bool failed = false;
+
+            try
+            {
+                using (TelemetryStage stage = rt.StartStage(S3ServerTelemetryNames.StageSignatureValidation))
+                {
+                    try
+                    {
+                        await ValidateSignatureAsync(s3ctx).ConfigureAwait(false);
+                    }
+                    catch (Exception e) when (TelemetryStage.Fail(stage, e))
+                    {
+                        throw;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                failed = true;
+                throw;
+            }
+            finally
+            {
+                string outcome = rt.SignatureOutcome;
+                if (outcome == null) outcome = failed ? S3ServerTelemetryNames.OutcomeError : S3ServerTelemetryNames.OutcomeValid;
+                rt.Telemetry.RecordSignature(version, outcome, S3ServerTelemetry.ElapsedSeconds(start));
+                rt.Activity?.SetTag(S3ServerTelemetryNames.AttributeSignatureVersion, version);
+                rt.Activity?.SetTag(S3ServerTelemetryNames.AttributeSignatureOutcome, outcome);
+            }
+        }
+
+        private static void MarkSignatureOutcome(string outcome)
+        {
+            RequestTelemetry rt = RequestTelemetry.Current;
+            if (rt != null) rt.SignatureOutcome = outcome;
         }
 
         private bool IsNonS3DefaultHeader(string key)
@@ -1408,6 +1570,7 @@
             if (Service.GetSecretKey == null)
             {
                 _Settings.Logger?.Invoke(_Header + "signature validation enabled but Service.GetSecretKey is not set; request rejected");
+                MarkSignatureOutcome(S3ServerTelemetryNames.OutcomeMisconfigured);
                 throw new S3Exception(new Error(ErrorCode.AccessDenied));
             }
 
@@ -1417,10 +1580,12 @@
                     && await Service.IsAnonymousRequestAllowed(s3ctx).ConfigureAwait(false))
                 {
                     _Settings.Logger?.Invoke(_Header + "anonymous request allowed without signature validation");
+                    MarkSignatureOutcome(S3ServerTelemetryNames.OutcomeAnonymous);
                 }
                 else
                 {
                     _Settings.Logger?.Invoke(_Header + "unsigned request rejected");
+                    MarkSignatureOutcome(S3ServerTelemetryNames.OutcomeUnsigned);
                     throw new S3Exception(new Error(ErrorCode.AccessDenied));
                 }
             }
@@ -1430,6 +1595,7 @@
                 if (String.IsNullOrEmpty(secretKey))
                 {
                     _Settings.Logger?.Invoke(_Header + "unable to retrieve secret key for signature " + s3ctx.Request.Signature);
+                    MarkSignatureOutcome(S3ServerTelemetryNames.OutcomeUnknownKey);
                     throw new S3Exception(new Error(ErrorCode.AccessDenied));
                 }
 
@@ -1491,12 +1657,14 @@
                     if (!result.Signature.Equals(s3ctx.Request.Signature))
                     {
                         _Settings.Logger?.Invoke(_Header + "invalid v4 signature '" + s3ctx.Request.Signature + "'");
+                        MarkSignatureOutcome(S3ServerTelemetryNames.OutcomeMismatch);
                         throw new S3Exception(new Error(ErrorCode.SignatureDoesNotMatch));
                     }
                 }
                 else
                 {
                     _Settings.Logger?.Invoke(_Header + "unknown signature version");
+                    MarkSignatureOutcome(S3ServerTelemetryNames.OutcomeUnsupported);
                     throw new S3Exception(new Error(ErrorCode.AccessDenied));
                 }
             }
@@ -1516,12 +1684,14 @@
             if (!_Settings.EnableSignatureV2)
             {
                 _Settings.Logger?.Invoke(_Header + "v2 signature rejected because EnableSignatureV2 is false");
+                MarkSignatureOutcome(S3ServerTelemetryNames.OutcomeUnsupported);
                 throw new S3Exception(new Error(ErrorCode.SignatureDoesNotMatch));
             }
 
             if (String.IsNullOrEmpty(s3ctx.Request.Signature))
             {
                 _Settings.Logger?.Invoke(_Header + "v2 signature missing");
+                MarkSignatureOutcome(S3ServerTelemetryNames.OutcomeMismatch);
                 throw new S3Exception(new Error(ErrorCode.AccessDenied));
             }
 
@@ -1539,6 +1709,7 @@
             catch (Exception e)
             {
                 _Settings.Logger?.Invoke(_Header + "v2 signature validation exception:" + Environment.NewLine + e.ToString());
+                MarkSignatureOutcome(S3ServerTelemetryNames.OutcomeError);
                 throw new S3Exception(new Error(ErrorCode.SignatureDoesNotMatch), e);
             }
         }
@@ -1609,6 +1780,7 @@
                 if (!SignaturesMatch(result.Signature, s3ctx.Request.Signature))
                 {
                     _Settings.Logger?.Invoke(_Header + "invalid v2 signature '" + s3ctx.Request.Signature + "'");
+                    MarkSignatureOutcome(S3ServerTelemetryNames.OutcomeMismatch);
                     throw new S3Exception(new Error(ErrorCode.SignatureDoesNotMatch));
                 }
             }
@@ -1619,12 +1791,14 @@
             if (!Int64.TryParse(s3ctx.Request.Expires, out long expires))
             {
                 _Settings.Logger?.Invoke(_Header + "invalid v2 signed URL expiration '" + s3ctx.Request.Expires + "'");
+                MarkSignatureOutcome(S3ServerTelemetryNames.OutcomeExpired);
                 throw new S3Exception(new Error(ErrorCode.AccessDenied));
             }
 
             if (expires < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
             {
                 _Settings.Logger?.Invoke(_Header + "expired v2 signed URL expiration '" + s3ctx.Request.Expires + "'");
+                MarkSignatureOutcome(S3ServerTelemetryNames.OutcomeExpired);
                 throw new S3Exception(new Error(ErrorCode.AccessDenied));
             }
 
@@ -1644,6 +1818,7 @@
                 if (!SignaturesMatch(result.Signature, s3ctx.Request.Signature))
                 {
                     _Settings.Logger?.Invoke(_Header + "invalid v2 signed URL signature '" + s3ctx.Request.Signature + "'");
+                    MarkSignatureOutcome(S3ServerTelemetryNames.OutcomeMismatch);
                     throw new S3Exception(new Error(ErrorCode.SignatureDoesNotMatch));
                 }
             }

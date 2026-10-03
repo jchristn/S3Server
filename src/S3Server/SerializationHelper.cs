@@ -137,6 +137,62 @@
         {
             if (String.IsNullOrEmpty(xml)) throw new ArgumentNullException(nameof(xml));
 
+            using (TelemetryStage stage = RequestTelemetry.StartCurrentStage(S3ServerTelemetryNames.StageDeserialize))
+            {
+                try
+                {
+                    return DeserializeXmlCore<T>(xml);
+                }
+                catch (Exception e) when (TelemetryStage.Fail(stage, e))
+                {
+                    throw;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Serialize XML.
+        /// Every element is placed in the Amazon S3 namespace (S3XmlNamespace), as Amazon S3 does for response bodies,
+        /// with two exceptions that also match Amazon S3: a root Error is serialized with no namespace, and a root
+        /// BucketLoggingStatus uses S3LoggingXmlNamespace.  Nested types (including an Error inside a DeleteResult)
+        /// inherit the root namespace.
+        /// </summary>
+        /// <param name="obj">Object.  Cannot be null.</param>
+        /// <param name="pretty">Pretty print.  Default is false.</param>
+        /// <returns>XML string.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if obj is null.</exception>
+        public static string SerializeXml(object obj, bool pretty = false)
+        {
+            return SerializeXml(obj, pretty, false);
+        }
+
+        #endregion
+
+        #region Internal-Methods
+
+        internal static string SerializeXml(object obj, bool pretty, bool urlEncodeListingValues)
+        {
+            if (obj == null) throw new ArgumentNullException(nameof(obj));
+
+            using (TelemetryStage stage = RequestTelemetry.StartCurrentStage(S3ServerTelemetryNames.StageSerialize))
+            {
+                try
+                {
+                    return SerializeXmlCore(obj, pretty, urlEncodeListingValues);
+                }
+                catch (Exception e) when (TelemetryStage.Fail(stage, e))
+                {
+                    throw;
+                }
+            }
+        }
+
+        #endregion
+
+        #region Private-Methods
+
+        private static T DeserializeXmlCore<T>(string xml) where T : class
+        {
             // remove preamble if exists
             if (xml.StartsWith(_ByteOrderMarkUtf8, StringComparison.Ordinal))
             {
@@ -200,30 +256,8 @@
             return obj;
         }
 
-        /// <summary>
-        /// Serialize XML.
-        /// Every element is placed in the Amazon S3 namespace (S3XmlNamespace), as Amazon S3 does for response bodies,
-        /// with two exceptions that also match Amazon S3: a root Error is serialized with no namespace, and a root
-        /// BucketLoggingStatus uses S3LoggingXmlNamespace.  Nested types (including an Error inside a DeleteResult)
-        /// inherit the root namespace.
-        /// </summary>
-        /// <param name="obj">Object.  Cannot be null.</param>
-        /// <param name="pretty">Pretty print.  Default is false.</param>
-        /// <returns>XML string.</returns>
-        /// <exception cref="ArgumentNullException">Thrown if obj is null.</exception>
-        public static string SerializeXml(object obj, bool pretty = false)
+        private static string SerializeXmlCore(object obj, bool pretty, bool urlEncodeListingValues)
         {
-            return SerializeXml(obj, pretty, false);
-        }
-
-        #endregion
-
-        #region Internal-Methods
-
-        internal static string SerializeXml(object obj, bool pretty, bool urlEncodeListingValues)
-        {
-            if (obj == null) throw new ArgumentNullException(nameof(obj));
-
             string defaultNamespace = GetXmlNamespace(obj.GetType());
             XmlSerializer xmlSerializer = _NamespacedSerializerCache.GetOrAdd(obj.GetType(), t => new XmlSerializer(t, GetXmlNamespace(t)));
 
@@ -253,10 +287,6 @@
                 }
             }
         }
-
-        #endregion
-
-        #region Private-Methods
 
         private class ExceptionConverter<TExceptionType> : JsonConverter<TExceptionType>
         {

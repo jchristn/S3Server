@@ -2,14 +2,14 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.1;net8.0;net10.0</TargetFrameworks>
-		<Version>8.0.1</Version>
+		<Version>8.1.0</Version>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Authors>Joel Christner</Authors>
 		<Description>Emulated Amazon Web Services (AWS) Simple Storage Service (S3) server-side interface.</Description>
 		<Copyright>(c)2026 Joel Christner</Copyright>
-		<PackageReleaseNotes>Patch release: ListObjectVersions delete markers contain only Key, VersionId, IsLatest, LastModified, and Owner (no nil ETag or StorageClass); DeleteObjects per-key errors are written as Key, VersionId, Code, Message. See CHANGELOG.md.</PackageReleaseNotes>
-		<PackageTags>aws s3 storage rest interface server less3 minio ceph view</PackageTags>
+		<PackageReleaseNotes>Observability: S3Server now emits OpenTelemetry-shaped metrics and traces through a System.Diagnostics Meter and ActivitySource named S3Server (S3 operations, pipeline stages, application callbacks, signature validation, errors, object sizes, build and config gauges). No exporter dependency; near-zero cost when nothing subscribes. Configure with S3ServerSettings.Telemetry. See TELEMETRY.md.</PackageReleaseNotes>
+		<PackageTags>aws s3 storage rest interface server less3 minio ceph view opentelemetry telemetry metrics tracing</PackageTags>
 		<PackageLicenseUrl></PackageLicenseUrl>
 		<PackageProjectUrl>https://github.com/jchristn/S3Server</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/jchristn/S3Server</RepositoryUrl>
@@ -35,12 +35,20 @@
 		<PackageReference Include="Watson" Version="7.1.0" />
 	</ItemGroup>
 
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+		<PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<None Include="..\..\LICENSE.md">
 		  <Pack>True</Pack>
 		  <PackagePath>\</PackagePath>
 		</None>
 		<None Include="..\..\README.md">
+		  <Pack>True</Pack>
+		  <PackagePath>\</PackagePath>
+		</None>
+		<None Include="..\..\TELEMETRY.md">
 		  <Pack>True</Pack>
 		  <PackagePath>\</PackagePath>
 		</None>

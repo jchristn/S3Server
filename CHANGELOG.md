@@ -2,6 +2,34 @@
 
 ## Current Version
 
+v8.1.0
+
+Built-in observability. S3Server now emits metrics and traces so an operator can see, from dashboards and traces alone, which S3 operations are slow or failing and whether the time went to signature validation, the application's storage callback, XML serialization, or sending the response. No public API is removed or changed, and no exporter or SDK dependency is added.
+
+Telemetry
+
+- A `System.Diagnostics.Metrics.Meter` and a `System.Diagnostics.ActivitySource`, both named `S3Server`, emit OpenTelemetry-shaped instruments. A host subscribes to them (Radiant, the OpenTelemetry SDK, `dotnet-counters`); when nothing subscribes, S3Server creates no per-request telemetry state
+- Metrics: `s3server.requests` and `s3server.request.duration` by operation and outcome, `s3server.requests.active`, `s3server.stage.duration` per pipeline stage, `s3server.callback.invocations` and `s3server.callback.duration` per callback, `s3server.signature.validations` and `s3server.signature.duration` by version and outcome, `s3server.errors` by error type and stage, `s3server.object.size`, `s3server.lifecycle.events`, and the `s3server.build.info`, `s3server.config.*`, and `s3server.listening` gauges. All attributes are bounded; bucket names, object keys, and request IDs never appear on metrics
+- Spans: `S3 {operation}` per request (with `aws.request_id`, `aws.s3.bucket`, opt-in `aws.s3.key`, status code, handler, and error type), `stage:{stage}` children, and `callback {callback}` children. Spans nest under Watson's server span, join an inbound W3C `traceparent`, and set `Error` status with an exception event on 5xx failures. Application callbacks run with `Activity.Current` set to their callback span, so their own spans nest beneath it
+- New `S3ServerSettings.Telemetry` (`S3ServerTelemetrySettings`): `Enable`, `EnableMetrics`, `EnableTraces`, `MeterName`, `ActivitySourceName`, `IncludeBucketNames` (default true), `IncludeObjectKeys` (default false)
+- New `S3ServerTelemetryNames` holds every meter, source, instrument, span, attribute, and attribute-value name as a constant
+- On .NET 9 and later, duration and size histograms advise explicit bucket boundaries; for `net8.0` and `netstandard2.1` hosts, TELEMETRY.md shows the equivalent view
+- Instrumentation is best-effort and never changes a response
+
+Documentation and assets
+
+- New TELEMETRY.md: meter and source names, configuration, how to subscribe, the metrics and spans catalogs, histogram buckets, recommended PromQL alerts, and the dashboard map. It is included in the NuGet package
+- New Grafana dashboard `assets/grafana/s3server.json` (overview, operations, pipeline stages, callbacks, signatures, errors, objects)
+
+Dependencies
+
+- `netstandard2.1` now references `System.Diagnostics.DiagnosticSource` 8.0.1 explicitly (it was already a transitive dependency through Watson). `net8.0` and `net10.0` use the inbox assembly
+
+Tests
+
+- New `Telemetry` suite (17 cases) using an in-memory `MeterListener` and `ActivityListener`: request, stage, callback, and size metrics; span hierarchy and attributes; callback `S3Exception` and unexpected-exception paths; missing objects; validation, malformed XML, default handler, unhandled, pre-request-handler, and post-request-handler paths; every signature outcome exercised by real clients; W3C trace propagation through Watson; active-request accounting under concurrency; lifecycle and config gauges; metric attribute bounds; the disabled and no-listener paths
+- `S3TestServer` accepts an optional `configure` action applied to the settings before the server is constructed
+
 v8.0.1
 
 Two response-body fixes found by Less3's compatibility suite after it moved to 8.0.0. No public API is removed or changed.

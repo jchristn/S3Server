@@ -118,6 +118,16 @@ Settings must be configured BEFORE starting the server:
 - `EmitCorsHeaders`: Send Watson's CORS headers only on responses to requests with an Origin header (default false)
 - `DefaultRequestHandler`: Called when no callback matches
 - `PostRequestHandler`: Called after response sent
+- `Telemetry`: `S3ServerTelemetrySettings` (Enable, EnableMetrics, EnableTraces, MeterName, ActivitySourceName, IncludeBucketNames, IncludeObjectKeys); read at construction
+
+### Telemetry
+
+- Meter and ActivitySource named `S3Server` (BCL only, no exporter dependency); Watson separately emits the HTTP layer as `Watson`
+- Code lives in `src/S3Server/Telemetry/`: `S3ServerTelemetryNames` (every public name, a public contract), `S3ServerTelemetrySettings`, `S3ServerTelemetry` (per-server instruments), `RequestTelemetry` (per-request state in an AsyncLocal, null when nothing listens), `TelemetryStage` (stage/callback scope)
+- Every callback invocation in `S3Server.RequestHandler` goes through `InvokeCallbackAsync(s3ctx, "Object.Read", () => Object.Read(s3ctx))`; new callbacks must do the same. Hooks use `InvokeHookAsync`; signature validation uses `ValidateSignatureInstrumentedAsync` and `MarkSignatureOutcome(...)` before each rejection
+- `S3Response` sends and `SerializationHelper` XML (de)serialization record the `send`, `serialize`, `deserialize` stages through `RequestTelemetry.Current`
+- Record failures with `catch (Exception e) when (TelemetryStage.Fail(stage, e)) { throw; }`; instrumentation must never throw or change a response
+- Metric attributes must stay bounded (no bucket, key, request ID); the Telemetry test suite asserts this. Update TELEMETRY.md and `assets/grafana/s3server.json` when adding or renaming instruments
 
 ### Callback Patterns
 
@@ -182,6 +192,7 @@ AWS Signature V4 validation can be enabled:
 - **Watson** (7.1.x): HTTP server framework (HTTP/1.1, HTTP/2, HTTP/3)
 - **AWSSignatureGenerator** (1.1.0): AWS signature validation
 - **PrettyId** (2.0.1): Request ID generation
+- **System.Diagnostics.DiagnosticSource** (8.0.1, netstandard2.1 only): Meter/ActivitySource
 
 ## Project Structure
 
@@ -193,6 +204,7 @@ src/
     S3Request.cs         - Request parser
     S3Response.cs        - Response builder
     S3ServerSettings.cs  - Configuration
+    Telemetry/           - Meter, ActivitySource, names, settings, per-request scope
     Callbacks/           - Callback interfaces
       ServiceCallbacks.cs
       BucketCallbacks.cs
@@ -250,6 +262,10 @@ OperationLimitsSettings.MaxPutObjectSize controls maximum object size for PutObj
 ## Chunked Transfer Encoding
 
 When handling chunked uploads (detected via `ctx.Request.Chunked` property), use `ctx.Request.ReadChunk()` to read chunks iteratively. Each chunk has a `Length`, `Data`, and `IsFinal` property. Continue reading until `IsFinal` is true. This is commonly used by AWS CLI for streaming uploads.
+
+## Recent Changes in v8.1.0
+
+- Built-in metrics and traces (meter and source `S3Server`), `S3ServerSettings.Telemetry`, `S3ServerTelemetryNames`; TELEMETRY.md and `assets/grafana/s3server.json`; Telemetry test suite with an in-memory listener
 
 ## Recent Changes in v8.0.1
 
@@ -434,6 +450,9 @@ public int MaxConnections
 **Library Code:**
 - Ensure NO Console.WriteLine statements are added to library code
 - Use the Logger callback pattern for diagnostic output
+
+**Punctuation:**
+- Never use em-dashes anywhere (code comments, XML documentation, Markdown, or other text); use a period, comma, colon, parentheses, or two sentences instead
 
 ### Code Assumptions
 

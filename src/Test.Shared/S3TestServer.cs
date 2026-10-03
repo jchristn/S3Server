@@ -1,4 +1,4 @@
-namespace Test.Shared
+﻿namespace Test.Shared
 {
     using System;
     using System.Collections.Concurrent;
@@ -142,6 +142,7 @@ namespace Test.Shared
         private int _ObjectReadRangeCount = 0;
         private int _ObjectUploadPartCount = 0;
         private int _WriteAclCount = 0;
+        private Action<S3ServerSettings> _Configure = null;
 
         #endregion
 
@@ -154,10 +155,12 @@ namespace Test.Shared
         /// <param name="enableSignatures">True to enable AWS signature validation.</param>
         /// <param name="startServer">True to start the server immediately.</param>
         /// <param name="enableSignatureV2">True to enable legacy AWS signature V2 validation.</param>
-        public S3TestServer(int port = 0, bool enableSignatures = false, bool startServer = true, bool enableSignatureV2 = false)
+        /// <param name="configure">Optional action to adjust settings before the server is constructed (for example telemetry names).</param>
+        public S3TestServer(int port = 0, bool enableSignatures = false, bool startServer = true, bool enableSignatureV2 = false, Action<S3ServerSettings> configure = null)
         {
             EnableSignatures = enableSignatures;
             EnableSignatureV2 = enableSignatureV2;
+            _Configure = configure;
 
             // An automatically selected port can be claimed by another test process between selection and bind
             // (the net8.0 and net10.0 test hosts run concurrently), so retry with a new port when the bind fails.
@@ -267,6 +270,8 @@ namespace Test.Shared
                 ctx.Response.ContentType = "text/plain";
                 await ctx.Response.Send("Handled by default handler");
             };
+
+            _Configure?.Invoke(settings);
 
             Server = new S3Server(settings);
 

@@ -183,7 +183,7 @@
 
             SetResponseHeaders();
 
-            return await _HttpResponse.Send().ConfigureAwait(false);
+            return await SendToClient().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -208,7 +208,7 @@
 
             SetResponseHeaders();
 
-            return await _HttpResponse.Send(bytes).ConfigureAwait(false);
+            return await SendToClient(bytes).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -234,7 +234,7 @@
 
                 SetResponseHeaders();
 
-                return await _HttpResponse.Send(ContentLength, ms).ConfigureAwait(false);
+                return await SendToClient(ContentLength, ms).ConfigureAwait(false);
             }
         }
 
@@ -254,11 +254,11 @@
 
             if (stream != null && ContentLength > 0)
             {
-                return await _HttpResponse.Send(ContentLength, stream).ConfigureAwait(false);
+                return await SendToClient(ContentLength, stream).ConfigureAwait(false);
             }
             else
             {
-                return await _HttpResponse.Send().ConfigureAwait(false);
+                return await SendToClient().ConfigureAwait(false);
             }
         }
 
@@ -274,6 +274,8 @@
         {
             if (error == null) throw new ArgumentNullException(nameof(error));
 
+            RequestTelemetry.Current?.MarkResponseError(error.Code);
+
             ChunkedTransfer = false;
             if (error.Code == ErrorCode.NotModified) return await SendNotModified().ConfigureAwait(false);
 
@@ -286,7 +288,7 @@
                 ContentType = Constants.ContentTypeXml;
                 _HttpResponse.ContentLength = 0;
                 SetResponseHeaders();
-                return await _HttpResponse.Send().ConfigureAwait(false);
+                return await SendToClient().ConfigureAwait(false);
             }
 
             byte[] bytes = Encoding.UTF8.GetBytes(SerializationHelper.SerializeXml(error));
@@ -301,7 +303,7 @@
 
                 SetResponseHeaders();
 
-                return await _HttpResponse.Send(ContentLength, ms).ConfigureAwait(false);
+                return await SendToClient(ContentLength, ms).ConfigureAwait(false);
             }
         }
 
@@ -336,6 +338,51 @@
 
         #region Private-Methods
 
+        private async Task<bool> SendToClient()
+        {
+            using (TelemetryStage stage = RequestTelemetry.StartCurrentStage(S3ServerTelemetryNames.StageSend))
+            {
+                try
+                {
+                    return await _HttpResponse.Send().ConfigureAwait(false);
+                }
+                catch (Exception e) when (TelemetryStage.Fail(stage, e))
+                {
+                    throw;
+                }
+            }
+        }
+
+        private async Task<bool> SendToClient(byte[] data)
+        {
+            using (TelemetryStage stage = RequestTelemetry.StartCurrentStage(S3ServerTelemetryNames.StageSend))
+            {
+                try
+                {
+                    return await _HttpResponse.Send(data).ConfigureAwait(false);
+                }
+                catch (Exception e) when (TelemetryStage.Fail(stage, e))
+                {
+                    throw;
+                }
+            }
+        }
+
+        private async Task<bool> SendToClient(long contentLength, Stream stream)
+        {
+            using (TelemetryStage stage = RequestTelemetry.StartCurrentStage(S3ServerTelemetryNames.StageSend))
+            {
+                try
+                {
+                    return await _HttpResponse.Send(contentLength, stream).ConfigureAwait(false);
+                }
+                catch (Exception e) when (TelemetryStage.Fail(stage, e))
+                {
+                    throw;
+                }
+            }
+        }
+
         private void SetResponseHeaders()
         {
             if (Headers == null) Headers = new NameValueCollection(StringComparer.InvariantCultureIgnoreCase);
@@ -358,7 +405,7 @@
 
             SetResponseHeaders();
 
-            return await _HttpResponse.Send().ConfigureAwait(false);
+            return await SendToClient().ConfigureAwait(false);
         }
 
         private void PopulateErrorIdentifiers(Error error)
